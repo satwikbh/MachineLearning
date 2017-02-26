@@ -4,7 +4,9 @@ import os
 import pickle as pi
 
 import numpy as np
-from pyspark import SparkContext as sc
+from pyspark import SparkContext
+
+sc = SparkContext('local', 'pyspark')
 
 
 class LoadData:
