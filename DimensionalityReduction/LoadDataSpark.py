@@ -50,7 +50,7 @@ class LoadData:
     @staticmethod
     def load_data(data_path):
         LoadData.logger.info("Entering the {} class".format(LoadData.load_data.__name__))
-        rdd = sc.textFile(data_path + "/" + "mycsvfile.csv")
+        rdd = sc.textFile(data_path + "/" + "mycsvfile.csv", 50)
         length = rdd.map(lambda line: line.split(",")[1][:-2]).filter(lambda line: list(line)).count()
         l = list(list())
 
