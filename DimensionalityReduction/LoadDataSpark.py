@@ -55,9 +55,9 @@ class LoadData:
         l = list(list())
 
         names = rdd.map(lambda line: line.split(",")[0]).take(length)
-        temp_list = rdd.map(lambda line: line.split(",")[1][:-2]).take(length)
+        value = rdd.map(lambda line: line.split(",")[1][:-2]).take(length)
 
-        for each in temp_list:
+        for each in value:
             l.append(list(each))
 
         input_matrix = np.array(l)
