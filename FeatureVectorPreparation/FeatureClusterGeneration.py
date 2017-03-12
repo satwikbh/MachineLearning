@@ -63,7 +63,7 @@ class FeatureClusterGeneration():
         """
         self.unknownFeatures[md5].append(name)
 
-    def getName(self, results):
+    def get_name(self, results):
         """
         Gets the name of the file being analyzed.
         :param results:
@@ -656,7 +656,7 @@ class FeatureClusterGeneration():
             self.cluster_path = self.get_cluster_path()
             if not os.path.exists(self.cluster_path):
                 os.makedirs(self.cluster_path)
-            self.getName(results)
+            self.get_name(results)
             self.prepare_dumps()
             if not self.debug(self.name, results):
                 self.static_res(self.name, results)

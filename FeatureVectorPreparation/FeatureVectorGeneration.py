@@ -244,9 +244,9 @@ class FeatureVectorGeneration():
         :return:
         """
         _current_dir = os.path.abspath(os.path.dirname("__file__"))
-        #CUCKOO_ROOT = "/".join(_current_dir.split("/")[:-2])
-        #path = CUCKOO_ROOT + "/cluster/"
-	path = _current_dir + "/cluster/"
+        # CUCKOO_ROOT = "/".join(_current_dir.split("/")[:-2])
+        # path = CUCKOO_ROOT + "/cluster/"
+        path = _current_dir + "/cluster/"
         log.info("Cluster Path: {0}".format(path))
         return path, _current_dir
 
@@ -258,6 +258,16 @@ class FeatureVectorGeneration():
         except Exception as e:
             log.error(e)
         return path
+
+    def create_cluster_dumps(self):
+        """
+        This method will create all the dumps.
+        This is a one time process and once the dumps are created, the next iteration will use these dumps to prepare the next set of dumps.
+        :return:
+        """
+        pi.dump(self.behavior_dump, open("Meta_Behavior.dump", "w"))
+        pi.dump(self.network_dump, open("Meta_Network.dump", "w"))
+        pi.dump(self.static_dump, open("Meta_Static.dump", "w"))
 
     @staticmethod
     def load_dump(cluster_path, dump_name):
@@ -281,6 +291,8 @@ class FeatureVectorGeneration():
             self.static()
 
         self.make_static()
+
+        self.create_cluster_dumps()
 
         x = 0
         for each in behavior_keys:
