@@ -20,32 +20,37 @@ class Validation:
             s += lines
 
         s = dict(ast.literal_eval(s))
-        temp1 = dict()
-        temp1["positives"] = s.get("positives")
-        temp1["total"] = s.get("total")
+        current_dict = dict()
+        current_dict["positives"] = s.get("positives")
+        current_dict["total"] = s.get("total")
         scans = s.get("scans")
 
-        temp1 = defaultdict(list)
+        current_dict = defaultdict(list)
         for each_av in scans:
             try:
-                temp1[each_av].append(scans.get(each_av).get("result"))
+                current_dict[each_av].append(scans.get(each_av).get("result"))
             except Exception as e:
                 print("The error is : {}, \n caused by : {}".format(e, each_av))
-        temp2 = self.meta_cluster.get(key)
+        meta_dict = self.meta_cluster.get(key)
         if counter != 0:
             finaldict = dict()
-            for stupid_key in temp1:
+            for stupid_key in current_dict:
                 try:
-                    temp3 = list()
-                    temp3 += temp1[stupid_key]
-                    temp3 += temp2[stupid_key]
-                    finaldict[stupid_key] = temp3
+                    intermediate_list = list()
+                    if current_dict.has_key(stupid_key):
+                        intermediate_list += current_dict[stupid_key]
+                    else:
+                        intermediate_list.append(None)
+                    if meta_dict.has_key(stupid_key):
+                        intermediate_list += meta_dict[stupid_key]
+                    else:
+                        intermediate_list.append(None)
+                    finaldict[stupid_key] = intermediate_list
                 except Exception as e:
-                    print("The error is : {}, \n caused by : {}".format(e, stupid_key))
+                    print("Error when Merging the current dict with Meta dict. \n Error Caused by : {}".format(e))
             self.meta_cluster[key] = finaldict
         else:
-            self.meta_cluster[key] = temp1
-            print("Bye")
+            self.meta_cluster[key] = current_dict
 
     def create_folders_dict(self, folder_names):
         self.meta_cluster = dict()
@@ -71,8 +76,8 @@ class Validation:
                 x += 1
 
         pi.dump(self.meta_cluster, open(path + "/" + "final_clusters.dump", "w"))
-        with open('FinalResult.json', 'w') as outfile:
-            json.dumps(self.meta_cluster, outfile)
+        with open(path + "/" + "FinalResult.json", 'w') as outfile:
+            json.dump(self.meta_cluster, outfile)
         print("Total time taken : {}".format(time.time() - start_time))
 
 

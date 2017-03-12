@@ -13,13 +13,13 @@ class Clustering:
         self.names = list()
         self.labels = defaultdict(list)
 
-    def prepare_names_list(self):
-        f1 = open("mycsvfile.csv")
+    def prepare_names_list(self, path):
+        f1 = open(path + "/" + "mycsvfile.csv")
         for lines in f1.readlines():
             self.names.append(lines.split(",")[0])
 
-    def prepare_labels_list(self):
-        f = open("reduced_matrix.dump")
+    def prepare_labels_list(self, path):
+        f = open(path + "/" + "reduced_matrix.dump")
         l = list(list())
 
         for lines in f.readlines():
@@ -45,12 +45,12 @@ class Clustering:
         if os.path.exists(path + "/" + "names.dump"):
             self.names = pi.load(open(path + "/" + "names.dump"))
         else:
-            self.prepare_names_list()
+            self.prepare_names_list(path)
         if os.path.exists(path + "/" + "labels.dump"):
-            self.labels = pi.load(open("labels.dump"))
+            self.labels = pi.load(open(path + "/" + "labels.dump"))
         else:
-            self.prepare_labels_list()
-        pi.dump(self.labels, open("labels.dump", "w"))
+            self.prepare_labels_list(path)
+            pi.dump(self.labels, open(path + "/" + "labels.dump", "w"))
 
     @staticmethod
     def set_path():
