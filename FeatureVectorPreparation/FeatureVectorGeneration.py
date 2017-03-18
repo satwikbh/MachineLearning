@@ -1,10 +1,21 @@
+import ConfigParser
 import csv
 import logging
 import os
 import pickle as pi
+
+from pymongo import MongoClient
+
+config = ConfigParser.RawConfigParser()
+config.read('Config.properties')
+
 from collections import defaultdict
 
 log = logging.getLogger(__name__)
+LOG_FILENAME = config.get('Mappings', 'mappings.logfile')
+LOG_LEVEL = config.get('Mappings', 'loglevel')
+
+logging.basicConfig(filename=LOG_FILENAME, level=LOG_LEVEL)
 
 
 class FeatureVectorGeneration():
@@ -27,6 +38,17 @@ class FeatureVectorGeneration():
 
     cluster_path = ""
     cuckoo_root = ""
+
+    @staticmethod
+    def get_client():
+        return MongoClient(
+            "mongod://" + config.get("MongoProperties", "address") + ":" + config.get("MongoProperties", "port"))
+
+    @staticmethod
+    def get_collection(client):
+        db = client.get_database(config.get("MongoProperties", "db_name"))
+        collection = db.get_collection(config.get("MongoProperties", "collection_name"))
+        return collection
 
     def load_props(self):
         behavior_keys = []
@@ -259,7 +281,7 @@ class FeatureVectorGeneration():
             log.error(e)
         return path
 
-    def create_cluster_dumps(self):
+    def create_cluster_dumps(self, collection):
         """
         This method will create all the dumps.
         This is a one time process and once the dumps are created, the next iteration will use these dumps to prepare the next set of dumps.
@@ -275,6 +297,8 @@ class FeatureVectorGeneration():
 
     def main(self):
         self.cluster_path, self.cuckoo_root = self.get_cluster_path()
+
+        collection = self.get_collection(self.get_client())
 
         behavior_keys, network_keys, static_keys = self.load_props()
 
@@ -292,7 +316,7 @@ class FeatureVectorGeneration():
 
         self.make_static()
 
-        self.create_cluster_dumps()
+        self.create_cluster_dumps(collection)
 
         x = 0
         for each in behavior_keys:
