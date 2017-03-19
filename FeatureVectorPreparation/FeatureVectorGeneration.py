@@ -367,7 +367,6 @@ class FeatureVectorGeneration():
         collection.remove(
             {'$and': [{'behavior': {'$exists': True}}, {'network': {'$exists': True}}, {'static': {'$exists': True}}]})
         collection.insert_one(meta_dict)
-        pi.dump(meta_dict, open("Meta_cluster.dump", "w"))
 
     @staticmethod
     def load_dump(cluster_path, dump_name):
