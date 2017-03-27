@@ -148,9 +148,13 @@ class Cluster2db(object):
             f = open(fname)
             d = pi.load(f)
             md5 = d.keys()[0]
-            value = d.values()[0]
             document = dict()
-            document['key'] = md5
+            if '.' in md5:
+                d[md5.split(".")[0]] = d.pop(md5)
+                document['key'] = md5.split(".")[0]
+            else:
+                document['key'] = md5
+            value = d.values()[0]
             if fname.endswith(".behaviorDump.cluster"):
                 self.convert_behavior_dump_to_json(value)
                 document['feature'] = 'behavior'
