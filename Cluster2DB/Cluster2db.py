@@ -111,11 +111,9 @@ class Cluster2db(object):
     @staticmethod
     def convert_static_dump_to_json(value):
         """
-        Here the Key will be behavior.
-        The inner keys of the json are 'dirents', 'fn_name', 'dlls', 'sections', 'peid_signatures'.
-        This method will convert the sets of these keys into list so that they can be converted to JSON.
+
         :param value:
-        :return behavior:
+        :return:
         """
         try:
             static = value.get("static")
@@ -128,11 +126,9 @@ class Cluster2db(object):
     @staticmethod
     def convert_statistics_dump_to_json(value):
         """
-        Here the Key will be behavior.
-        The inner keys of the json are 'dirents', 'fn_name', 'dlls', 'sections', 'peid_signatures'.
-        This method will convert the sets of these keys into list so that they can be converted to JSON.
+
         :param value:
-        :return behavior:
+        :return:
         """
         try:
             value["statSignatures"] = list(value.get("statSignatures"))
@@ -166,7 +162,7 @@ class Cluster2db(object):
                 document['feature'] = 'static'
             elif fname.endswith(".statsDump.cluster"):
                 self.convert_statistics_dump_to_json(value)
-                document['feature'] = 'statistic'
+                document['feature'] = 'statSignatures'
             else:
                 return
 
