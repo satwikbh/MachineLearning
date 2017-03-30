@@ -2,24 +2,30 @@ import ConfigParser
 import logging
 import time
 import urllib
+from collections import defaultdict
 
 import gensim
 from gensim import corpora
 from pymongo import MongoClient
 
 config = ConfigParser.RawConfigParser()
-config.read('config.properties')
+config.read('../Config.properties')
 
 logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
 # ipython sometimes messes up the logging setup; restore
 logging.root.level = logging.INFO
 
-log = logging.getLoggerClass()
+log = logging.getLogger(__name__)
 
 
 class TopicModelling:
     def __init__(self):
-        self.doc2bow = dict()
+        self.doc2bow = defaultdict(list)
+
+    @staticmethod
+    def get_client_wo_auth(address, port):
+        return MongoClient(
+            "mongodb://" + address + ":" + port)
 
     @staticmethod
     def get_client(address, port, username, password, auth_db):
@@ -31,7 +37,7 @@ class TopicModelling:
         bow = list()
         for key, value in doc.items():
             if isinstance(value, list):
-                bow += list
+                bow += value
             else:
                 log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
@@ -40,9 +46,9 @@ class TopicModelling:
         bow = list()
         for key, value in doc.items():
             if isinstance(value, dict):
-                self.get_bow_for_network_feature(feature, value)
+                bow += self.get_bow_for_network_feature(feature, value)
             elif isinstance(value, list):
-                bow += value
+                bow += [str(s) for s in value if isinstance(s, int)]
             else:
                 log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
@@ -56,11 +62,11 @@ class TopicModelling:
             log.error("Feature {} doesn't have {} type as value.".format(feature, type(doc)))
 
     @staticmethod
-    def get_bow_for_static_feature(doc, feature):
+    def get_bow_for_static_feature(feature, doc):
         bow = list()
         for key, value in doc.items():
             if isinstance(value, list):
-                bow += list
+                bow += value
             if isinstance(value, dict):
                 log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
@@ -84,10 +90,12 @@ class TopicModelling:
             return None
 
     def parse_each_document(self, cursor):
-        for document in cursor:
-            feature = document.get("feature")
-            value = document.get("value")
-            self.doc2bow[document.get("key")] = self.get_bow_for_each_document(value, feature)
+        for each_document in cursor:
+            feature = each_document.get("feature")
+            value = each_document.get("value")
+            d2b = self.get_bow_for_each_document(value, feature)
+            if d2b is not None:
+                self.doc2bow[each_document.get("key")] += d2b
 
     def lda_model(self):
         """
@@ -114,22 +122,31 @@ class TopicModelling:
         """
         log.info("~~~~~~~ Program started ~~~~~~~")
         start_time = time.time()
-        db_address = config.get("MongoDetails", "address")
-        db_port = config.get("MongoDetails", "port")
-        uname = config.get("MongoDetails", "username")
-        password = urllib.quote(config.get("MongoDetails", "password"))
-        auth_db = config.get("MongoDetails", "auth_db")
-        db_name = config.get("MongoDetails", "db_name")
-        collection_name = config.get("MongoDetails", "collection_name")
+        is_auth_enabled = config.get("MongoProperties", "isAuthEnabled")
+        db_address = config.get("MongoProperties", "address")
+        db_port = config.get("MongoProperties", "port")
+        uname = config.get("MongoProperties", "username")
+        password = urllib.quote(config.get("MongoProperties", "password"))
+        auth_db = config.get("MongoProperties", "auth_db")
+        db_name = config.get("MongoProperties", "db_name")
+        collection_name = config.get("MongoProperties", "fingerprint_collection")
 
-        client = self.get_client(db_address, db_port, uname, password, auth_db)
+        if is_auth_enabled:
+            client = self.get_client_wo_auth(db_address, db_port)
+        else:
+            client = self.get_client(db_address, db_port, uname, password, auth_db)
         db = client[db_name]
         collection = db[collection_name]
 
         query = {"key": {'$exists': True}}
-        cursor = collection.find(query)
+        cursor = collection.find(query).limit(100)
         self.parse_each_document(cursor)
 
         log.info("~~~~~~~ Printing the LDA model ~~~~~~~")
         log.info(self.lda_model())
         log.info("~~~~~~~ Total time taken : {} ~~~~~~~".format(time.time() - start_time))
+
+
+if __name__ == '__main__':
+    tm = TopicModelling()
+    tm.main()
