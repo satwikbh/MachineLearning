@@ -144,7 +144,7 @@ class TopicModelling:
         collection = db[collection_name]
 
         query = {"key": {'$exists': True}}
-        cursor = collection.find(query).limit(100)
+        cursor = collection.find(query)
         self.parse_each_document(cursor)
 
         log.info("~~~~~~~ Printing the LDA model ~~~~~~~")
