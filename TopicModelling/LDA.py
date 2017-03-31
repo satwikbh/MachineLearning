@@ -113,8 +113,9 @@ class TopicModelling:
         LDA = gensim.models.ldamodel.LdaModel
 
         # Running and Training LDA model on the document term matrix.
-        ldamodel = LDA(doc_term_matrix, num_topics=3, id2word=dictionary, passes=50)
-        return ldamodel.print_topics(num_topics=3, num_words=3)
+        ldamodel = LDA(doc_term_matrix, num_topics=100, id2word=dictionary, passes=500)
+        # log.info(ldamodel.print_topics(num_topics=3, num_words=3))
+        log.info(ldamodel.show_topics())
 
     def main(self):
         """
