@@ -82,21 +82,10 @@ def parse(it, md5, verbose, jsondump, collection):
 
 
 def main(collection, malware_md5):
-    opt = argparse.ArgumentParser(description="Search and Download from VirusTotal")
-    opt.add_argument("HashorPath", help="Enter the MD5/SHA1/256 Hash or Path to File")
-    opt.add_argument("-s", "--search", action="store_true", help="Search VirusTotal")
-    opt.add_argument("-v", "--verbose", action="store_true", dest="verbose", help="Turn on verbosity of VT reports")
-    opt.add_argument("-j", "--jsondump", action="store_true", help="Stores the report in mongo")
-    opt.add_argument("-r", "--rescan", action="store_true", help="Force Rescan with Current A/V Definitions")
-    if len(sys.argv) <= 2:
-        opt.print_help()
-        sys.exit(1)
-    options = opt.parse_args()
-
-    vt = vtAPI()
-    md5 = checkMD5(malware_md5)
-    if options.search or options.jsondump or options.verbose:
-        parse(vt.getReport(md5), md5, options.verbose, options.jsondump, collection)
-    if options.rescan:
-        pass
-    vt.rescan(md5)
+    try:
+        vt = vtAPI()
+        md5 = checkMD5(malware_md5)
+        parse(vt.getReport(md5), md5, False, True, collection)
+        vt.rescan(md5)
+    except Exception as e:
+        print(e)

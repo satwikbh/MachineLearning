@@ -11,7 +11,7 @@ class VirusTotal:
     @staticmethod
     def main():
         client = MongoClient(
-            "mongodb://" + "admin" + ":" + urllib.quote("goodDevelopers@123") + "@" + "localhost:27017" + "/" + "admin")
+            "mongodb://" + "localhost:27017" + "/" + "admin")
         db = client["cuckoo"]
         vt_collection = db["VirusTotalResults"]
         malware_collection = db["cluster2db"]
@@ -21,9 +21,12 @@ class VirusTotal:
         print("Total number of malware's are : {}".format(len(list_of_md5)))
 
         for index, each_malware_md5 in enumerate(list_of_md5):
-            vtlite.main(vt_collection, each_malware_md5)
-            print("Malware {} report generated".format(index))
-            time.sleep(15)
+            if "VirusShare_" in each_malware_md5:
+                vtlite.main(vt_collection, each_malware_md5.split("_")[1])
+                print("Malware {} report generated".format(index))
+                time.sleep(15)
+            else:
+                continue
 
 
 if __name__ == '__main__':
