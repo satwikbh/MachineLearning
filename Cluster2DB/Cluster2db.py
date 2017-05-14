@@ -24,6 +24,17 @@ class Cluster2db(object):
         return collection
 
     @staticmethod
+    def flatten_list(nested_list):
+        flattened_list = list()
+        for sublist in nested_list:
+            if isinstance(sublist, list):
+                for item in sublist:
+                    flattened_list.append(item)
+            else:
+                flattened_list.append(sublist)
+        return flattened_list
+
+    @staticmethod
     def insert_one_by_one(collection, gfs):
         with open('mycsvfile.csv', 'rb') as f:
             # Size 0 will read the ENTIRE file into memory!
@@ -135,6 +146,64 @@ class Cluster2db(object):
         except Exception as e:
             print(e)
 
+    @staticmethod
+    def convert_signatures_dump_to_json(value):
+        """
+        Mongo doesn't accept int keys, this method will convert them to string and also makes the flatten list out of the values.
+        :param value: 
+        :return: 
+        """
+        doc = dict()
+        try:
+            signatures = value.get('signatures')
+            for key, value in signatures.items():
+                doc[str(key)] = list(set(Cluster2db.flatten_list(value)))
+        except Exception as e:
+            print(e)
+        return doc
+
+    @staticmethod
+    def convert_unknown_features_to_json(value):
+        """
+        
+        :param value: 
+        :return: 
+        """
+        try:
+            pass
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def convert_failed_analyses_to_json(value):
+        """
+        
+        :param value: 
+        :return: 
+        """
+        try:
+            pass
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def convert_malheur_value_to_json(value):
+        """
+        Convert the malheur result into a json with family and score key's
+        :param value: 
+        :return: 
+        """
+        doc = dict()
+        doc['family'] = None
+        doc['score'] = None
+        try:
+            malheur = value.get("malheur")
+            doc['family'] = malheur[0]
+            doc['score'] = malheur[1]
+        except Exception as e:
+            print(e)
+        return doc
+
     def dump_to_document(self, fname, collection):
         """
         This method will parse the pickle file and then dumps them into Mongo.
@@ -142,43 +211,74 @@ class Cluster2db(object):
         """
         try:
             f = open(fname)
-            d = pi.load(f)
-            md5 = d.keys()[0]
-            document = dict()
-            if '.' in md5:
-                d[md5.split(".")[0]] = d.pop(md5)
-                document['key'] = md5.split(".")[0]
-            else:
-                document['key'] = md5
-            value = d.values()[0]
-            if fname.endswith(".behaviorDump.cluster"):
-                self.convert_behavior_dump_to_json(value)
-                document['feature'] = 'behavior'
-            elif fname.endswith(".networkDump.cluster"):
-                self.convert_network_dump_to_json(value)
-                document['feature'] = 'network'
-            elif fname.endswith(".staticDump.cluster"):
-                self.convert_static_dump_to_json(value)
-                document['feature'] = 'static'
-            elif fname.endswith(".statsDump.cluster"):
-                self.convert_statistics_dump_to_json(value)
-                document['feature'] = 'statSignatures'
-            else:
-                return
+            behavior_profile = pi.load(f)
 
-            document['value'] = d
-            collection.insert_one(document)
+            if isinstance(behavior_profile, list):
+                if fname.endswith(".failedAnalyses.cluster"):
+                    document = dict()
+                    document["key"] = "failedAnalyses"
+                    cursor = collection.find({"key": "failedAnalyses"})
+                    failed_list = list()
+                    for each in cursor:
+                        failed_list += each.get("value")
+                    failed_list += behavior_profile
+                    document["value"] = list(set(failed_list))
+                    collection.remove({"key": "failedAnalyses"})
+                    collection.insert(document)
+
+            if isinstance(behavior_profile, dict):
+                if len(behavior_profile.keys()) <= 0:
+                    return
+                else:
+                    md5 = behavior_profile.keys()[0]
+                    document = dict()
+                    if '.' in md5:
+                        behavior_profile[md5.split(".")[0]] = behavior_profile.pop(md5)
+                        document['key'] = md5.split(".")[0]
+                    else:
+                        document['key'] = md5
+                    value = behavior_profile.values()[0]
+                    if fname.endswith(".behaviorDump.cluster"):
+                        self.convert_behavior_dump_to_json(value)
+                        document['feature'] = 'behavior'
+                    elif fname.endswith(".networkDump.cluster"):
+                        self.convert_network_dump_to_json(value)
+                        document['feature'] = 'network'
+                    elif fname.endswith(".staticDump.cluster"):
+                        self.convert_static_dump_to_json(value)
+                        document['feature'] = 'static'
+                    elif fname.endswith(".statsDump.cluster"):
+                        self.convert_statistics_dump_to_json(value)
+                        document['feature'] = 'statSignatures'
+                    elif fname.endswith(".signatureDump.cluster"):
+                        behavior_profile = self.convert_signatures_dump_to_json(value)
+                        document['feature'] = 'signatures'
+                    elif fname.endswith(".unknownFeatures.cluster"):
+                        self.convert_unknown_features_to_json(value)
+                        document['feature'] = ''
+                    elif fname.endswith(".failedAnalyses.cluster"):
+                        self.convert_failed_analyses_to_json(value)
+                        document['feature'] = ''
+                    elif fname.endswith(".malheurDump.cluster"):
+                        behavior_profile = self.convert_malheur_value_to_json(value)
+                        document['feature'] = 'malheur'
+                    else:
+                        return
+
+                    document['value'] = behavior_profile
+                    collection.insert_one(document)
+
         except Exception as e:
             print(e)
 
     def main(self):
         print("Process started")
-
         start_time = time.time()
         collection = self.get_collection(self.get_client())
         print("Enter the path of the clusters : ")
         path = str(raw_input())
         files_list = os.listdir(path)
+        print("Number of files : {}".format(len(files_list)))
         for each in files_list:
             if isfile(join(path, each)):
                 self.dump_to_document(path + each, collection)
