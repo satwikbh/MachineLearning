@@ -9,6 +9,16 @@ class VirusTotal:
         pass
 
     @staticmethod
+    def query_and_insert_into_db(list_of_md5, vt_collection):
+        for index, each_malware_md5 in enumerate(list_of_md5):
+            if "VirusShare_" in each_malware_md5:
+                vtlite.main(vt_collection, each_malware_md5.split("_")[1])
+                print("Malware {} report generated".format(index))
+                time.sleep(15)
+            else:
+                continue
+
+    @staticmethod
     def main():
         client = MongoClient(
             "mongodb://" + "localhost:27017" + "/" + "admin")
@@ -20,13 +30,15 @@ class VirusTotal:
 
         print("Total number of malware's are : {}".format(len(list_of_md5)))
 
-        for index, each_malware_md5 in enumerate(list_of_md5):
-            if "VirusShare_" in each_malware_md5:
-                vtlite.main(vt_collection, each_malware_md5.split("_")[1])
-                print("Malware {} report generated".format(index))
-                time.sleep(15)
-            else:
-                continue
+        while True:
+            VirusTotal.query_and_insert_into_db(list_of_md5, vt_collection)
+            updated_list = vt_collection.find({}).distinct("malware_source")
+            list_of_md5 = malware_collection.find({"key": {"$exists": True}}).distinct("key")
+            list_of_md5 = list(set(list_of_md5) - set(updated_list))
+            if len(list_of_md5) < 1:
+                break
+
+        print("Mission Impossible is completed !!!!")
 
 
 if __name__ == '__main__':

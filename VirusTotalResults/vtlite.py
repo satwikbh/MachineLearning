@@ -67,18 +67,14 @@ def parse(it, md5, verbose, jsondump, collection):
 
     if jsondump:
         if collection:
-            collection.insert(it)
+            it_dict = dict(it)
+            it_dict['malware_source'] = "VirusShare_" + str(md5.lower())
+            collection.insert(json.loads(json.dumps(it_dict)))
         else:
             jsondumpfile = open("VTDL" + md5 + ".json", "w")
             pprint(it, jsondumpfile)
             jsondumpfile.close()
             print "\n\tJSON Written to File -- " + "VTDL" + md5 + ".json"
-
-    if verbose:
-        print '\n\tVerbose VirusTotal Information Output:\n'
-        for x in it['scans']:
-            print '\t', x, '\t' if len(x) < 7 else '', '\t' if len(x) < 14 else '', '\t', it['scans'][x][
-                'detected'], '\t', it['scans'][x]['result']
 
 
 def main(collection, malware_md5):
@@ -86,6 +82,5 @@ def main(collection, malware_md5):
         vt = vtAPI()
         md5 = checkMD5(malware_md5)
         parse(vt.getReport(md5), md5, False, True, collection)
-        vt.rescan(md5)
     except Exception as e:
         print(e)
