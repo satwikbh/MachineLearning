@@ -15,7 +15,7 @@ class Cluster2db(object):
     @staticmethod
     def get_client():
         return MongoClient(
-            "mongodb://" + "cuckoo" + ":" + urllib.quote("goodDeveloper@123") + "@" + "localhost:27017" + "/" + "admin")
+            "mongodb://" + "admin" + ":" + urllib.quote("goodDeveloper@123") + "@" + "localhost:27017" + "/" + "admin")
 
     @staticmethod
     def get_collection(client):
@@ -153,6 +153,7 @@ class Cluster2db(object):
         :param value: 
         :return: 
         """
+        main_doc = dict()
         doc = dict()
         try:
             signatures = value.get('signatures')
@@ -160,7 +161,8 @@ class Cluster2db(object):
                 doc[str(key)] = list(set(Cluster2db.flatten_list(value)))
         except Exception as e:
             print(e)
-        return doc
+        main_doc['signatures'] = doc
+        return main_doc
 
     @staticmethod
     def convert_unknown_features_to_json(value):
@@ -169,22 +171,12 @@ class Cluster2db(object):
         :param value: 
         :return: 
         """
+        main_doc = dict()
         try:
             pass
         except Exception as e:
             print(e)
-
-    @staticmethod
-    def convert_failed_analyses_to_json(value):
-        """
-        
-        :param value: 
-        :return: 
-        """
-        try:
-            pass
-        except Exception as e:
-            print(e)
+        return main_doc
 
     @staticmethod
     def convert_malheur_value_to_json(value):
@@ -193,6 +185,7 @@ class Cluster2db(object):
         :param value: 
         :return: 
         """
+        main_doc = dict()
         doc = dict()
         doc['family'] = None
         doc['score'] = None
@@ -202,7 +195,8 @@ class Cluster2db(object):
             doc['score'] = malheur[1]
         except Exception as e:
             print(e)
-        return doc
+        main_doc['malheur'] = doc
+        return main_doc
 
     def dump_to_document(self, fname, collection):
         """
@@ -251,17 +245,14 @@ class Cluster2db(object):
                         self.convert_statistics_dump_to_json(value)
                         document['feature'] = 'statSignatures'
                     elif fname.endswith(".signatureDump.cluster"):
-                        behavior_profile = self.convert_signatures_dump_to_json(value)
+                        behavior_profile = {document['key']: self.convert_signatures_dump_to_json(value)}
                         document['feature'] = 'signatures'
-                    elif fname.endswith(".unknownFeatures.cluster"):
-                        self.convert_unknown_features_to_json(value)
-                        document['feature'] = ''
-                    elif fname.endswith(".failedAnalyses.cluster"):
-                        self.convert_failed_analyses_to_json(value)
-                        document['feature'] = ''
                     elif fname.endswith(".malheurDump.cluster"):
-                        behavior_profile = self.convert_malheur_value_to_json(value)
+                        behavior_profile = {document['key']: self.convert_malheur_value_to_json(value)}
                         document['feature'] = 'malheur'
+                    elif fname.endswith(".unknownFeatures.cluster"):
+                        behavior_profile = {document['key']: self.convert_unknown_features_to_json(value)}
+                        document['feature'] = 'unknownFeatures'
                     else:
                         return
 
@@ -273,6 +264,7 @@ class Cluster2db(object):
 
     def main(self):
         print("Process started")
+
         start_time = time.time()
         collection = self.get_collection(self.get_client())
         print("Enter the path of the clusters : ")

@@ -55,17 +55,16 @@ def get_bow_for_static_feature(feature, doc):
 
 
 def get_bow_for_each_document(document, feature):
-    list_of_keys = document.values()[0].keys()
-    if feature == "behavior" and feature in list_of_keys:
+    if feature == "behavior":
         behavior = document.values()[0].get(feature)
         return get_bow_for_behavior_feature(feature, behavior)
-    elif feature == "network" and feature in list_of_keys:
+    elif feature == "network":
         network = document.values()[0].get(feature)
         return get_bow_for_network_feature(feature, network)
-    elif feature == "static" and feature in list_of_keys:
+    elif feature == "static":
         static = document.values()[0].get(feature)
         return get_bow_for_static_feature(feature, static)
-    elif feature == "statSignatures" and feature in list_of_keys:
+    elif feature == "statSignatures":
         statistic = document.values()[0].get(feature)
         return get_bow_for_statistic_feature(feature, statistic)
     else:
@@ -73,13 +72,18 @@ def get_bow_for_each_document(document, feature):
         return None
 
 
-def parse_each_document(list_of_docs):
+def parse_each_document(list_of_docs, collection):
     for each_document in list_of_docs:
-        feature = each_document.get("feature")
-        value = each_document.get("value")
-        d2b = get_bow_for_each_document(value, feature)
-        if d2b is not None:
-            doc2bow[each_document.get("key")] += d2b
+        cursor = collection.find({"key": each_document})
+        for each in cursor:
+            feature = each.get("feature")
+            value = each.get("value")
+            if feature == "behavior" or feature == "network" or feature == "static" or feature == "statSignatures":
+                list_of_keys = value.values()[0].keys()
+                if feature in list_of_keys:
+                    d2b = get_bow_for_each_document(value, feature)
+                    if d2b is not None:
+                        doc2bow[each.get("key")] += d2b
 
 
 def convert2vec():
@@ -116,11 +120,17 @@ def set_lsh_parameters(dataset):
     # If we cannot determine the number of threads setting it ONE is an ideal way for it to infer.
     # The number of threads used is always at most the number of tables l.
     lsh_params.num_setup_threads = 1
+    lsh_params.num_rotations = 2
+    lsh_params.l = 10
 
-    # we build 18-bit hashes so that each table has
-    # 2^18 bins; this is a good choise since 2^18 is of the same
+    # we build 20-bit hashes so that each table has
+    # 2^20 bins; this is a good choise since 2^20 is of the same
     # order of magnitude as the number of data points
-    falc.compute_number_of_hash_functions(18, lsh_params)
+    # falc.compute_number_of_hash_functions(20, lsh_params)
+    falc.compute_number_of_hash_functions(10, lsh_params)
+    index = falc.LSHIndex(lsh_params)
+
+    return index
 
 
 def lsh():
@@ -134,14 +144,15 @@ def lsh():
     dataset -= np.mean(dataset, axis=0)
 
     # Using default parameters for now. Need to change this as per out requirement.
-    falc.get_default_parameters(dimension=dataset.shape[1], num_points=dataset.shape[0])
-    params = falc.get_default_parameters(dimension=dataset.shape[1], num_points=dataset.shape[0])
+    # params = falc.get_default_parameters(dimension=dataset.shape[1], num_points=dataset.shape[0])
 
-    index = falc.LSHIndex(params)
+    # Custom parameters for LSH
+    index = set_lsh_parameters(dataset)
     index.setup(dataset=dataset)
+
     query = dataset[0]
 
-    index.find_k_nearest_neighbors(k=10, query=query)
+    something = index.find_k_nearest_neighbors(k=10, query=query)
 
 
 def main():
@@ -160,7 +171,7 @@ def main():
     query = {"key": {'$exists': True}}
     list_of_docs = coll.find(query).distinct("key")
 
-    parse_each_document(list_of_docs)
+    parse_each_document(list_of_docs, coll)
     lsh()
 
 
