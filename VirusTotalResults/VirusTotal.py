@@ -27,6 +27,8 @@ class VirusTotal:
         malware_collection = db["cluster2db"]
 
         list_of_md5 = malware_collection.find({"key": {"$exists": True}}).distinct("key")
+        updated_list = vt_collection.find({}).distinct("malware_source")
+        list_of_md5 = list(set(list_of_md5) - set(updated_list))
 
         print("Total number of malware's are : {}".format(len(list_of_md5)))
 
