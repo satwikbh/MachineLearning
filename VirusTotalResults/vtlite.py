@@ -12,25 +12,20 @@ from pprint import pprint
 class vtAPI():
     def __init__(self):
         self.api = 'ad789e9c1d04904b4ca1a542d1eec0179f283c35180ac468cfb3d1fdb74caade'
+        self.api_new = "f79f5999550593986e44b4df25d65e719db681cff42c952271aaaea912b2c852"
         self.base = 'https://www.virustotal.com/vtapi/v2/'
 
-    def getReport(self, md5):
-        param = {'resource': md5, 'apikey': self.api}
+    def getReport(self, md5, switch):
+        if switch:
+            param = {'resource': md5, 'apikey': self.api}
+        else:
+            param = {'resource': md5, 'apikey': self.api_new}
         url = self.base + "file/report"
         data = urllib.urlencode(param)
         result = urllib2.urlopen(url, data)
         jdata = json.loads(result.read())
         return jdata
 
-    def rescan(self, md5):
-        param = {'resource': md5, 'apikey': self.api}
-        url = self.base + "file/rescan"
-        data = urllib.urlencode(param)
-        result = urllib2.urlopen(url, data)
-        print "\n\tVirus Total Rescan Initiated for -- " + md5 + " (Requery in 10 Mins)"
-
-
-# Md5 Function
 
 def checkMD5(checkval):
     if re.match(r"([a-fA-F\d]{32})", checkval) == None:
@@ -64,10 +59,10 @@ def parse(it, md5, verbose, jsondump, collection):
             print "\n\tJSON Written to File -- " + "VTDL" + md5 + ".json"
 
 
-def main(collection, malware_md5):
+def main(collection, malware_md5, switch):
     try:
         vt = vtAPI()
         md5 = checkMD5(malware_md5)
-        parse(vt.getReport(md5), md5, False, True, collection)
+        parse(vt.getReport(md5, switch), md5, False, True, collection)
     except Exception as e:
         print(e)
