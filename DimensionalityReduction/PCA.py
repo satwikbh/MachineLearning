@@ -1,12 +1,12 @@
 import json
 import logging.config
-import os
 import pickle as pi
 import time
 
 import ipdb
 import matplotlib
 import numpy as np
+import os
 from sklearn import manifold
 from sklearn.decomposition import PCA as sklearnPCA
 from sklearn.decomposition import kernel_pca as kernelPCA

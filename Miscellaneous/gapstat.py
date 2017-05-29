@@ -1,7 +1,5 @@
-import time
-import hashlib
-import scipy
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,6 +9,7 @@ import pickle as pi
 from sklearn.cluster import KMeans
 
 plt.rcParams['figure.figsize'] = 10, 10
+
 
 def optimalK(data, nrefs=3, maxClusters=15):
     """
@@ -22,7 +21,7 @@ def optimalK(data, nrefs=3, maxClusters=15):
     Returns: (gaps, optimalK)
     """
     gaps = np.zeros((len(range(1, maxClusters)),))
-    resultsdf = pd.DataFrame({'clusterCount':[], 'gap':[]})
+    resultsdf = pd.DataFrame({'clusterCount': [], 'gap': []})
     for gap_index, k in enumerate(range(1, maxClusters)):
 
         # Holder for reference dispersion results
@@ -30,21 +29,20 @@ def optimalK(data, nrefs=3, maxClusters=15):
 
         # For n references, generate random sample and perform kmeans getting resulting dispersion of each loop
         for i in range(nrefs):
-            
             # Create new random reference set
             randomReference = np.random.random_sample(size=data.shape)
-            
+
             # Fit to it
             km = KMeans(k)
             km.fit(randomReference)
-            
+
             refDisp = km.inertia_
             refDisps[i] = refDisp
 
         # Fit cluster to original data and create dispersion
         km = KMeans(k)
         km.fit(data)
-        
+
         origDisp = km.inertia_
 
         # Calculate gap statistic
@@ -52,10 +50,12 @@ def optimalK(data, nrefs=3, maxClusters=15):
 
         # Assign this loop's gap statistic to gaps
         gaps[gap_index] = gap
-        
-        resultsdf = resultsdf.append({'clusterCount':k, 'gap':gap}, ignore_index=True)
 
-    return (gaps.argmax() + 1, resultsdf)  # Plus 1 because index of 0 means 1 cluster is optimal, index 2 = 3 clusters are optimal
+        resultsdf = resultsdf.append({'clusterCount': k, 'gap': gap}, ignore_index=True)
+
+    return (gaps.argmax() + 1,
+            resultsdf)  # Plus 1 because index of 0 means 1 cluster is optimal, index 2 = 3 clusters are optimal
+
 
 reduced_matrix = pi.load(open("ReducedMatrix.dump"))
 print("Reduced Matrix shape : {}".format(reduced_matrix.shape))

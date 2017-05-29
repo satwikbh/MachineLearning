@@ -1,3 +1,10 @@
 gensim=2.0.0
 pymongo
 sklearn
+scipy
+matplotlib
+nearpy
+datasketch
+falconn
+keras
+pickle

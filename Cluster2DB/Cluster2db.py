@@ -1,11 +1,8 @@
-import json
-import mmap
-import os
 import pickle as pi
 import time
-import urllib
 from os.path import isfile, join
 
+import os
 from pymongo import MongoClient
 
 
@@ -14,8 +11,10 @@ class Cluster2db(object):
 
     @staticmethod
     def get_client():
+        # return MongoClient(
+        #     "mongodb://" + "admin" + ":" + urllib.quote("goodDeveloper@123") + "@" + "localhost:27017" + "/" + "admin")
         return MongoClient(
-            "mongodb://" + "admin" + ":" + urllib.quote("goodDeveloper@123") + "@" + "localhost:27017" + "/" + "admin")
+            "mongodb://localhost:27017" + "/" + "admin")
 
     @staticmethod
     def get_collection(client):
@@ -33,44 +32,6 @@ class Cluster2db(object):
             else:
                 flattened_list.append(sublist)
         return flattened_list
-
-    @staticmethod
-    def insert_one_by_one(collection, gfs):
-        with open('mycsvfile.csv', 'rb') as f:
-            # Size 0 will read the ENTIRE file into memory!
-            m = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
-
-            while True:
-                try:
-                    input_dictionary = dict()
-                    data = m.readline()
-                    key, value = data.split(",")
-                    input_dictionary[key] = list(value[:-2])
-                    # collection.insert_one(input_dictionary)
-                    gfs.put(str(json.dumps(input_dictionary)))
-                except Exception as e:
-                    print e, key
-                    break
-
-    @staticmethod
-    def bulk_insert(collection):
-        with open('mycsvfile.csv', 'rb') as f:
-            # Size 0 will read the ENTIRE file into memory!
-            m = mmap.mmap(f.fileno(), 0, prot=mmap.PROT_READ)
-            l = list()
-            while True:
-                try:
-                    input_dictionary = dict()
-                    data = m.readline()
-                    key, value = data.split(",")
-                    input_dictionary[key] = list(value[:-2])
-                    l.append(input_dictionary)
-                    if (len(l) % 500 == 0):
-                        collection.insert_many(l)
-                        l = list()
-                except Exception as e:
-                    print e, key
-                    break
 
     @staticmethod
     def convert_behavior_dump_to_json(value):
@@ -198,7 +159,7 @@ class Cluster2db(object):
         main_doc['malheur'] = doc
         return main_doc
 
-    def dump_to_document(self, fname, collection):
+    def dump_to_document(self, fname, collection, bulk):
         """
         This method will parse the pickle file and then dumps them into Mongo.
         :return:
@@ -257,10 +218,37 @@ class Cluster2db(object):
                         return
 
                     document['value'] = behavior_profile
-                    collection.insert_one(document)
+                    bulk.insert(document)
 
         except Exception as e:
             print(e)
+
+    @staticmethod
+    def key_mapping(key):
+        if key == "statSignatures":
+            return "statsDump"
+        if key == "static":
+            return "staticDump"
+        if key == "signatures":
+            return "signatureDump"
+        if key == "network":
+            return "networkDump"
+        if key == "malheur":
+            return "malheurDump"
+        if key == "behavior":
+            return "behaviorDump"
+
+    @staticmethod
+    def present_in_db(collection, files_list):
+        list_of_keys_in_mongo = list()
+        cursor = collection.find({"key": {"$exists": True}}, ["key", "feature"])
+        for each in cursor:
+            key = each.get("key")
+            feature = each.get("feature")
+            if "failedAnalyses" not in key:
+                val = key + "." + Cluster2db.key_mapping(feature) + ".cluster"
+                list_of_keys_in_mongo.append(val)
+        return set(files_list).difference(set(list_of_keys_in_mongo))
 
     def main(self):
         print("Process started")
@@ -268,12 +256,23 @@ class Cluster2db(object):
         start_time = time.time()
         collection = self.get_collection(self.get_client())
         print("Enter the path of the clusters : ")
-        path = str(raw_input())
+        # path = str(raw_input())
+        path = "/Users/satwik/Documents/IIIT/MS_Thesis/Cluster/cluster/"
         files_list = os.listdir(path)
-        print("Number of files : {}".format(len(files_list)))
-        for each in files_list:
+        print("Total number of files in cluster: {}".format(len(files_list)))
+
+        updated_list = self.present_in_db(collection, files_list)
+        print("Total number of files already in mongo: {}".format(len(files_list) - len(updated_list)))
+
+        bulk = collection.initialize_unordered_bulk_op()
+
+        for each in updated_list:
             if isfile(join(path, each)):
-                self.dump_to_document(path + each, collection)
+                self.dump_to_document(path + each, collection, bulk)
+        try:
+            bulk.execute()
+        except Exception as e:
+            print(e)
         end_time = time.time()
 
         print("Process done")

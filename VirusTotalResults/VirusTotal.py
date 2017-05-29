@@ -1,7 +1,8 @@
 import time
+
 from pymongo import MongoClient
+
 import vtlite
-import urllib
 
 
 class VirusTotal:

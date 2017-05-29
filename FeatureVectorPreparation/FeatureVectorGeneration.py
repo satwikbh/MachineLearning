@@ -1,10 +1,8 @@
 import ConfigParser
 import logging
-import os
 import pickle as pi
-import json
-from gridfs import GridFS
 
+import os
 from pymongo import MongoClient
 
 config = ConfigParser.RawConfigParser()

@@ -18,4 +18,3 @@ class DBLookUp():
 if __name__ == '__main__':
     dblookup = DBLookUp()
     dblookup.main()
-

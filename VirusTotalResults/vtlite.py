@@ -5,7 +5,11 @@
 # If things are broken let me know chris@xenosec.org
 # No Licence or warranty expressed or implied, use however you wish! 
 
-import json, urllib, urllib2, argparse, hashlib, re, sys
+import hashlib
+import json
+import re
+import urllib
+import urllib2
 from pprint import pprint
 
 
@@ -22,8 +26,8 @@ class vtAPI():
             param = {'resource': md5, 'apikey': self.api_new}
         url = self.base + "file/report"
         data = urllib.urlencode(param)
-        result = urllib2.urlopen(url, data)
-        jdata = json.loads(result.read())
+        result = urllib2.urlopen(url, data).read()
+        jdata = json.loads(result)
         return jdata
 
 
@@ -65,4 +69,4 @@ def main(collection, malware_md5, switch):
         md5 = checkMD5(malware_md5)
         parse(vt.getReport(md5, switch), md5, False, True, collection)
     except Exception as e:
-        print(e)
+        print(e, malware_md5)

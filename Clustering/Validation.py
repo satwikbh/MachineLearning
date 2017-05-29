@@ -1,9 +1,10 @@
 import ast
 import json
-import os
 import pickle as pi
 import time
 from collections import defaultdict
+
+import os
 
 from Clustering import Clustering
 

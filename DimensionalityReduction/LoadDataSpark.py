@@ -1,10 +1,10 @@
 import json
 import logging.config
-import os
 import pickle as pi
 import time
 
 import numpy as np
+import os
 from pyspark import SparkContext
 
 sc = SparkContext('local', 'pyspark')

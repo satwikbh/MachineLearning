@@ -5,7 +5,13 @@
 # If things are broken let me know chris@xenosec.org
 # No Licence or warranty expressed or implied, use however you wish! 
 
-import json, urllib, urllib2, argparse, hashlib, re, sys
+import argparse
+import hashlib
+import json
+import re
+import sys
+import urllib
+import urllib2
 from pprint import pprint
 
 
@@ -91,7 +97,7 @@ def parse(it, md5, verbose, jsondump):
         return 0
     print "\n\tResults for MD5: ", it['md5'], "\n\n\tDetected by: ", it['positives'], '/', it[
         'total'], '\n\tSophos Detection:', it['scans']['Sophos']['result'], '\n\tKaspersky Detection:', \
-    it['scans']['Kaspersky']['result'], '\n\tTrendMicro Detection:', it['scans']['TrendMicro'][
+        it['scans']['Kaspersky']['result'], '\n\tTrendMicro Detection:', it['scans']['TrendMicro'][
         'result'], '\n\tScanned on:', it['scan_date'], '\n\tFirst Seen:', it['first_seen'], '\n\tLast Seen:', it[
         'last_seen'], '\n\tUnique Sources', it['unique_sources'], '\n\tSubmission Names:'
     for x in it['submission_names']:

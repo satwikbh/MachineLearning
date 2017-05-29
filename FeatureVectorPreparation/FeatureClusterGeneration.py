@@ -1,7 +1,8 @@
 import logging
-import os
 import pickle as pi
 from collections import defaultdict
+
+import os
 
 log = logging.getLogger(__name__)
 

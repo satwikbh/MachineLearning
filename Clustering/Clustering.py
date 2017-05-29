@@ -1,10 +1,10 @@
-import os
 import pickle as pi
 import time
 from collections import defaultdict
 from subprocess import check_output
 
 import numpy as np
+import os
 from sklearn.cluster import DBSCAN
 
 

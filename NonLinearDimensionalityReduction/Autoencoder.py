@@ -6,7 +6,7 @@ from keras.layers import Input, Dense
 from keras.models import Model
 from sklearn.model_selection import train_test_split as tts
 
-from logger import CustomLogger
+from Utils import LoggerUtil
 
 
 class Autoencoder:
@@ -80,6 +80,6 @@ class Autoencoder:
 
 
 if __name__ == '__main__':
-    clog = CustomLogger.CustomLogger.setup_logging()
+    clog = LoggerUtil.CustomLogger.setup_logging()
     sae = Autoencoder(clog)
     sae.main()
