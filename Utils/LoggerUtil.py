@@ -6,7 +6,7 @@ import os
 
 
 class LoggerUtil(object):
-    def __init__(self):
+    def __init__(self, default_path):
         path = os.path.dirname(__file__) + "/" + "logging.json"
         logging_config = json.load(open(path))
         dictConfig(logging_config)

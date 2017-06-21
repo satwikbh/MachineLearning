@@ -1,4 +1,5 @@
 import json
+import urllib
 from collections import defaultdict
 
 from pymongo import MongoClient
@@ -58,8 +59,9 @@ class Dataset:
         return json.dumps(clusters)
 
     def get_data(self, test=None, train=None):
-        # client = MongoClient("mongodb://" + "admin" + ":" + urllib.quote("goodDevelopers@123") + "@" + "localhost:27017" + "/" + "admin")
-        client = MongoClient("mongodb://" + "localhost:27017" + "/" + "admin")
+        client = MongoClient(
+            "mongodb://" + "admin" + ":" + urllib.quote("goodDevelopers@123") + "@" + "localhost:27017" + "/" + "admin")
+        # client = MongoClient("mongodb://" + "localhost:27017" + "/" + "admin")
         db = client['cuckoo']
         collection = db['cluster2db']
 
