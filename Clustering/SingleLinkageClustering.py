@@ -6,17 +6,17 @@ from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram
 from scipy.cluster.hierarchy import fcluster
 
-from Utils import LoggerUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class SingleLinkageClustering:
     def __init__(self):
-        self.log = LoggerUtil.LoggerUtil(self.__class__.__name__).get()
+        self.log = LoggerUtil(self.__class__.__name__).get()
 
     def single_linkage_clustering(self, inp, threshold, num_variants):
         self.log.info("************ SINGLE LINKAGE CLUSTERING *************")
         start_time = time.time()
-        dataset = inp.astype(np.float32)
+        dataset = inp.astype(np.float64)
 
         # Centering the data
         dataset -= np.mean(dataset, axis=0)
@@ -30,11 +30,11 @@ class SingleLinkageClustering:
         dendrogram(
             Z,
             truncate_mode='lastp',  # show only the last p merged clusters
-            p=12,  # show only the last p merged clusters
+            p=18,  # show only the last p merged clusters
             show_leaf_counts=False,  # otherwise numbers in brackets are counts
             leaf_rotation=90.,
             leaf_font_size=12.,
-            show_contracted=True,  # to get a distribution impression in truncated branches
+            show_contracted=False,  # to get a distribution impression in truncated branches
         )
         plt.show()
 

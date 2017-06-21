@@ -7,4 +7,3 @@ nearpy
 datasketch
 falconn
 keras
-pickle
