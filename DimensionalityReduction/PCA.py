@@ -3,7 +3,6 @@ import logging.config
 import pickle as pi
 import time
 
-import ipdb
 import matplotlib
 import numpy as np
 import os
@@ -44,7 +43,6 @@ class PCA:
 
     @staticmethod
     def plotting(value, name):
-        ipdb.set_trace()  # debugging starts here
         plt.plot(np.array(value[:, 0]), np.array(value[:, 1]), "ro")
         plt.savefig(name + ".png")
 

@@ -1,5 +1,4 @@
 import ConfigParser
-import logging
 import time
 import urllib
 from collections import defaultdict
@@ -8,38 +7,35 @@ import gensim
 from gensim import corpora
 from pymongo import MongoClient
 
+from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
+
 config = ConfigParser.RawConfigParser()
 config.read('../Config.properties')
-
-logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.INFO)
-# ipython sometimes messes up the logging setup; restore
-logging.root.level = logging.INFO
-
-log = logging.getLogger(__name__)
 
 
 class TopicModelling:
     def __init__(self):
         self.doc2bow = defaultdict(list)
+        self.log = LoggerUtil(self.__class__.__name__).get()
 
     @staticmethod
     def get_client_wo_auth(address, port):
-        return MongoClient(
-            "mongodb://" + address + ":" + port)
+        return MongoClient("mongodb://" + address + ":" + port)
 
     @staticmethod
     def get_client(address, port, username, password, auth_db):
         return MongoClient(
             "mongodb://" + username + ":" + urllib.quote(password) + "@" + address + ":" + port + "/" + auth_db)
 
-    @staticmethod
-    def get_bow_for_behavior_feature(feature, doc):
+    def get_bow_for_behavior_feature(self, feature, doc):
         bow = list()
         for key, value in doc.items():
             if isinstance(value, list):
                 bow += value
             else:
-                log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+                self.log.error(
+                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
 
     def get_bow_for_network_feature(self, feature, doc):
@@ -50,25 +46,25 @@ class TopicModelling:
             elif isinstance(value, list):
                 bow += [str(s) for s in value if isinstance(s, int)]
             else:
-                log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+                self.log.error(
+                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
 
-    @staticmethod
-    def get_bow_for_statistic_feature(feature, doc):
+    def get_bow_for_statistic_feature(self, feature, doc):
         bow = list()
         if isinstance(doc, list):
             bow += doc
         else:
-            log.error("Feature {} doesn't have {} type as value.".format(feature, type(doc)))
+            self.log.error("Feature {} doesn't have {} type as value.".format(feature, type(doc)))
 
-    @staticmethod
-    def get_bow_for_static_feature(feature, doc):
+    def get_bow_for_static_feature(self, feature, doc):
         bow = list()
         for key, value in doc.items():
             if isinstance(value, list):
                 bow += value
             if isinstance(value, dict):
-                log.error("In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+                self.log.error(
+                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
         return bow
 
     def get_bow_for_each_document(self, document, feature):
@@ -86,7 +82,7 @@ class TopicModelling:
             statistic = document.values()[0].get(feature)
             return self.get_bow_for_statistic_feature(feature, statistic)
         else:
-            log.error("Feature other than behavior, network, static, statistic accessed.")
+            self.log.error("Feature other than behavior, network, static, statistic accessed.")
             return None
 
     def parse_each_document(self, cursor):
@@ -119,13 +115,13 @@ class TopicModelling:
         LDA.save(ldamodel, open("LDA.model", "w"))
 
         # log.info(ldamodel.print_topics(num_topics=3, num_words=3))
-        log.info(ldamodel.show_topics())
+        self.log.info(ldamodel.show_topics())
 
     def main(self):
         """
         The Main method
         """
-        log.info("~~~~~~~ Program started ~~~~~~~")
+        self.log.info("~~~~~~~ Program started ~~~~~~~")
         start_time = time.time()
         is_auth_enabled = config.get("MongoProperties", "isAuthEnabled")
         db_address = config.get("MongoProperties", "address")
@@ -136,10 +132,9 @@ class TopicModelling:
         db_name = config.get("MongoProperties", "db_name")
         collection_name = config.get("MongoProperties", "fingerprint_collection")
 
-        if is_auth_enabled:
-            client = self.get_client_wo_auth(db_address, db_port)
-        else:
-            client = self.get_client(db_address, db_port, uname, password, auth_db)
+        db_util = DBUtils()
+        client = db_util.get_client(db_address, db_port, uname, password, auth_db, is_auth_enabled)
+
         db = client[db_name]
         collection = db[collection_name]
 
@@ -147,9 +142,9 @@ class TopicModelling:
         cursor = collection.find(query)
         self.parse_each_document(cursor)
 
-        log.info("~~~~~~~ Printing the LDA model ~~~~~~~")
-        log.info(self.lda_model())
-        log.info("~~~~~~~ Total time taken : {} ~~~~~~~".format(time.time() - start_time))
+        self.log.info("~~~~~~~ Printing the LDA model ~~~~~~~")
+        self.log.info(self.lda_model())
+        self.log.info("~~~~~~~ Total time taken : {} ~~~~~~~".format(time.time() - start_time))
 
 
 if __name__ == '__main__':

@@ -35,7 +35,7 @@ class Dataset:
             if each['score'] == 10.0:
                 clusters[each['family']].append(each)
 
-        return json.dumps(clusters)
+        return clusters
 
     def get_test_data(self, list_of_docs, collection):
         clusters = defaultdict(list)
@@ -56,7 +56,7 @@ class Dataset:
             if each['score'] == 0.0:
                 clusters[each['family']].append(each)
 
-        return json.dumps(clusters)
+        return clusters
 
     def get_data(self, test=None, train=None):
         client = MongoClient(

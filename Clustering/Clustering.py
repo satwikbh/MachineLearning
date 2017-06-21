@@ -18,6 +18,7 @@ class Clustering:
         for lines in f1.readlines():
             self.names.append(lines.split(",")[0])
 
+    # FIXME : This method has been moved as a different file. Refactor to fix this
     def prepare_labels_list(self, path):
         f = open(path + "/" + "reduced_matrix.dump")
         l = list(list())

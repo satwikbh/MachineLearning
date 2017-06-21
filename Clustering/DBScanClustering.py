@@ -1,7 +1,9 @@
 from collections import defaultdict
 
 from sklearn.cluster import DBSCAN
+
 from Utils.LoggerUtil import LoggerUtil
+
 
 class DBScan:
     def __init__(self):
