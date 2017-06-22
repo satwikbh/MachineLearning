@@ -36,7 +36,7 @@ class PairwiseDistanceMeasures:
             row = X[i]
             temp = list()
             for j in xrange(y):
-                temp.append(distance.hamming(row, X[j]))
+                temp.append(distance.hamming(row, X[i][j]))
             dist_matrix.append(temp)
         return dist_matrix
 
@@ -54,7 +54,7 @@ class PairwiseDistanceMeasures:
             row = X[i]
             temp = list()
             for j in xrange(y):
-                temp.append(distance.cosine(row, X[j]))
+                temp.append(distance.cosine(row, X[i][j]))
             dist_matrix.append(temp)
         return dist_matrix
 
@@ -65,14 +65,13 @@ class PairwiseDistanceMeasures:
         :param X: Input Matrix in numpy format
         :return:
         """
-
         dist_matrix = list(list())
         x, y = X.shape
         for i in xrange(x):
             row = X[i]
             temp = list()
             for j in xrange(y):
-                temp.append(distance.euclidean(row, X[j]))
+                temp.append(distance.euclidean(row, X[i][j]))
             dist_matrix.append(temp)
         return dist_matrix
 
@@ -690,7 +689,10 @@ class PairwiseDistanceMeasures:
 
         input_matrix = np.array(input_matrix, dtype=float)
 
-        sim, dist = self.pairwise_jaccard(np.array(input_matrix))
+        # sim, dist = self.pairwise_jaccard(input_matrix)
+        dist = self.pairwise_euclidean(input_matrix)
+        dist = self.pairwise_cosine(input_matrix)
+        dist = self.pairwise_hamming(input_matrix)
         # clusters = self.get_clusters(sim, 0.9)
         # print clusters
 
