@@ -1,49 +1,87 @@
 import math
 import urllib
-import scipy.sparse
+from scipy.spatial import distance
 
+import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 import numpy as np
 import pickle as pi
 
 from Clustering import KMeansImpl
 from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
 from HelperFunctions.ParsingLogic import ParsingLogic
 
 
-class PairwiseJaccardSimilarity:
+class PairwiseDistanceMeasures:
     def __init__(self):
         self.kmeans = KMeansImpl.KMeansImpl()
         self.db_utils = DBUtils()
         self.parser = ParsingLogic()
+        self.log = LoggerUtil(self.__class__.__name__).get()
 
     @staticmethod
-    def euclidean(a, b):
-        temp_list = list()
-        for x in xrange(len(a)):
-            temp_list.append((a[x] - b[x]) ** 2)
-        return math.sqrt(sum(temp_list))
+    def pairwise_hamming(X):
+        """
+        Computes the Pairwise Hamming distance between the rows of `X`.
+        :param X: Input Matrix in numpy format
+        :return:
+        """
+        dist_matrix = list(list())
+        x, y = X.shape
+        for i in xrange(x):
+            row = X[i]
+            temp = list()
+            for j in xrange(y):
+                temp.append(distance.hamming(row, X[j]))
+            dist_matrix.append(temp)
+        return dist_matrix
 
     @staticmethod
-    def jaccard_sim(input_matrix):
-        mat = scipy.sparse.csr_matrix(input_matrix)
-        cols_sum = mat.getnnz(axis=0)
-        ab = mat.T * mat
+    def pairwise_cosine(X):
+        """
+        Computes the Pairwise Cosine distance between the rows of `X`.
+        :param X: Input Matrix in numpy format
+        :return:
+        """
+        # TODO: Can this method be improved just like pairwise_jaccard
+        dist_matrix = list(list())
+        x, y = X.shape
+        for i in xrange(x):
+            row = X[i]
+            temp = list()
+            for j in xrange(y):
+                temp.append(distance.cosine(row, X[j]))
+            dist_matrix.append(temp)
+        return dist_matrix
 
-        # for rows
-        aa = np.repeat(cols_sum, ab.getnnz(axis=0))
-        # for columns
-        bb = cols_sum[ab.indices]
+    @staticmethod
+    def pairwise_euclidean(X):
+        """
+        Computes the Pairwise Euclidean distance between the rows of `X`.
+        :param X: Input Matrix in numpy format
+        :return:
+        """
 
-        similarities = ab.copy()
-        similarities.data /= aa + bb - ab.data
-
-        return similarities
+        dist_matrix = list(list())
+        x, y = X.shape
+        for i in xrange(x):
+            row = X[i]
+            temp = list()
+            for j in xrange(y):
+                temp.append(distance.euclidean(row, X[j]))
+            dist_matrix.append(temp)
+        return dist_matrix
 
     @staticmethod
     def pairwise_jaccard(X):
         """
-        Computes the Jaccard distance between the rows of `X`.
+        Computes the Pairwise Jaccard distance between the rows of `X`.
+        :param X: Input Matrix in numpy format
+        :return:
         """
         intersect = X.dot(X.T)
         row_sums = intersect.diagonal()
@@ -663,5 +701,5 @@ class PairwiseJaccardSimilarity:
 
 
 if __name__ == "__main__":
-    pjs = PairwiseJaccardSimilarity()
+    pjs = PairwiseDistanceMeasures()
     pjs.main()
