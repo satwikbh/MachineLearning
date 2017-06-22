@@ -5,14 +5,14 @@ import urllib
 import numpy as np
 
 import HelperFunctions.helper_functions as utils
-import Utils.DBUtils as dbUtils
+from Utils.DBUtils import DBUtils
 from Clustering.BirchClustering import BirchClustering
 from Clustering.DBScanClustering import DBScan
 from Clustering.SingleLinkageClustering import SingleLinkageClustering
 from DatasketchLsh import DatasketchLsh
 from FalconnLsh import FalconnLsh
+from HelperFunctions.ParsingLogic import ParsingLogic
 from NearpyLsh import NearpyLsh
-from ParsingLogic import ParsingLogic
 from Utils.LoggerUtil import LoggerUtil
 
 
@@ -20,6 +20,7 @@ class DriverClass:
     def __init__(self):
 
         self.log = LoggerUtil(self.__class__).get()
+        self.db_utils = DBUtils()
 
         self.parser = ParsingLogic()
         self.falconn = FalconnLsh()
@@ -37,8 +38,8 @@ class DriverClass:
         port = "27017"
         auth_db = "admin"
 
-        client = dbUtils.DBUtils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=False,
-                                            username=None, password=None)
+        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=False,
+                                          username=None, password=None)
 
         # client = dbUtils.DBUtils.get_client(address, port, username, password, auth_db, is_auth_enabled=True)
 

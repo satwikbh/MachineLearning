@@ -90,15 +90,16 @@ class ParsingLogic:
         start_time = time.time()
         flat_list = [item for sublist in self.doc2bow.values() for item in sublist]
         cluster = list(set(flat_list))
-        feature_vector = list(list())
+        feature_vector = list()
 
-        for each in self.doc2bow.values():
-            temp = list()
-            for here in cluster:
-                if here in each:
-                    temp.append(1)
-                else:
-                    temp.append(0)
-            feature_vector.append(temp)
+        for index, each in enumerate(self.doc2bow.values()):
+            temp = len(cluster) * ['0']
+            sparse_representation = [cluster.index(x) for x in each]
+            for x in sparse_representation:
+                temp[x] = '1'
+            value = ''.join(temp)
+            del temp
+            feature_vector.append(value)
+
         self.log.info("Time taken for Convert 2 Vector : {}".format(time.time() - start_time))
         return feature_vector
