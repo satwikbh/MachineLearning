@@ -24,65 +24,65 @@ class PairwiseDistanceMeasures:
         self.log = LoggerUtil(self.__class__.__name__).get()
 
     @staticmethod
-    def pairwise_hamming(X):
+    def pairwise_hamming(input_matrix):
         """
         Computes the Pairwise Hamming distance between the rows of `X`.
-        :param X: Input Matrix in numpy format
+        :param input_matrix: The input matrix in numpy format
         :return:
         """
         dist_matrix = list(list())
-        x, y = X.shape
-        for i in xrange(x):
-            row = X[i]
+        row_size = input_matrix.shape[0]
+        for i in xrange(row_size):
+            row = input_matrix[i]
             temp = list()
-            for j in xrange(y):
-                temp.append(distance.hamming(row, X[i][j]))
+            for j in xrange(row_size):
+                temp.append(distance.hamming(row, input_matrix[j]))
             dist_matrix.append(temp)
         return dist_matrix
 
     @staticmethod
-    def pairwise_cosine(X):
+    def pairwise_cosine(input_matrix):
         """
         Computes the Pairwise Cosine distance between the rows of `X`.
-        :param X: Input Matrix in numpy format
+        :param input_matrix: The input matrix in numpy format
         :return:
         """
         # TODO: Can this method be improved just like pairwise_jaccard
         dist_matrix = list(list())
-        x, y = X.shape
-        for i in xrange(x):
-            row = X[i]
+        row_size = input_matrix.shape[0]
+        for i in xrange(row_size):
+            row = input_matrix[i]
             temp = list()
-            for j in xrange(y):
-                temp.append(distance.cosine(row, X[i][j]))
+            for j in xrange(row_size):
+                temp.append(distance.cosine(row, input_matrix[j]))
             dist_matrix.append(temp)
         return dist_matrix
 
     @staticmethod
-    def pairwise_euclidean(X):
+    def pairwise_euclidean(input_matrix):
         """
         Computes the Pairwise Euclidean distance between the rows of `X`.
-        :param X: Input Matrix in numpy format
+        :param input_matrix: The input matrix in numpy format
         :return:
         """
         dist_matrix = list(list())
-        x, y = X.shape
-        for i in xrange(x):
-            row = X[i]
+        row_size = input_matrix.shape[0]
+        for i in xrange(row_size):
+            row = input_matrix[i]
             temp = list()
-            for j in xrange(y):
-                temp.append(distance.euclidean(row, X[i][j]))
+            for j in xrange(row_size):
+                temp.append(distance.euclidean(row, input_matrix[j]))
             dist_matrix.append(temp)
         return dist_matrix
 
     @staticmethod
-    def pairwise_jaccard(X):
+    def pairwise_jaccard(input_matrix):
         """
         Computes the Pairwise Jaccard distance between the rows of `X`.
-        :param X: Input Matrix in numpy format
+        :param input_matrix: Input Matrix in numpy format
         :return:
         """
-        intersect = X.dot(X.T)
+        intersect = input_matrix.dot(input_matrix.T)
         row_sums = intersect.diagonal()
         unions = row_sums[:, None] + row_sums - intersect
         sim = np.asarray(intersect).__truediv__(unions)
@@ -691,8 +691,8 @@ class PairwiseDistanceMeasures:
 
         # sim, dist = self.pairwise_jaccard(input_matrix)
         dist = self.pairwise_euclidean(input_matrix)
-        dist = self.pairwise_cosine(input_matrix)
-        dist = self.pairwise_hamming(input_matrix)
+        # dist = self.pairwise_cosine(input_matrix)
+        # dist = self.pairwise_hamming(input_matrix)
         # clusters = self.get_clusters(sim, 0.9)
         # print clusters
 
