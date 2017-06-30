@@ -3,7 +3,7 @@ import time
 from nearpy import Engine
 from nearpy.hashes import RandomBinaryProjections
 
-import HelperFunctions.helper_functions as utils
+import HelperFunctions.HelperFunction as utils
 from Utils import LoggerUtil
 
 

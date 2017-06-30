@@ -4,7 +4,7 @@ import urllib
 
 import numpy as np
 
-import HelperFunctions.helper_functions as utils
+import HelperFunctions.HelperFunction as utils
 from Utils.DBUtils import DBUtils
 from Clustering.BirchClustering import BirchClustering
 from Clustering.DBScanClustering import DBScan
