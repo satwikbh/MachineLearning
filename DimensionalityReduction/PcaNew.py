@@ -1,7 +1,10 @@
 import pickle as pi
+import numpy as np
+import hickle
 
 from scipy.linalg import svd
 from sklearn.decomposition import IncrementalPCA
+from sklearn.preprocessing import StandardScaler
 
 from Utils.LoggerUtil import LoggerUtil
 
@@ -58,7 +61,30 @@ class PcaNew:
         return reduced_matrix
 
     def dimensionality_reduction(self, input_matrix):
-        U, SIGMA, VT = self.singular_value_decomposition(input_matrix)
+        input_matrix_std = StandardScaler().fit_transform(input_matrix)
+        U, SIGMA, VT = self.singular_value_decomposition(input_matrix_std.T)
         threshold_point = self.get_threshold_point(SIGMA)
-        reduced_matrix = self.perform_incremental_pca(input_matrix, threshold_point)
+        projection_matrix = U[:, :threshold_point]
+        reduced_matrix = input_matrix_std.dot(projection_matrix)
+        # reduced_matrix = self.perform_incremental_pca(input_matrix, threshold_point)
         self.log.info("Reduced Matrix Shape : {}".format(reduced_matrix.shape))
+        return reduced_matrix
+
+    def prepare_data_for_pca(self, m, fv_dist_path_names):
+        self.log.info("")
+        # Todo : Center the data ? How do you do this for the batches ?
+        i_pca = IncrementalPCA(n_components=m)
+        for each_file in fv_dist_path_names:
+            partial_matrix = hickle.load(each_file)
+            i_pca.partial_fit(partial_matrix)
+
+        x_transformed = None
+        for each_file in fv_dist_path_names:
+            partial_matrix = hickle.load(each_file)
+            x_chunk = i_pca.transform(partial_matrix)
+            if x_transformed is None:
+                x_transformed = x_chunk
+            else:
+                x_transformed = np.vstack((x_transformed, x_chunk))
+
+        return x_transformed

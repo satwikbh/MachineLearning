@@ -8,3 +8,4 @@ datasketch
 falconn
 keras
 ipdb
+h5py

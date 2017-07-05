@@ -45,8 +45,8 @@ class Driver:
         list_of_docs = coll.find(query).distinct("key")
         pi.dump(list_of_docs, open("names.dump", "w"))
 
-        self.parser.parse_each_document(list_of_docs, coll)
-        hcp = self.parser.convert2vec()
+        doc2bow = self.parser.parse_each_document(list_of_docs, coll)
+        hcp = self.parser.convert2vec(doc2bow)
         input_matrix = np.array(hcp)
         pi.dump(input_matrix, open("input_matrix.dump", "w"))
 

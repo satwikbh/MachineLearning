@@ -107,8 +107,8 @@ class DriverClass:
             inp = pi.load(open("inp_" + str(num_variants) + ".dump"))
         else:
             # self.parser.parse_each_document(list_of_docs[:num_variants], coll)
-            self.parser.parse_each_document(list_of_docs, coll)
-            hcp = self.parser.convert2vec()
+            doc2bow = self.parser.parse_each_document(list_of_docs, coll)
+            hcp = self.parser.convert2vec(doc2bow)
             inp = np.array(hcp)
             pi.dump(inp, open("inp_" + str(num_variants) + ".dump", 'w'))
 
