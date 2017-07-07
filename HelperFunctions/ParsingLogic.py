@@ -102,20 +102,20 @@ class ParsingLogic:
         start_time = time.time()
         feature_vector_list = list()
         fv_dist_fnames = list()
-        cluster = list()
+        cluster_dict = dict()
 
         dist_fnames, counter = self.dis_pool.load_distributed_feature_vector(dist_fnames)
 
         for index, each_file in enumerate(dist_fnames):
             doc2bow_str = hickle.load(each_file)
             doc2bow = json.loads(doc2bow_str)
-            flat_list = [item for sublist in doc2bow.values() for item in sublist]
-            if len(cluster) == 0:
-                cluster = list(set(flat_list))
-            else:
-                cluster += list(set(flat_list))
+            flat_set = set()
+            for sublist in doc2bow.values():
+                for item in sublist:
+                    if item not in flat_set:
+                        cluster_dict.setdefault(item, len(cluster_dict))
 
-        num_cols = len(cluster)
+        num_cols = len(cluster_dict.keys())
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
 
         for index, each_file in enumerate(dist_fnames):
@@ -123,10 +123,10 @@ class ParsingLogic:
             doc2bow = json.loads(doc2bow_str)
             matrix = list()
             for inner_index, each in enumerate(doc2bow.values()):
-                column = [cluster.index(x) for x in each]
+                column = [cluster_dict.get(x) for x in each]
                 row = len(column) * [0]
                 data = len(column) * [1.0]
-                value = coo_matrix((data, (row, column)), shape=(1, len(cluster)), dtype=np.float32)
+                value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
                 matrix.append(value)
                 self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))
 
@@ -135,4 +135,4 @@ class ParsingLogic:
             feature_vector_list.append(mini_batch_matrix)
 
         self.log.info("Time taken for Convert 2 Vector : {}".format(time.time() - start_time))
-        return fv_dist_fnames, len(cluster)
+        return fv_dist_fnames, len(cluster_dict.keys())
