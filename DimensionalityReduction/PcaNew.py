@@ -76,12 +76,14 @@ class PcaNew:
         i_pca = IncrementalPCA(n_components=m)
         for each_file in fv_dist_path_names:
             partial_matrix = hickle.load(each_file)
-            i_pca.partial_fit(partial_matrix)
+            numpy_dense_array = np.asarray(partial_matrix.todense())
+            i_pca.partial_fit(numpy_dense_array)
 
         x_transformed = None
         for each_file in fv_dist_path_names:
             partial_matrix = hickle.load(each_file)
-            x_chunk = i_pca.transform(partial_matrix)
+            numpy_dense_array = np.asarray(partial_matrix.todense())
+            x_chunk = i_pca.transform(numpy_dense_array)
             if x_transformed is None:
                 x_transformed = x_chunk
             else:

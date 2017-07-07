@@ -30,8 +30,8 @@ class PrepareDataset:
         port = "27017"
         auth_db = "admin"
 
-        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=False,
-                                          username=None, password=None)
+        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=True,
+                                          username=username, password=password)
 
         db = client['cuckoo']
         collection = db['cluster2db']
@@ -65,9 +65,9 @@ class PrepareDataset:
                 else:
                     value = list_of_keys[count:]
                 count += config_param_chunk_size
-                index += 1
                 doc2bow = self.parser.parse_each_document(value, collection)
                 dist_fnames.append(self.dis_pool.save_distributed_pool(doc2bow, index))
+                index += 1
 
         # Converting to feature vector
         fv_dist_path_names, num_cols = self.parser.convert2vec(dist_fnames, len(list_of_keys))

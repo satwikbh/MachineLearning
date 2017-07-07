@@ -33,8 +33,7 @@ class DistributePoolingSet:
             self.helper.create_dir_if_absent(self.feature_vector_dir_name)
             file_name = self.path + "/" + self.feature_vector_dir_name + "/" + self.feature_vector_ext + str(
                 part) + ".hkl"
-            numpy_dense_array = np.asarray(mini_batch.todense())
-            hickle.dump(numpy_dense_array, file_name, mode='w', compression='gzip')
+            hickle.dump(mini_batch.tocsr(), file_name, mode='w', compression='gzip')
             return file_name
         except Exception as e:
             self.log.error("Error : {}".format(e))
@@ -46,6 +45,7 @@ class DistributePoolingSet:
             completed = [x.split("/")[-1].split("feature_vector_")[1] for x in completed]
             dist_fnames = [x.split("/")[-1].split("feature_pool_")[1] for x in dist_fnames]
             remaining = set(dist_fnames).difference(completed)
+            self.log.info("Completed : {}\tRemaining : {}".format(len(completed), len(remaining)))
             remaining = [self.path + "/" + self.feature_pool_dir_name + "/" + self.feature_pool_ext.split("part")[0] + x
                          for x in
                          remaining]
