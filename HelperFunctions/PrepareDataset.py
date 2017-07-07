@@ -10,6 +10,7 @@ from DimensionalityReduction.PcaNew import PcaNew
 from ParsingLogic import ParsingLogic
 from DistributePoolingSet import DistributePoolingSet
 from Clustering.KMeansImpl import KMeansImpl
+from HelperFunction import HelperFunction
 
 
 class PrepareDataset:
@@ -20,6 +21,7 @@ class PrepareDataset:
         self.dim_red = PcaNew()
         self.dis_pool = DistributePoolingSet()
         self.kmeans = KMeansImpl()
+        self.helper = HelperFunction()
 
     def get_collection(self):
         username = "admin"
@@ -54,16 +56,18 @@ class PrepareDataset:
     def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size):
         count = 0
         index = 0
-        dist_fnames = list()
-        while count < len(list_of_keys):
-            if count + config_param_chunk_size < len(list_of_keys):
-                value = list_of_keys[count:count + config_param_chunk_size]
-            else:
-                value = list_of_keys[count:]
-            count += config_param_chunk_size
-            index += 1
-            doc2bow = self.parser.parse_each_document(value, collection)
-            dist_fnames.append(self.dis_pool.distributed_pool(doc2bow, index))
+        dist_fnames = self.dis_pool.load_distributed_pool()
+
+        if len(dist_fnames) == 0:
+            while count < len(list_of_keys):
+                if count + config_param_chunk_size < len(list_of_keys):
+                    value = list_of_keys[count:count + config_param_chunk_size]
+                else:
+                    value = list_of_keys[count:]
+                count += config_param_chunk_size
+                index += 1
+                doc2bow = self.parser.parse_each_document(value, collection)
+                dist_fnames.append(self.dis_pool.save_distributed_pool(doc2bow, index))
 
         # Converting to feature vector
         fv_dist_path_names, num_cols = self.parser.convert2vec(dist_fnames, len(list_of_keys))
