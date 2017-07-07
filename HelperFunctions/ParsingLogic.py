@@ -4,7 +4,7 @@ import hickle
 import numpy as np
 
 from collections import defaultdict
-from scipy.sparse import coo_matrix, csr_matrix, vstack
+from scipy.sparse import coo_matrix, vstack
 
 from Utils.LoggerUtil import LoggerUtil
 from DistributePoolingSet import DistributePoolingSet
@@ -122,12 +122,13 @@ class ParsingLogic:
             doc2bow_str = hickle.load(each_file)
             doc2bow = json.loads(doc2bow_str)
             matrix = list()
-            for each in doc2bow.values():
+            for inner_index, each in enumerate(doc2bow.values()):
                 column = [cluster.index(x) for x in each]
                 row = len(column) * [0]
                 data = len(column) * [1.0]
                 value = coo_matrix((data, (row, column)), shape=(1, len(cluster)), dtype=np.float32)
                 matrix.append(value)
+                self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))
 
             mini_batch_matrix = vstack(matrix)
             fv_dist_fnames.append(self.dis_pool.save_distributed_feature_vector(mini_batch_matrix, index + counter))
