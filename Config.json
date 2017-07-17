@@ -1,0 +1,14 @@
+{
+  "dimensionality_reduction": {
+    "mini_batch_size": 100,
+    "files_per_batch": 1000,
+    "feature_vector_path": "",
+    "feature_pool_path": "",
+    "reduced_matrix_path": ""
+  },
+  "non_linear_dimensionality_reduction": {
+    "mini_batch_size": 100,
+    "feature_vector_path": "",
+    "feature_pool_path": ""
+  }
+}

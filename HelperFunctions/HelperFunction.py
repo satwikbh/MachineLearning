@@ -1,9 +1,31 @@
 import os
+import math
 
 
 class HelperFunction:
     def __init__(self):
         pass
+
+    @staticmethod
+    def get_threshold_point(list_of_nums, percentage):
+        count = 0
+        threshold = sum(list_of_nums) * percentage
+        for x in xrange(len(list_of_nums)):
+            if count > threshold:
+                break
+            count += list_of_nums[x]
+        return x
+
+    @staticmethod
+    def batch(iterable, n=1):
+        l = len(iterable)
+        for ndx in range(0, l, n):
+            yield iterable[ndx:min(ndx + n, l)]
+
+    @staticmethod
+    def nearest_power_of_two(shape):
+        value = 1 << (shape - 1).bit_length()
+        return int(math.log(value, 2))
 
     @staticmethod
     def get_files_with_extension(extension, path):
@@ -23,9 +45,5 @@ class HelperFunction:
             os.makedirs(directory)
 
     @staticmethod
-    def get_nearest_power_of_two(val):
-        index = 0
-        while val != 0:
-            index += 1
-            val = val >> 1
-        return index
+    def get_full_path(directory, fname):
+        return os.path.join(directory, fname)

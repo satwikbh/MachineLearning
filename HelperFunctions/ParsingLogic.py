@@ -107,7 +107,7 @@ class ParsingLogic:
         dist_fnames, counter = self.dis_pool.load_distributed_feature_vector(dist_fnames)
 
         for index, each_file in enumerate(dist_fnames):
-            doc2bow_str = hickle.load(each_file)
+            doc2bow_str = hickle.load(open(each_file))
             doc2bow = json.loads(doc2bow_str)
             flat_set = set()
             for sublist in doc2bow.values():
@@ -119,7 +119,7 @@ class ParsingLogic:
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
 
         for index, each_file in enumerate(dist_fnames):
-            doc2bow_str = hickle.load(each_file)
+            doc2bow_str = hickle.load(open(each_file))
             doc2bow = json.loads(doc2bow_str)
             matrix = list()
             for inner_index, each in enumerate(doc2bow.values()):

@@ -1,4 +1,3 @@
-import math
 import pickle as pi
 
 import numpy as np
@@ -6,17 +5,14 @@ from keras.layers import Input, Dense
 from keras.models import Model
 from sklearn.model_selection import train_test_split as tts
 
-from Utils import LoggerUtil
+from Utils.LoggerUtil import LoggerUtil
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class Autoencoder:
-    def __init__(self, logger):
-        self.log = logger
-
-    @staticmethod
-    def nearest_power_of_two(shape):
-        value = 1 << (shape - 1).bit_length()
-        return int(math.log(value, 2))
+    def __init__(self):
+        self.log = LoggerUtil(self.__class__.__name__).get()
+        self.helper = HelperFunction()
 
     def prepare_data(self):
         """
@@ -38,7 +34,7 @@ class Autoencoder:
         :return:
         """
         self.log.info("~~~~~~Model Preparation started~~~~~~")
-        encoding_dim = self.nearest_power_of_two(self.train_matrix.shape[1]) - 2
+        encoding_dim = self.helper.nearest_power_of_two(self.train_matrix.shape[1]) - 2
         encoded = Dense(encoding_dim, activation='relu')(input_img)
         decoded = Dense(self.train_matrix.shape[1], activation='sigmoid')(encoded)
         autoencoder = Model(input=input_img, output=decoded)
@@ -80,6 +76,5 @@ class Autoencoder:
 
 
 if __name__ == '__main__':
-    clog = LoggerUtil.CustomLogger.setup_logging()
-    sae = Autoencoder(clog)
+    sae = Autoencoder()
     sae.main()
