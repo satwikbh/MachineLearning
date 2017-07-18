@@ -1,9 +1,9 @@
 {
   "dimensionality_reduction": {
     "mini_batch_size": 100,
-    "feature_vector_path": "",
-    "feature_pool_path": "",
-    "reduced_matrix_path": ""
+    "feature_vector_path": "/tmp/HelperFunctions/feature_vector/",
+    "feature_pool_path": "/tmp/HelperFunctions/feature_pool/",
+    "reduced_matrix_path": "/tmp/HelperFunctions/reduced_matrix/"
   },
   "non_linear_dimensionality_reduction": {
     "mini_batch_size": 100,
