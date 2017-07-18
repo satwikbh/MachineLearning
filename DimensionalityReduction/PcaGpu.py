@@ -20,12 +20,11 @@ class PcaGpu:
         self.config = ConfigUtil().get_config_instance()['dimensionality_reduction']
 
     @staticmethod
-    def transform_data_to_chunks(batch_of_files, mini_batch_size):
+    def transform_data_to_chunks(each_file, mini_batch_size):
         fv_list = []
-        for each_file in batch_of_files:
-            fv = hickle.load(open(each_file)).astype(np.float32)
-            for x in xrange(fv.shape[0] / mini_batch_size):
-                fv_list.append(fv[x:x + mini_batch_size])
+        fv = hickle.load(open(each_file)).astype(np.float32)
+        for x in xrange(fv.shape[0] / mini_batch_size):
+            fv_list.append(fv[x:x + mini_batch_size])
         return fv_list
 
     def compute_svd(self, fv_list):
@@ -39,39 +38,50 @@ class PcaGpu:
             final__sigma_matrix.append(s_gpu.get().tolist())
             final_vt_matrix.append(vt_gpu.get())
             self.log.info("Shape of SIGMA matrix : {}\tShape of VT matrix : {}".format(s_gpu.shape, vt_gpu.shape))
-            threshold_point = self.helper.get_threshold_point(s_gpu, 0.9)
+            threshold_point = self.helper.get_threshold_point(s_gpu.get(), 0.9)
             self.log.info("Threshold point for the SIGMA matrix : {}".format(threshold_point))
             self.log.info(
                 "Time taken for svd computation of iteration number {} is : {}".format(index, time.time() - start_time))
         return fv_list, final__sigma_matrix, final_vt_matrix
 
-    def reduce_matrix(self, fv_list, final__sigma_matrix, final_vt_matrix):
-        self.log.info("Stacking the partial matrices")
+    def store_matrix_to_disk(self, fv_list, final__sigma_matrix, final_vt_matrix, projected_matrix_full_path):
+        self.log.info("Saving partial projected matrix to disk")
         final_input_matrix = vstack(fv_list)
         final_projected_matrix = np.vstack(final_vt_matrix)
 
-        final_reduced_matrix = final_input_matrix.dot(final_projected_matrix.T)
+        hickle.dump(final_projected_matrix, open(projected_matrix_full_path, 'w'))
         self.log.info(
-            "Input submatrix : {}\tProjected submatrix : {}\tReduced submatrix : {}".format(final_input_matrix.shape,
-                                                                                            final_projected_matrix.shape,
-                                                                                            final_reduced_matrix.shape))
-        return final_reduced_matrix
+            "Input submatrix : {}\tProjected submatrix : {}".format(final_input_matrix.shape,
+                                                                    final_projected_matrix.shape))
 
     def main(self):
         start_time = time.time()
         mini_batch_size = self.config['mini_batch_size']
-        files_per_batch = self.config['files_per_batch']
         feature_vector_path = self.config['feature_vector_path']
         reduced_matrix_path = self.config['reduced_matrix_path']
-        list_of_files = self.helper.get_files_with_extension("feature_vector_", feature_vector_path)
+        projected_matrix_path = self.config['projected_matrix_path']
+        list_of_files = self.helper.get_files_starts_with_extension("feature_vector_", feature_vector_path)
         self.helper.create_dir_if_absent(reduced_matrix_path)
+        self.helper.create_dir_if_absent(projected_matrix_path)
+        meta_fv_list = list()
 
-        for index, batch_of_files in enumerate(self.helper.batch(list_of_files, files_per_batch)):
-            fv_list = self.transform_data_to_chunks(batch_of_files, mini_batch_size)
+        for index, each_file in enumerate(list_of_files):
+            projected_matrix_full_path = self.helper.get_full_path(projected_matrix_path,
+                                                                   "projected_matrix_part_" + str(index) + ".hkl")
+            fv_list = self.transform_data_to_chunks(each_file, mini_batch_size)
             fv_list, final__sigma_matrix, final_vt_matrix = self.compute_svd(fv_list)
-            final_reduced_matrix = self.reduce_matrix(fv_list, final__sigma_matrix, final_vt_matrix)
-            file_name = self.helper.get_full_path(reduced_matrix_path, "reduced_matrix_part_" + str(index) + ".hkl")
-            hickle.dump(final_reduced_matrix, open(file_name, 'w'))
+            self.store_matrix_to_disk(fv_list, final__sigma_matrix, final_vt_matrix,
+                                      projected_matrix_full_path)
+            meta_fv_list += fv_list
+
+        list_of_projected_matrix_path = self.helper.get_files_starts_with_extension(projected_matrix_path,
+                                                                                    "projected_matrix_part_")
+        final_input_matrix = np.vstack(meta_fv_list)
+        final_projected_matrix = np.vstack([hickle.load(x) for x in list_of_projected_matrix_path])
+
+        final_reduced_matrix = final_input_matrix.dot(final_projected_matrix.T)
+        self.log.info("Final Reduced Matrix Shape : {}".format(final_reduced_matrix.shape))
+
         self.log.info("Total time taken : {}".format(time.time() - start_time))
 
 

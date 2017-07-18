@@ -28,7 +28,7 @@ class HelperFunction:
         return int(math.log(value, 2))
 
     @staticmethod
-    def get_files_with_extension(extension, path):
+    def get_files_starts_with_extension(extension, path):
         all_files = list()
         for each_file in os.listdir(path):
             if each_file.startswith(extension):
