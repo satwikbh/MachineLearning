@@ -3,7 +3,8 @@
     "mini_batch_size": 100,
     "feature_vector_path": "/tmp/HelperFunctions/feature_vector/",
     "feature_pool_path": "/tmp/HelperFunctions/feature_pool/",
-    "reduced_matrix_path": "/tmp/HelperFunctions/reduced_matrix/"
+    "reduced_matrix_path": "/tmp/HelperFunctions/reduced_matrix/",
+    "projected_matrix_path": "/tmp/HelperFunctions/projected_matrix_path"
   },
   "non_linear_dimensionality_reduction": {
     "mini_batch_size": 100,

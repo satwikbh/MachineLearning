@@ -5,7 +5,7 @@ import time
 import numpy as np
 import hickle
 
-from scipy.sparse import vstack
+from scipy.sparse import vstack, csr_matrix
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -35,11 +35,13 @@ class PcaGpu:
             start_time = time.time()
             sub_matrix_gpu = gpuarray.to_gpu(sub_matrix.todense())
             s_gpu, vt_gpu = linalg.svd(sub_matrix_gpu, 'N', 'S', lib="cusolver")
-            final__sigma_matrix.append(s_gpu.get().tolist())
-            final_vt_matrix.append(vt_gpu.get())
-            self.log.info("Shape of SIGMA matrix : {}\tShape of VT matrix : {}".format(s_gpu.shape, vt_gpu.shape))
             threshold_point = self.helper.get_threshold_point(s_gpu.get(), 0.9)
             self.log.info("Threshold point for the SIGMA matrix : {}".format(threshold_point))
+            final__sigma_matrix.append(s_gpu.get().tolist())
+            final_vt_matrix.append(vt_gpu.get()[:threshold_point, :])
+            self.log.info("Shape of SIGMA matrix : {}\tShape of VT matrix : {}".format(s_gpu.shape,
+                                                                                       vt_gpu[:threshold_point,
+                                                                                       :].shape))
             self.log.info(
                 "Time taken for svd computation of iteration number {} is : {}".format(index, time.time() - start_time))
         return fv_list, final__sigma_matrix, final_vt_matrix
@@ -47,7 +49,9 @@ class PcaGpu:
     def store_matrix_to_disk(self, fv_list, final__sigma_matrix, final_vt_matrix, projected_matrix_full_path):
         self.log.info("Saving partial projected matrix to disk")
         final_input_matrix = vstack(fv_list)
-        final_projected_matrix = np.vstack(final_vt_matrix)
+        # Convert to sparse matrix ... done for saving disk space
+        final_vt_matrix = [csr_matrix(x) for x in final_vt_matrix]
+        final_projected_matrix = vstack(final_vt_matrix)
 
         hickle.dump(final_projected_matrix, open(projected_matrix_full_path, 'w'))
         self.log.info(
