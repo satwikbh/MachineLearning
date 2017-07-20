@@ -60,13 +60,13 @@ class PcaGpu:
                                                                     final_projected_matrix.shape))
 
     def check_already_completed(self, feature_vector_path, projected_matrix_path):
-        feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part_", feature_vector_path)
+        feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part-", feature_vector_path)
         projected_matrix = self.helper.get_files_starts_with_extension("projected_matrix_part_", projected_matrix_path)
         projected_matrix_files = [x.split("projected_matrix_part_")[1] for x in projected_matrix]
         temp = list()
 
         for each_file in feature_vector:
-            part = each_file.split("feature_vector_part_")[1]
+            part = each_file.split("feature_vector_part-")[1]
             if part in projected_matrix_files:
                 temp.append(each_file)
 
