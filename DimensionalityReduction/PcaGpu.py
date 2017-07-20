@@ -70,8 +70,8 @@ class PcaGpu:
             if part in projected_matrix_files:
                 temp.append(each_file)
 
-        for x in feature_vector:
-            if x in temp:
+        for x in temp:
+            if x in feature_vector:
                 feature_vector.remove(x)
 
         return feature_vector
@@ -87,6 +87,7 @@ class PcaGpu:
         gpu_id = ','.join(gpus_to_use)
         self.log.info("Using the following gpus : {}".format(gpu_id))
         os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
+        os.environ["CUDA_DEVICE"] = gpu_id
 
         # list_of_files = self.helper.get_files_starts_with_extension("feature_vector_part_", feature_vector_path)
         list_of_files = self.check_already_completed(feature_vector_path, projected_matrix_path)
@@ -94,9 +95,10 @@ class PcaGpu:
         self.helper.create_dir_if_absent(projected_matrix_path)
         meta_fv_list = list()
 
-        for index, each_file in enumerate(list_of_files):
+        for each_file in list_of_files:
+            part = each_file.split("feature_vector_part-")[1]
             projected_matrix_full_path = self.helper.get_full_path(projected_matrix_path,
-                                                                   "projected_matrix_part_" + str(index) + ".hkl")
+                                                                   "projected_matrix_part_" + part)
             fv_list = self.transform_data_to_chunks(each_file, mini_batch_size)
             fv_list, final__sigma_matrix, final_vt_matrix = self.compute_svd(fv_list)
             self.store_matrix_to_disk(fv_list, final__sigma_matrix, final_vt_matrix,
