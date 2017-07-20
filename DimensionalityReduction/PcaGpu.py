@@ -58,13 +58,31 @@ class PcaGpu:
             "Input submatrix : {}\tProjected submatrix : {}".format(final_input_matrix.shape,
                                                                     final_projected_matrix.shape))
 
+    def check_already_completed(self, feature_vector_path, projected_matrix_path):
+        feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part_", feature_vector_path)
+        projected_matrix = self.helper.get_files_starts_with_extension("projected_matrix_part_", projected_matrix_path)
+        projected_matrix_files = [x.split("projected_matrix_part_")[1] for x in projected_matrix]
+        temp = list()
+
+        for each_file in feature_vector:
+            part = each_file.split("feature_vector_part_")[1]
+            if part in projected_matrix_files:
+                temp.append(each_file)
+
+        for x in feature_vector:
+            if x in temp:
+                feature_vector.remove(x)
+
+        return feature_vector
+
     def main(self):
         start_time = time.time()
         mini_batch_size = self.config['mini_batch_size']
         feature_vector_path = self.config['feature_vector_path']
         reduced_matrix_path = self.config['reduced_matrix_path']
         projected_matrix_path = self.config['projected_matrix_path']
-        list_of_files = self.helper.get_files_starts_with_extension("feature_vector_", feature_vector_path)
+        # list_of_files = self.helper.get_files_starts_with_extension("feature_vector_part_", feature_vector_path)
+        list_of_files = self.check_already_completed(feature_vector_path, projected_matrix_path)
         self.helper.create_dir_if_absent(reduced_matrix_path)
         self.helper.create_dir_if_absent(projected_matrix_path)
         meta_fv_list = list()
