@@ -4,6 +4,7 @@ import skcuda.linalg as linalg
 import time
 import numpy as np
 import hickle
+import os
 
 from scipy.sparse import vstack, csr_matrix
 
@@ -17,7 +18,7 @@ class PcaGpu:
         linalg.init()
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.helper = HelperFunction()
-        self.config = ConfigUtil().get_config_instance()['dimensionality_reduction']
+        self.config = ConfigUtil().get_config_instance()
 
     @staticmethod
     def transform_data_to_chunks(each_file, mini_batch_size):
@@ -77,10 +78,16 @@ class PcaGpu:
 
     def main(self):
         start_time = time.time()
-        mini_batch_size = self.config['mini_batch_size']
-        feature_vector_path = self.config['feature_vector_path']
-        reduced_matrix_path = self.config['reduced_matrix_path']
-        projected_matrix_path = self.config['projected_matrix_path']
+        mini_batch_size = self.config['dimensionality_reduction']['mini_batch_size']
+        feature_vector_path = self.config['dimensionality_reduction']['feature_vector_path']
+        reduced_matrix_path = self.config['dimensionality_reduction']['reduced_matrix_path']
+        projected_matrix_path = self.config['dimensionality_reduction']['projected_matrix_path']
+
+        gpus_to_use = self.config['environment']['gpu_id']
+        gpu_id = ','.join(gpus_to_use)
+        self.log.info("Using the following gpus : {}".format(gpu_id))
+        os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
+
         # list_of_files = self.helper.get_files_starts_with_extension("feature_vector_part_", feature_vector_path)
         list_of_files = self.check_already_completed(feature_vector_path, projected_matrix_path)
         self.helper.create_dir_if_absent(reduced_matrix_path)

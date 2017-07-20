@@ -10,5 +10,10 @@
     "mini_batch_size": 100,
     "feature_vector_path": "",
     "feature_pool_path": ""
+  },
+  "environment": {
+    "gpu_id": [
+      0
+    ]
   }
 }
