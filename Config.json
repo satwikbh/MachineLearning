@@ -1,10 +1,12 @@
 {
   "dimensionality_reduction": {
     "mini_batch_size": 100,
-    "feature_vector_path": "/tmp/HelperFunctions/feature_vector/",
-    "feature_pool_path": "/tmp/HelperFunctions/feature_pool/",
-    "reduced_matrix_path": "/tmp/HelperFunctions/reduced_matrix/",
-    "projected_matrix_path": "/tmp/HelperFunctions/projected_matrix_path"
+    "feature_vector_path": "/home/satwik/Documents/MachineLearning/Data/feature_vector/",
+    "feature_pool_path": "/home/satwik/Documents/MachineLearning/Data/feature_pool/",
+    "reduced_matrix_path": "/home/satwik/Documents/MachineLearning/Data/reduced_matrix/",
+    "projected_matrix_path": "/home/satwik/Documents/MachineLearning/Data/projected_matrix_path/",
+    "pruned_feature_vector_path": "/home/satwik/Documents/MachineLearning/Data/pruned_fv_path/",
+    "col_dist_path": "/home/satwik/Documents/MachineLearning/Data/"
   },
   "non_linear_dimensionality_reduction": {
     "mini_batch_size": 100,

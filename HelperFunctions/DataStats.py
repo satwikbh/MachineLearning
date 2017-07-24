@@ -5,6 +5,7 @@ from time import time
 
 import hickle as hkl
 import numpy as np
+from scipy import delete as delete_column
 
 
 class DataStats:
@@ -17,11 +18,7 @@ class DataStats:
     def stats(fv):
         fv_csc = fv.tocsc()
         index_pointer = fv_csc.indptr
-        new_index_pointer = list()
-
-        for x in xrange(1, index_pointer.shape[0]):
-            value = index_pointer[x] - index_pointer[x - 1]
-            new_index_pointer.append(value)
+        new_index_pointer = np.diff(index_pointer)
         return new_index_pointer
 
     def sum_up(self, partial_index_pointer, col_wise_dist):
@@ -45,14 +42,41 @@ class DataStats:
             del fv
         return col_wise_dist
 
+    @staticmethod
+    def call_func(old_mat, cols_to_delete):
+        all_cols = np.arange(old_mat.shape[1])
+        cols_to_keep = np.where(np.logical_not(np.in1d(all_cols, cols_to_delete)))[0]
+        new_mat = old_mat[:, cols_to_keep]
+        return new_mat
+
+    @staticmethod
+    def estimate_cols_to_remove(col_wise_dist):
+        cols_to_delete = list()
+        mean = np.mean(col_wise_dist)
+        for index, value in enumerate(col_wise_dist):
+            if value < mean:
+                cols_to_delete.append(index)
+        return cols_to_delete
+
+    def store_pruned_matrix(self, feature_vector, col_wise_dist, pruned_matrix_path):
+        cols_to_delete = self.estimate_cols_to_remove(col_wise_dist)
+        for index, each_file in enumerate(feature_vector):
+            fv = hkl.load(each_file).tocsr()
+            new_mat = self.call_func(fv, cols_to_delete)
+            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
+            hkl.dump(new_mat, open(file_name))
+
     def main(self):
         start_time = time()
         self.log.info("Generating column wise count of non zero elements")
         feature_vector_path = self.config['dimensionality_reduction']['feature_vector_path']
+        pruned_matrix_path = self.config['dimensionality_reduction']['pruned_feature_vector_path']
+        col_dist_path = self.config['dimensionality_reduction']['col_dist_path']
         feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part-", feature_vector_path)
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist = self.get_stats(feature_vector)
-        hkl.dump(np.asarray(col_wise_dist), open("col_wise_dist.dump", "w"))
+        hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
+        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path)
         self.log.info("Total time for execution : {}".format(time() - start_time))
 
 
