@@ -70,23 +70,21 @@ class PcaNew:
         self.log.info("Reduced Matrix Shape : {}".format(reduced_matrix.shape))
         return reduced_matrix
 
-    def prepare_data_for_pca(self, m, fv_dist_path_names):
-        self.log.info("")
+    def prepare_data_for_pca(self, m, fv_path_name):
+        self.log.info("Starting PCA")
         # Todo : Center the data ? How do you do this for the batches ?
         i_pca = IncrementalPCA(n_components=m)
-        for each_file in fv_dist_path_names:
-            partial_matrix = hickle.load(each_file)
-            numpy_dense_array = np.asarray(partial_matrix.todense())
-            i_pca.partial_fit(numpy_dense_array)
+        partial_matrix = hickle.load(open(fv_path_name))
+        numpy_dense_array = np.asarray(partial_matrix.todense())
+        i_pca.partial_fit(numpy_dense_array)
 
         x_transformed = None
-        for each_file in fv_dist_path_names:
-            partial_matrix = hickle.load(each_file)
-            numpy_dense_array = np.asarray(partial_matrix.todense())
-            x_chunk = i_pca.transform(numpy_dense_array)
-            if x_transformed is None:
-                x_transformed = x_chunk
-            else:
-                x_transformed = np.vstack((x_transformed, x_chunk))
+        partial_matrix = hickle.load(open(fv_path_name))
+        numpy_dense_array = np.asarray(partial_matrix.todense())
+        x_chunk = i_pca.transform(numpy_dense_array)
+        if x_transformed is None:
+            x_transformed = x_chunk
+        else:
+            x_transformed = np.vstack((x_transformed, x_chunk))
 
         return x_transformed

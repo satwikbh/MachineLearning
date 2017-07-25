@@ -5,7 +5,6 @@ from time import time
 
 import hickle as hkl
 import numpy as np
-from scipy import delete as delete_column
 
 
 class DataStats:
@@ -64,14 +63,18 @@ class DataStats:
             fv = hkl.load(each_file).tocsr()
             new_mat = self.call_func(fv, cols_to_delete)
             file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
-            hkl.dump(new_mat, open(file_name))
+            hkl.dump(new_mat, open(file_name, "w"))
 
     def main(self):
         start_time = time()
         self.log.info("Generating column wise count of non zero elements")
-        feature_vector_path = self.config['dimensionality_reduction']['feature_vector_path']
-        pruned_matrix_path = self.config['dimensionality_reduction']['pruned_feature_vector_path']
-        col_dist_path = self.config['dimensionality_reduction']['col_dist_path']
+        feature_vector_path = self.config['data']['feature_vector_path']
+        pruned_matrix_path = self.config['data']['pruned_feature_vector_path']
+        col_dist_path = self.config['data']['col_dist_path']
+
+        self.helper.create_dir_if_absent(feature_vector_path)
+        self.helper.create_dir_if_absent(pruned_matrix_path)
+
         feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part-", feature_vector_path)
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist = self.get_stats(feature_vector)

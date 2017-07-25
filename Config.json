@@ -1,12 +1,16 @@
 {
   "dimensionality_reduction": {
-    "mini_batch_size": 100,
+    "mini_batch_size": 100
+  },
+  "data": {
     "feature_vector_path": "/home/satwik/Documents/MachineLearning/Data/feature_vector/",
     "feature_pool_path": "/home/satwik/Documents/MachineLearning/Data/feature_pool/",
     "reduced_matrix_path": "/home/satwik/Documents/MachineLearning/Data/reduced_matrix/",
     "projected_matrix_path": "/home/satwik/Documents/MachineLearning/Data/projected_matrix_path/",
     "pruned_feature_vector_path": "/home/satwik/Documents/MachineLearning/Data/pruned_fv_path/",
-    "col_dist_path": "/home/satwik/Documents/MachineLearning/Data/"
+    "col_dist_path": "/home/satwik/Documents/MachineLearning/Data/",
+    "list_of_keys": "/home/satwik/Documents/MachineLearning/Data/",
+    "malware_families_list": "/home/satwik/Documents/MachineLearning/Data/"
   },
   "non_linear_dimensionality_reduction": {
     "mini_batch_size": 100,
@@ -16,6 +20,16 @@
   "environment": {
     "gpu_id": [
       "0"
-    ]
+    ],
+    "mongo": {
+      "username": "admin",
+      "password": "goodDevelopers@123",
+      "address": "localhost",
+      "port": "27017",
+      "auth_db": "admin",
+      "is_auth_enabled": true,
+      "db_name": "cuckoo",
+      "collection_name": "cluster2db"
+    }
   }
 }

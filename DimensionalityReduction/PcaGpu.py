@@ -79,9 +79,9 @@ class PcaGpu:
     def main(self):
         start_time = time.time()
         mini_batch_size = self.config['dimensionality_reduction']['mini_batch_size']
-        feature_vector_path = self.config['dimensionality_reduction']['feature_vector_path']
-        reduced_matrix_path = self.config['dimensionality_reduction']['reduced_matrix_path']
-        projected_matrix_path = self.config['dimensionality_reduction']['projected_matrix_path']
+        feature_vector_path = self.config['data']['feature_vector_path']
+        reduced_matrix_path = self.config['data']['reduced_matrix_path']
+        projected_matrix_path = self.config['data']['projected_matrix_path']
 
         gpus_to_use = self.config['environment']['gpu_id']
         gpu_id = ','.join(gpus_to_use)
