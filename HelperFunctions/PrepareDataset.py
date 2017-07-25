@@ -10,6 +10,7 @@ from ParsingLogic import ParsingLogic
 from DistributePoolingSet import DistributePoolingSet
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunction import HelperFunction
+from DataStats import DataStats
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.DBUtils import DBUtils
@@ -26,6 +27,7 @@ class PrepareDataset:
         self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
+        self.data_stats = DataStats()
 
     def get_collection(self):
         username = self.config['mongo']['username']
@@ -43,7 +45,7 @@ class PrepareDataset:
         db = client[db_name]
         collection_name = self.config['mongo']['collection_name']
         collection = db[collection_name]
-        return collection
+        return client, collection
 
     def get_families_data(self, collection, list_of_keys):
         entire_families = defaultdict(list)
@@ -84,7 +86,7 @@ class PrepareDataset:
         return file_name
 
     def load_data(self):
-        collection = self.get_collection()
+        client, collection = self.get_collection()
         cursor = collection.aggregate([{"$group": {"_id": '$key'}}])
         list_of_keys = list()
 
@@ -107,6 +109,8 @@ class PrepareDataset:
         # self.log.info("DBScan labels : {}".format(dbscan.labels_.tolist()))
         # kmeans_clusters = self.kmeans.get_clusters_kmeans(reduced_matrix, names=list_of_keys, k=16)
         # families = self.kmeans.get_family_names(collection, kmeans_clusters)
+        client.close()
+        self.data_stats.main()
 
 
 if __name__ == "__main__":

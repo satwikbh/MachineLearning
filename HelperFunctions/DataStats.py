@@ -81,8 +81,3 @@ class DataStats:
         hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
         self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path)
         self.log.info("Total time for execution : {}".format(time() - start_time))
-
-
-if __name__ == '__main__':
-    stats = DataStats()
-    stats.main()
