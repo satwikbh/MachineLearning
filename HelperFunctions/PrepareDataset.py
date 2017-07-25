@@ -1,10 +1,8 @@
 import urllib
 import pickle as pi
-import hickle as hkl
 import json
 
 from collections import defaultdict
-from sklearn.cluster import DBSCAN
 from sklearn.feature_extraction.text import CountVectorizer
 
 from DimensionalityReduction.PcaNew import PcaNew
@@ -65,8 +63,8 @@ class PrepareDataset:
 
     def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size):
         count = 0
-        index = 0
-        list_of_files = list()
+        keys = list()
+        values = list()
         while count < len(list_of_keys):
             if count + config_param_chunk_size < len(list_of_keys):
                 value = list_of_keys[count:count + config_param_chunk_size]
@@ -74,16 +72,16 @@ class PrepareDataset:
                 value = list_of_keys[count:]
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
-            tok = list()
-            for val in doc2bow.values():
-                tok.append("$^$^$^$^$".join(val))
-            vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text.split("$^$^$^$^$"), binary=True)
-            X = vec.fit_transform(tok)
-            self.log.info("Sparse Matrix Shape : {}".format(X.shape))
-            file_name = self.dis_pool.save_distributed_feature_vector(sub_matrix=X, sub_matrix_index=index)
-            index += 1
-            list_of_files.append(file_name)
-        return list_of_files
+            keys += doc2bow.keys()
+            values += doc2bow.values()
+        tok = list()
+        for val in values:
+            tok.append("$^$^$^$^$".join(val))
+        vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text.split("$^$^$^$^$"), binary=True)
+        feature_vector = vec.fit_transform(tok)
+        self.log.info("Sparse Matrix Shape : {}".format(feature_vector.shape))
+        file_name = self.dis_pool.save_feature_vector(feature_vector=feature_vector)
+        return file_name
 
     def load_data(self):
         collection = self.get_collection()
@@ -98,9 +96,10 @@ class PrepareDataset:
         config_param_chunk_size = len(list_of_keys)
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
         fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size)
-        rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
-        rows = len(fv_dist_path_names) * rows
-        self.log.info("Final Matrix shape : {}".format(rows, columns))
+        # rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
+        # rows = len(fv_dist_path_names) * rows
+        # self.log.info("Final Matrix shape : {}".format(rows, columns))
+
         # reduced_matrix = self.dim_red.prepare_data_for_pca(config_param_chunk_size, fv_dist_path_names)
         # self.log.info("Reduced Matrix Shape : {}".format(reduced_matrix.shape))
         # dbscan = DBSCAN()
