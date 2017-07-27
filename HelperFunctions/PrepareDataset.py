@@ -1,5 +1,7 @@
 import urllib
 import pickle as pi
+import hickle as hkl
+import numpy as np
 import json
 
 from collections import defaultdict
@@ -63,10 +65,8 @@ class PrepareDataset:
         json.dump(entire_families, open(malware_families_path, "w"))
         self.log.info("Total Number of families : {} ".format(len(entire_families)))
 
-    def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size):
+    def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         count = 0
-        keys = list()
-        values = list()
         iteration = 0
         while count < len(list_of_keys):
             self.log.info("Iteration : {}".format(iteration))
@@ -76,16 +76,15 @@ class PrepareDataset:
                 value = list_of_keys[count:]
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
-            keys += doc2bow.keys()
-            values += doc2bow.values()
+            values = np.asarray(doc2bow.values())
             iteration += 1
+            file_name = open(feature_pool_path + "/" + "feature_pool_part_" + str(iteration) + ".hkl")
+            hkl.dump(values, file_name)
+            file_name.close()
             del doc2bow
 
-        tok = list()
-        for val in values:
-            tok.append("$^$^$^$^$".join(val))
-        vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text.split("$^$^$^$^$"), binary=True)
-        feature_vector = vec.fit_transform(tok)
+        vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text, binary=True)
+        feature_vector = vec.fit_transform(values)
         self.log.info("Sparse Matrix Shape : {}".format(feature_vector.shape))
         file_name = self.dis_pool.save_feature_vector(feature_vector=feature_vector)
         return file_name
@@ -100,10 +99,12 @@ class PrepareDataset:
 
         self.get_families_data(collection, list_of_keys)
         # Because the number of samples will always be less than the number of features.
-        config_param_chunk_size = len(list_of_keys)
+        config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
-        fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size)
+        feature_pool_path = self.config['data']['feature_pool_path']
+        fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size,
+                                                     feature_pool_path)
 
         # rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
         # rows = len(fv_dist_path_names) * rows

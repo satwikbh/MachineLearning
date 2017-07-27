@@ -77,18 +77,18 @@ class ParsingLogic:
         doc2bow = defaultdict(list)
         self.log.info("************ Parsing the documents *************")
         start_time = time.time()
+        cursor = collection.find({"key": {"$in": list_of_docs}})
 
-        for index, each_document in enumerate(list_of_docs):
-            cursor = collection.find({"key": each_document})
-            for each in cursor:
-                feature = each.get("feature")
-                value = each.get("value")
-                if feature == "behavior" or feature == "network" or feature == "static" or feature == "statSignatures":
-                    list_of_keys = value.values()[0].keys()
-                    if feature in list_of_keys:
-                        d2b = self.get_bow_for_each_document(value, feature)
-                        if d2b is not None:
-                            doc2bow[each.get("key")] += d2b
+        for each_document in cursor:
+            feature = each_document.get("feature")
+            value = each_document.get("value")
+            if feature == "behavior" or feature == "network" or feature == "static" or feature == "statSignatures":
+                list_of_keys = value.values()[0].keys()
+                if feature in list_of_keys:
+                    d2b = self.get_bow_for_each_document(value, feature)
+                    if d2b is not None:
+                        doc2bow[each_document.get("key")] += d2b
+
         self.log.info("Time taken for Parsing the documents : {}".format(time.time() - start_time))
         return doc2bow
 
