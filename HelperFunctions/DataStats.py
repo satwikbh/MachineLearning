@@ -42,7 +42,7 @@ class DataStats:
         return col_wise_dist
 
     @staticmethod
-    def call_func(old_mat, cols_to_delete):
+    def delete_columns(old_mat, cols_to_delete):
         all_cols = np.arange(old_mat.shape[1])
         cols_to_keep = np.where(np.logical_not(np.in1d(all_cols, cols_to_delete)))[0]
         new_mat = old_mat[:, cols_to_keep]
@@ -61,7 +61,7 @@ class DataStats:
         cols_to_delete = self.estimate_cols_to_remove(col_wise_dist)
         for index, each_file in enumerate(feature_vector):
             fv = hkl.load(each_file).tocsr()
-            new_mat = self.call_func(fv, cols_to_delete)
+            new_mat = self.delete_columns(fv, cols_to_delete)
             file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
             hkl.dump(new_mat, open(file_name, "w"))
 

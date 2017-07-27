@@ -30,20 +30,20 @@ class PrepareDataset:
         self.data_stats = DataStats()
 
     def get_collection(self):
-        username = self.config['mongo']['username']
-        pwd = self.config['mongo']['password']
+        username = self.config['environment']['mongo']['username']
+        pwd = self.config['environment']['mongo']['password']
         password = urllib.quote(pwd)
-        address = self.config['mongo']['address']
-        port = self.config['mongo']['port']
-        auth_db = self.config['mongo']['auth_db']
-        is_auth_enabled = self.config['mongo']['is_auth_enabled']
+        address = self.config['environment']['mongo']['address']
+        port = self.config['environment']['mongo']['port']
+        auth_db = self.config['environment']['mongo']['auth_db']
+        is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
 
         client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
                                           username=username, password=password)
 
-        db_name = self.config['mongo']['db_name']
+        db_name = self.config['environment']['mongo']['db_name']
         db = client[db_name]
-        collection_name = self.config['mongo']['collection_name']
+        collection_name = self.config['environment']['mongo']['collection_name']
         collection = db[collection_name]
         return client, collection
 
@@ -67,7 +67,9 @@ class PrepareDataset:
         count = 0
         keys = list()
         values = list()
+        iteration = 0
         while count < len(list_of_keys):
+            self.log.info("Iteration : {}".format(iteration))
             if count + config_param_chunk_size < len(list_of_keys):
                 value = list_of_keys[count:count + config_param_chunk_size]
             else:
@@ -76,6 +78,9 @@ class PrepareDataset:
             doc2bow = self.parser.parse_each_document(value, collection)
             keys += doc2bow.keys()
             values += doc2bow.values()
+            iteration += 1
+            del doc2bow
+
         tok = list()
         for val in values:
             tok.append("$^$^$^$^$".join(val))
@@ -97,7 +102,9 @@ class PrepareDataset:
         # Because the number of samples will always be less than the number of features.
         config_param_chunk_size = len(list_of_keys)
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
+
         fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size)
+
         # rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
         # rows = len(fv_dist_path_names) * rows
         # self.log.info("Final Matrix shape : {}".format(rows, columns))

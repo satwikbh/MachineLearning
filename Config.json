@@ -12,6 +12,9 @@
     "list_of_keys": "/home/satwik/Documents/MachineLearning/Data/",
     "malware_families_list": "/home/satwik/Documents/MachineLearning/Data/"
   },
+  "classifier_data":{
+    "labelled_data": "/home/satwik/Documents/MachineLearning/Data/LabelledData"
+  },
   "non_linear_dimensionality_reduction": {
     "mini_batch_size": 100,
     "feature_vector_path": "",
