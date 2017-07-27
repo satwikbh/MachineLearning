@@ -83,6 +83,7 @@ class PrepareDataset:
             file_name.close()
             del doc2bow
 
+        import ipdb;ipdb.set_trace()
         vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text, binary=True)
         feature_vector = vec.fit_transform(values)
         self.log.info("Sparse Matrix Shape : {}".format(feature_vector.shape))
@@ -103,6 +104,7 @@ class PrepareDataset:
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
         feature_pool_path = self.config['data']['feature_pool_path']
+        self.helper.create_dir_if_absent(feature_pool_path)
         fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size,
                                                      feature_pool_path)
 
