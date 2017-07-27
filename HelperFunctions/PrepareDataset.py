@@ -1,6 +1,6 @@
 import urllib
 import pickle as pi
-import hickle as hkl
+import math
 import numpy as np
 import json
 
@@ -65,7 +65,8 @@ class PrepareDataset:
         json.dump(entire_families, open(malware_families_path, "w"))
         self.log.info("Total Number of families : {} ".format(len(entire_families)))
 
-    def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
+    def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
+        feature_pool_part_path_list = list()
         count = 0
         iteration = 0
         while count < len(list_of_keys):
@@ -78,16 +79,34 @@ class PrepareDataset:
             doc2bow = self.parser.parse_each_document(value, collection)
             values = np.asarray(doc2bow.values())
             iteration += 1
-            file_name = open(feature_pool_path + "/" + "feature_pool_part_" + str(iteration) + ".hkl")
-            hkl.dump(values, file_name)
-            file_name.close()
-            del doc2bow
+            feature_pool_part_path_list.append(self.dis_pool.save_feature_pool(feature_pool_path, values, iteration))
+            del doc2bow, values
+        return feature_pool_part_path_list
 
-        import ipdb;ipdb.set_trace()
+    def generate_count_vectorizer(self, feature_pool_part_path_list):
+        feature_pool = np.asarray([])
+        for each_file in feature_pool_part_path_list:
+            fp = pi.load(open(each_file))
+            feature_pool = np.concatenate([feature_pool, fp])
+
+        self.log.info("Feature Pool size : {}".format(feature_pool.shape))
         vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text, binary=True)
-        feature_vector = vec.fit_transform(values)
-        self.log.info("Sparse Matrix Shape : {}".format(feature_vector.shape))
+        feature_vector = vec.fit_transform(feature_pool)
+
+        self.log.info("Feature Vector Matrix Shape : {}".format(feature_vector.shape))
         file_name = self.dis_pool.save_feature_vector(feature_vector=feature_vector)
+        return file_name
+
+    def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
+        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl", path=feature_pool_path)
+
+        if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
+            self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
+        else:
+            feature_pool_part_path_list = self.generate_feature_pool(collection, list_of_keys, config_param_chunk_size,
+                                                                     feature_pool_path)
+
+        file_name = self.generate_count_vectorizer(feature_pool_part_path_list)
         return file_name
 
     def load_data(self):

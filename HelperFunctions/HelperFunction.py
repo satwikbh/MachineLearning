@@ -36,6 +36,14 @@ class HelperFunction:
         return all_files
 
     @staticmethod
+    def get_files_ends_with_extension(extension, path):
+        all_files = list()
+        for each_file in os.listdir(path):
+            if each_file.endswith(extension):
+                all_files.append(os.path.join(path, each_file))
+        return all_files
+
+    @staticmethod
     def is_file_present(fname):
         return os.path.isfile(fname)
 
