@@ -75,7 +75,7 @@ class DataStats:
         self.helper.create_dir_if_absent(feature_vector_path)
         self.helper.create_dir_if_absent(pruned_matrix_path)
 
-        feature_vector = self.helper.get_files_starts_with_extension("feature_vector_part-", feature_vector_path)
+        feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".hkl")
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist = self.get_stats(feature_vector)
         hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))

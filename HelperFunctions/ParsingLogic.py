@@ -1,5 +1,4 @@
 import time
-import json
 import hickle
 import numpy as np
 
@@ -92,7 +91,7 @@ class ParsingLogic:
         self.log.info("Time taken for Parsing the documents : {}".format(time.time() - start_time))
         return doc2bow
 
-    def convert2vec(self, dist_fnames, num_rows):
+    def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows):
         """
         Generate & return the feature vector path names
         The feature matrix is in Scipy CSR format.
@@ -104,25 +103,23 @@ class ParsingLogic:
         fv_dist_fnames = list()
         cluster_dict = dict()
 
-        dist_fnames, counter = self.dis_pool.load_distributed_feature_vector(dist_fnames)
-
-        for index, each_file in enumerate(dist_fnames):
-            doc2bow_str = hickle.load(open(each_file))
-            doc2bow = json.loads(doc2bow_str)
-            flat_set = set()
-            for sublist in doc2bow.values():
-                for item in sublist:
-                    if item not in flat_set:
-                        cluster_dict.setdefault(item, len(cluster_dict))
+        for index, each_file in enumerate(feature_pool_part_path_list):
+            file_object = open(each_file)
+            doc2bow = hickle.load(file_object)
+            doc2bow_list = doc2bow.flatten()
+            for each in doc2bow_list:
+                cluster_dict.setdefault(each, len(cluster_dict))
+            del doc2bow, doc2bow_list
+            file_object.close()
 
         num_cols = len(cluster_dict.keys())
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
 
-        for index, each_file in enumerate(dist_fnames):
-            doc2bow_str = hickle.load(open(each_file))
-            doc2bow = json.loads(doc2bow_str)
+        for index, each_file in enumerate(feature_pool_part_path_list):
+            file_object = open(each_file)
+            doc2bow = hickle.load(file_object)
             matrix = list()
-            for inner_index, each in enumerate(doc2bow.values()):
+            for inner_index, each in enumerate(doc2bow):
                 column = [cluster_dict.get(x) for x in each]
                 row = len(column) * [0]
                 data = len(column) * [1.0]
@@ -131,8 +128,12 @@ class ParsingLogic:
                 self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))
 
             mini_batch_matrix = vstack(matrix)
-            fv_dist_fnames.append(self.dis_pool.save_distributed_feature_vector(mini_batch_matrix, index + counter))
+            fv_dist_part_file_name = self.dis_pool.save_distributed_feature_vector(mini_batch_matrix,
+                                                                                   feature_vector_path,
+                                                                                   index)
+            fv_dist_fnames.append(fv_dist_part_file_name)
             feature_vector_list.append(mini_batch_matrix)
+            file_object.close()
 
         self.log.info("Time taken for Convert 2 Vector : {}".format(time.time() - start_time))
-        return fv_dist_fnames, len(cluster_dict.keys())
+        return fv_dist_fnames

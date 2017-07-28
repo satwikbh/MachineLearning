@@ -5,7 +5,6 @@ import numpy as np
 import json
 
 from collections import defaultdict
-from sklearn.feature_extraction.text import CountVectorizer
 
 from DimensionalityReduction.PcaNew import PcaNew
 from ParsingLogic import ParsingLogic
@@ -77,27 +76,14 @@ class PrepareDataset:
                 value = list_of_keys[count:]
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
-            values = np.asarray(doc2bow.values())
+            values = np.asarray(doc2bow.values(), dtype=str)
             iteration += 1
             feature_pool_part_path_list.append(self.dis_pool.save_feature_pool(feature_pool_path, values, iteration))
             del doc2bow, values
         return feature_pool_part_path_list
 
-    def generate_count_vectorizer(self, feature_pool_part_path_list):
-        feature_pool = np.asarray([])
-        for each_file in feature_pool_part_path_list:
-            fp = pi.load(open(each_file))
-            feature_pool = np.concatenate([feature_pool, fp])
-
-        self.log.info("Feature Pool size : {}".format(feature_pool.shape))
-        vec = CountVectorizer(analyzer="word", tokenizer=lambda text: text, binary=True)
-        feature_vector = vec.fit_transform(feature_pool)
-
-        self.log.info("Feature Vector Matrix Shape : {}".format(feature_vector.shape))
-        file_name = self.dis_pool.save_feature_vector(feature_vector=feature_vector)
-        return file_name
-
-    def get_data_as_matrix(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
+    def get_data_as_matrix(self, client, collection, list_of_keys, config_param_chunk_size, feature_pool_path,
+                           feature_vector_path):
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl", path=feature_pool_path)
 
         if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
@@ -106,8 +92,9 @@ class PrepareDataset:
             feature_pool_part_path_list = self.generate_feature_pool(collection, list_of_keys, config_param_chunk_size,
                                                                      feature_pool_path)
 
-        file_name = self.generate_count_vectorizer(feature_pool_part_path_list)
-        return file_name
+        client.close()
+        return self.parser.convert2vec(feature_pool_part_path_list, feature_vector_path,
+                                       num_rows=len(list_of_keys))
 
     def load_data(self):
         client, collection = self.get_collection()
@@ -123,9 +110,12 @@ class PrepareDataset:
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
         feature_pool_path = self.config['data']['feature_pool_path']
+        feature_vector_path = self.config['data']['feature_vector_path']
         self.helper.create_dir_if_absent(feature_pool_path)
-        fv_dist_path_names = self.get_data_as_matrix(collection, list_of_keys, config_param_chunk_size,
-                                                     feature_pool_path)
+        self.helper.create_dir_if_absent(feature_vector_path)
+        fv_dist_path_names = self.get_data_as_matrix(client, collection, list_of_keys, config_param_chunk_size,
+                                                     feature_pool_path, feature_vector_path)
+        self.data_stats.main()
 
         # rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
         # rows = len(fv_dist_path_names) * rows
@@ -138,8 +128,6 @@ class PrepareDataset:
         # self.log.info("DBScan labels : {}".format(dbscan.labels_.tolist()))
         # kmeans_clusters = self.kmeans.get_clusters_kmeans(reduced_matrix, names=list_of_keys, k=16)
         # families = self.kmeans.get_family_names(collection, kmeans_clusters)
-        client.close()
-        self.data_stats.main()
 
 
 if __name__ == "__main__":
