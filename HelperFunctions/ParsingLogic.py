@@ -1,4 +1,4 @@
-import time
+from time import time
 import pickle as pi
 import numpy as np
 
@@ -75,7 +75,7 @@ class ParsingLogic:
     def parse_each_document(self, list_of_docs, collection):
         doc2bow = defaultdict(list)
         self.log.info("************ Parsing the documents *************")
-        start_time = time.time()
+        start_time = time()
         cursor = collection.find({"key": {"$in": list_of_docs}})
 
         for each_document in cursor:
@@ -88,7 +88,7 @@ class ParsingLogic:
                     if d2b is not None:
                         doc2bow[each_document.get("key")] += d2b
 
-        self.log.info("Time taken for Parsing the documents : {}".format(time.time() - start_time))
+        self.log.info("Time taken for Parsing the documents : {}".format(time() - start_time))
         return doc2bow
 
     def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows):
@@ -98,18 +98,22 @@ class ParsingLogic:
         :return: 
         """
         self.log.info("************ Convert 2 Vector *************")
-        start_time = time.time()
+        start_time = time()
         feature_vector_list = list()
         fv_dist_fnames = list()
         cluster_dict = dict()
+        cluster_dict.defaultfactory = cluster_dict.__len__
 
         for index, each_file in enumerate(feature_pool_part_path_list):
             file_object = open(each_file)
             doc2bow = pi.load(file_object)
             for each in doc2bow:
-                cluster_dict.setdefault(each, len(cluster_dict))
+                cluster_dict[each]
             del doc2bow
             file_object.close()
+
+        self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
+        start_time = time()
 
         num_cols = len(cluster_dict.keys())
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
@@ -118,13 +122,13 @@ class ParsingLogic:
             file_object = open(each_file)
             doc2bow = pi.load(file_object)
             matrix = list()
-            for inner_index, each in enumerate(doc2bow):
-                column = [cluster_dict.get(x) for x in each]
-                row = len(column) * [0]
-                data = len(column) * [1.0]
-                value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
-                matrix.append(value)
-                self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))
+
+            column = [cluster_dict.get(each_word for each_word in doc2bow)]
+            row = len(column) * [0]
+            data = len(column) * [1.0]
+            value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
+            matrix.append(value)
+            self.log.info("Working on {} matrix".format(index))
 
             mini_batch_matrix = vstack(matrix)
             fv_dist_part_file_name = self.dis_pool.save_distributed_feature_vector(mini_batch_matrix,
@@ -134,5 +138,5 @@ class ParsingLogic:
             feature_vector_list.append(mini_batch_matrix)
             file_object.close()
 
-        self.log.info("Time taken for Convert 2 Vector : {}".format(time.time() - start_time))
+        self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
         return fv_dist_fnames
