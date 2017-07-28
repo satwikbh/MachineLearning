@@ -1,5 +1,5 @@
 import time
-import hickle
+import pickle as pi
 import numpy as np
 
 from collections import defaultdict
@@ -105,11 +105,10 @@ class ParsingLogic:
 
         for index, each_file in enumerate(feature_pool_part_path_list):
             file_object = open(each_file)
-            doc2bow = hickle.load(file_object)
-            doc2bow_list = doc2bow.flatten()
-            for each in doc2bow_list:
+            doc2bow = pi.load(file_object)
+            for each in doc2bow:
                 cluster_dict.setdefault(each, len(cluster_dict))
-            del doc2bow, doc2bow_list
+            del doc2bow
             file_object.close()
 
         num_cols = len(cluster_dict.keys())
@@ -117,7 +116,7 @@ class ParsingLogic:
 
         for index, each_file in enumerate(feature_pool_part_path_list):
             file_object = open(each_file)
-            doc2bow = hickle.load(file_object)
+            doc2bow = pi.load(file_object)
             matrix = list()
             for inner_index, each in enumerate(doc2bow):
                 column = [cluster_dict.get(x) for x in each]

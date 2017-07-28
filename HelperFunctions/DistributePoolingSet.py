@@ -1,4 +1,5 @@
 import hickle as hkl
+import pickle as pi
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -26,7 +27,7 @@ class DistributePoolingSet:
     def save_feature_pool(self, feature_pool_path, values, index):
         try:
             file_object = open(feature_pool_path + "/" + "feature_pool_part_" + str(index) + ".hkl", "w")
-            hkl.dump(values, file_object, mode="w", compression="gzip")
+            pi.dump(values, file_object)
             file_object.close()
         except Exception as e:
             self.log.error("Error : {}".format(e))

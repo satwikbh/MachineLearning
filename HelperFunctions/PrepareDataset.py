@@ -64,6 +64,11 @@ class PrepareDataset:
         json.dump(entire_families, open(malware_families_path, "w"))
         self.log.info("Total Number of families : {} ".format(len(entire_families)))
 
+    @staticmethod
+    def flatten_list(doc2bow):
+        flat_list = [item for sublist in doc2bow.values() for item in sublist]
+        return flat_list
+
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         feature_pool_part_path_list = list()
         count = 0
@@ -76,7 +81,7 @@ class PrepareDataset:
                 value = list_of_keys[count:]
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
-            values = np.asarray(doc2bow.values(), dtype=str)
+            values = self.flatten_list(doc2bow)
             iteration += 1
             feature_pool_part_path_list.append(self.dis_pool.save_feature_pool(feature_pool_path, values, iteration))
             del doc2bow, values
