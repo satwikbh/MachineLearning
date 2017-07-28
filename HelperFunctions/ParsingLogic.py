@@ -102,14 +102,16 @@ class ParsingLogic:
         feature_vector_list = list()
         fv_dist_fnames = list()
         cluster_dict = dict()
-        cluster_dict.defaultfactory = cluster_dict.__len__
+        cluster_dict.default_factory = cluster_dict.__len__
 
         for index, each_file in enumerate(feature_pool_part_path_list):
+            self.log.info("Final pool preparation Iteration: #{}".format(index))
             file_object = open(each_file)
             doc2bow = pi.load(file_object)
-            for each in doc2bow:
+            flat_list = self.helper.flatten_list(doc2bow)
+            for each in flat_list:
                 cluster_dict[each]
-            del doc2bow
+            del doc2bow, flat_list
             file_object.close()
 
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
@@ -122,13 +124,13 @@ class ParsingLogic:
             file_object = open(each_file)
             doc2bow = pi.load(file_object)
             matrix = list()
-
-            column = [cluster_dict.get(each_word for each_word in doc2bow)]
-            row = len(column) * [0]
-            data = len(column) * [1.0]
-            value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
-            matrix.append(value)
-            self.log.info("Working on {} matrix".format(index))
+            for inner_index, each in enumerate(doc2bow.values()):
+                column = [cluster_dict.get(x) for x in each]
+                row = len(column) * [0]
+                data = len(column) * [1.0]
+                value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
+                matrix.append(value)
+                self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))
 
             mini_batch_matrix = vstack(matrix)
             fv_dist_part_file_name = self.dis_pool.save_distributed_feature_vector(mini_batch_matrix,

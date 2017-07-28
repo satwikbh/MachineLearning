@@ -81,10 +81,10 @@ class PrepareDataset:
                 value = list_of_keys[count:]
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
-            values = self.flatten_list(doc2bow)
             iteration += 1
-            feature_pool_part_path_list.append(self.dis_pool.save_feature_pool(feature_pool_path, values, iteration))
-            del doc2bow, values
+            feature_pool_part_path_list.append(
+                self.dis_pool.save_feature_pool(feature_pool_path, doc2bow.values(), iteration))
+            del doc2bow
         return feature_pool_part_path_list
 
     def get_data_as_matrix(self, client, collection, list_of_keys, config_param_chunk_size, feature_pool_path,

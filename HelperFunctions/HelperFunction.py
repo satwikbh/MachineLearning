@@ -55,3 +55,8 @@ class HelperFunction:
     @staticmethod
     def get_full_path(directory, fname):
         return os.path.join(directory, fname)
+
+    @staticmethod
+    def flatten_list(doc2bow):
+        flat_list = [item for sublist in doc2bow.values() for item in sublist]
+        return flat_list
