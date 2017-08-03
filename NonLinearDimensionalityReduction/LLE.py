@@ -24,19 +24,19 @@ class LLE:
 
     def perform_lle(self, iteration, partial_matrix):
         self.log.info("LLE on iteration #{}".format(iteration))
-        model = LocallyLinearEmbedding(n_components=3, n_neighbors=2, eigen_solver="auto", n_jobs=-1)
-        Y = model.fit_transform(partial_matrix)
+        model = LocallyLinearEmbedding(n_components=3, n_neighbors=2, eigen_solver="dense", n_jobs=-1)
+        Y = model.fit_transform(partial_matrix.toarray())
         return Y
 
     def main(self):
         start_time = time()
-        pruned_path = self.config['data']['pruned_feature_vector_path']
-        plot_path = self.config['plots']['tsne']
-        # pruned_path = "/home/satwik/Documents/Research/MachineLearning/Data/pruned_fv_path/"
-        # plot_path = "/home/satwik/Documents/Research/MachineLearning/Data/plots/lle/"
+        # pruned_path = self.config['data']['pruned_feature_vector_path']
+        # plot_path = self.config['plots']['tsne']
+        pruned_path = "/home/satwik/Documents/Research/MachineLearning/Data/pruned_fv_path/"
+        plot_path = "/home/satwik/Documents/Research/MachineLearning/Data/plots/lle/"
         list_of_files = self.helper.get_files_ends_with_extension(path=pruned_path, extension=".hkl")
         for index, each_file in enumerate(list_of_files):
-            partial_matrix = hkl.load(open(each_file)).todense()
+            partial_matrix = hkl.load(open(each_file))
             Y = self.perform_lle(index, partial_matrix)
             self.plot_matrix(Y, index, plot_path)
             break
