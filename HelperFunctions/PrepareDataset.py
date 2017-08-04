@@ -90,6 +90,8 @@ class PrepareDataset:
     def get_data_as_matrix(self, client, collection, list_of_keys, config_param_chunk_size, feature_pool_path,
                            feature_vector_path):
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl", path=feature_pool_path)
+        feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl",
+                                                                                  path=feature_vector_path)
 
         if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
             self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
@@ -98,8 +100,13 @@ class PrepareDataset:
                                                                      feature_pool_path)
 
         client.close()
-        return self.parser.convert2vec(feature_pool_part_path_list, feature_vector_path,
-                                       num_rows=len(list_of_keys))
+
+        if len(feature_vector_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
+            self.log.info("Feature vector already generated at : {}".format(feature_vector_path))
+            return feature_vector_path
+        else:
+            return self.parser.convert2vec(feature_pool_part_path_list, feature_vector_path,
+                                           num_rows=len(list_of_keys))
 
     def load_data(self):
         client, collection = self.get_collection()
@@ -110,7 +117,6 @@ class PrepareDataset:
             list_of_keys.append(each_element['_id'])
 
         self.get_families_data(collection, list_of_keys)
-        # Because the number of samples will always be less than the number of features.
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
