@@ -33,13 +33,15 @@ class DataStats:
 
     def get_stats(self, list_of_files):
         col_wise_dist = list()
+        num_rows = 0
         for index, each_file in enumerate(list_of_files):
             self.log.info("Iteration : {}".format(index))
             fv = hkl.load(each_file)
+            num_rows += fv.shape[0]
             partial_index_pointer = self.stats(fv)
             col_wise_dist = self.sum_up(partial_index_pointer, col_wise_dist)
             del fv
-        return col_wise_dist
+        return col_wise_dist, num_rows
 
     @staticmethod
     def delete_columns(old_mat, cols_to_delete):
@@ -49,16 +51,17 @@ class DataStats:
         return new_mat
 
     @staticmethod
-    def estimate_cols_to_remove(col_wise_dist):
+    def estimate_cols_to_remove(col_wise_dist, threshold):
         cols_to_delete = list()
-        mean = np.mean(col_wise_dist)
+        # threshold = np.mean(col_wise_dist)
         for index, value in enumerate(col_wise_dist):
-            if value < mean:
+            if value < threshold:
                 cols_to_delete.append(index)
         return cols_to_delete
 
-    def store_pruned_matrix(self, feature_vector, col_wise_dist, pruned_matrix_path):
-        cols_to_delete = self.estimate_cols_to_remove(col_wise_dist)
+    def store_pruned_matrix(self, feature_vector, col_wise_dist, pruned_matrix_path, num_rows):
+        threshold = num_rows * self.config['data']['pruning_threshold']
+        cols_to_delete = self.estimate_cols_to_remove(col_wise_dist, threshold)
         for index, each_file in enumerate(feature_vector):
             fv = hkl.load(each_file).tocsr()
             new_mat = self.delete_columns(fv, cols_to_delete)
@@ -77,7 +80,7 @@ class DataStats:
 
         feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".hkl")
         self.log.info("Total number of files : {}".format(len(feature_vector)))
-        col_wise_dist = self.get_stats(feature_vector)
+        col_wise_dist, num_rows = self.get_stats(feature_vector)
         hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
-        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path)
+        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path, num_rows)
         self.log.info("Total time for execution : {}".format(time() - start_time))
