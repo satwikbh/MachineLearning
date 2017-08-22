@@ -1,5 +1,4 @@
 import urllib
-import json
 import pickle as pi
 
 from collections import defaultdict
@@ -48,19 +47,16 @@ class AvclassValidation:
             clusters[cluster_label].append(name)
         return clusters
 
-    def prepare_labels(self, collection):
+    def prepare_labels(self, list_of_keys, collection):
         variant_labels = defaultdict(list)
-        cursor = collection.aggregate([{"$group": {"_id": "$md5"}}])
+        cursor = collection.find({"md5": {"$in": list_of_keys}})
 
-        list_of_md5 = self.cursor2list(cursor)
-
-        for index, each_key in enumerate(list_of_md5):
+        for index, doc in enumerate(cursor):
             if index % 1000 == 0:
                 self.log.info("Iteration : #{}".format(index / 1000))
-            query = {"md5": each_key}
-            doc = collection.find(query).next()
+            key = doc["md5"]
             family = doc["avclass"]["result"]
-            variant_labels[each_key].append(family)
+            variant_labels[key].append(family)
 
         return variant_labels
 
@@ -78,20 +74,27 @@ class AvclassValidation:
 
         return cluster_dist
 
-    def main(self, labels):
+    def main(self, labels, input_matrix_indices):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
         :param labels: The labels format is (cluster_label, malware_source).
         malware_source is found in database and usually starts with VirusShare_.
-        :return: A json which contains the a cluster label and the accuracy it has over all the variants.
+        :param input_matrix_indices: These indices will be useful to compute the cluster accuracy.
+        Since the dataset is distributed, giving the indices will help to locate the correct chunk.
+        :return: A dict which contains the a cluster label and the accuracy it has over all the variants.
         """
         start_time = time()
         client, avclass_collection = self.get_connection()
         names_path = self.config["data"]["list_of_keys"]
-        list_of_keys = pi.load(open(names_path + "/" + "names.dump"))
+        temp = pi.load(open(names_path + "/" + "names.dump"))
+        list_of_keys = list()
 
-        variant_labels = self.prepare_labels(avclass_collection)
+        for index in input_matrix_indices:
+            val = temp[index].split("_")[1]
+            list_of_keys.append(val)
+
+        variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
         input_labels = self.labels2clusters(labels)
 
         cluster_accuracy = defaultdict(list)
@@ -101,9 +104,4 @@ class AvclassValidation:
             cluster_accuracy[key].append(accuracy)
 
         self.log.info("Total time taken : {}".format(time() - start_time))
-        return json.dumps(cluster_accuracy)
-
-
-if __name__ == '__main__':
-    validation = AvclassValidation()
-    validation.main([])
+        return cluster_accuracy
