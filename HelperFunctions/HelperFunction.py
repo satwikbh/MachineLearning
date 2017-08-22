@@ -1,5 +1,7 @@
 import os
 import math
+import hickle as hkl
+from scipy.sparse import vstack
 
 
 class HelperFunction:
@@ -7,14 +9,22 @@ class HelperFunction:
         pass
 
     @staticmethod
+    def stack_matrix(list_of_matrices):
+        temp = list()
+        for each in list_of_matrices:
+            temp.append(hkl.load(open(each)))
+        matrix = vstack(temp)
+        return matrix
+
+    @staticmethod
     def get_threshold_point(list_of_nums, percentage):
         count = 0
         threshold = sum(list_of_nums) * percentage
-        for x in xrange(len(list_of_nums)):
+        for index, value in enumerate(list_of_nums):
             if count > threshold:
                 break
-            count += list_of_nums[x]
-        return x
+            count += value
+        return index
 
     @staticmethod
     def batch(iterable, n=1):

@@ -7,11 +7,11 @@ import json
 from collections import defaultdict
 
 from DimensionalityReduction.PcaNew import PcaNew
-from ParsingLogic import ParsingLogic
-from DistributePoolingSet import DistributePoolingSet
+from HelperFunctions.ParsingLogic import ParsingLogic
+from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from Clustering.KMeansImpl import KMeansImpl
-from HelperFunction import HelperFunction
-from DataStats import DataStats
+from HelperFunctions.HelperFunction import HelperFunction
+from HelperFunctions.DataStats import DataStats
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.DBUtils import DBUtils
