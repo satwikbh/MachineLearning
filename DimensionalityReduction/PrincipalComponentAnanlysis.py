@@ -59,7 +59,7 @@ class PrincipalComponentAnanlysis:
         start_time = time()
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        reduced_matrix = self.pca(input_matrix.toarray(), min(input_matrix.shape))
+        reduced_matrix = self.pca(input_matrix.toarray(), min(input_matrix.shape), randomized=True)
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
         min_samples_list = range(2, 20, 2)
         min_cluster_size_list = range(2, 20, 2)
