@@ -41,10 +41,12 @@ class AvclassValidation:
         return list_of_keys
 
     @staticmethod
-    def labels2clusters(labels):
+    def labels2clusters(labels, list_of_keys, variant_labels):
         clusters = defaultdict(list)
-        for cluster_label, name in enumerate(labels):
-            clusters[cluster_label].append(name)
+        for index, value in enumerate(labels):
+            md5 = list_of_keys[index]
+            cluster_label = variant_labels[md5]
+            clusters[value].append(cluster_label)
         return clusters
 
     def prepare_labels(self, list_of_keys, collection):
@@ -61,16 +63,13 @@ class AvclassValidation:
         return variant_labels
 
     @staticmethod
-    def compute_accuracy(labels, variant_labels):
-        list_of_clusters = list()
-        for names in labels:
-            list_of_clusters.append(variant_labels[names])
-
+    def compute_accuracy(input_labels):
+        list_of_clusters = input_labels.keys()
         total_no_of_values = len(list_of_clusters)
 
         cluster_dist = dict()
-        for each_label in set(list_of_clusters):
-            cluster_dist[each_label] = list_of_clusters.count(each_label) * 1.0 / total_no_of_values
+        for each_label in list_of_clusters:
+            cluster_dist[each_label] = len(input_labels[each_label]) * 1.0 / total_no_of_values
 
         return cluster_dist
 
@@ -91,17 +90,15 @@ class AvclassValidation:
         list_of_keys = list()
 
         for index in input_matrix_indices:
-            val = temp[index].split("_")[1]
-            list_of_keys.append(val)
+            try:
+                val = temp[index].split("_")[1]
+                list_of_keys.append(val)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
 
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
-        input_labels = self.labels2clusters(labels)
-
-        cluster_accuracy = defaultdict(list)
-
-        for key, value in input_labels:
-            accuracy = self.compute_accuracy(value, variant_labels)
-            cluster_accuracy[key].append(accuracy)
+        input_labels = self.labels2clusters(labels, list_of_keys, variant_labels)
+        cluster_accuracy = self.compute_accuracy(input_labels)
 
         self.log.info("Total time taken : {}".format(time() - start_time))
         return cluster_accuracy
