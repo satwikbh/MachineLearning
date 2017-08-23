@@ -62,12 +62,19 @@ class PrincipalComponentAnanlysis:
         reduced_matrix = self.pca(input_matrix.toarray(), min(input_matrix.shape))
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
         min_samples_list = range(2, 20, 2)
+        min_cluster_size_list = range(2, 20, 2)
 
-        accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
-                                                     input_matrix_indices=input_matrix_indices,
-                                                     eps_list=eps_list,
-                                                     min_samples_list=min_samples_list)
-        self.log.info("Accuracy : {}".format(accuracy_params))
+        dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
+                                                            input_matrix_indices=input_matrix_indices,
+                                                            eps_list=eps_list,
+                                                            min_samples_list=min_samples_list)
+
+        hdbscan_accuracy_params = self.hdbscan.hdbscan_cluster(input_matrix=reduced_matrix,
+                                                               input_matrix_indices=input_matrix_indices,
+                                                               min_cluster_size_list=min_cluster_size_list)
+
+        self.log.info("DBScan Accuracy : {}".format(dbscan_accuracy_params))
+        self.log.info("HDBScan Accuracy : {}".format(hdbscan_accuracy_params))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 

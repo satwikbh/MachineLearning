@@ -17,11 +17,7 @@ class HelperFunction:
 
     @staticmethod
     def stack_matrix(list_of_matrices):
-        temp = list()
-        for each in list_of_matrices:
-            temp.append(hkl.load(open(each)))
-        matrix = vstack(temp)
-        return matrix
+        return vstack(list_of_matrices)
 
     @staticmethod
     def get_threshold_point(list_of_nums, percentage):
