@@ -87,3 +87,27 @@ ENV/
 
 # Rope project settings
 .ropeproject
+.DS_Store
+.idea/
+.imdone/
+Cluster2DB/.DS_Store
+Clustering/.DS_Store
+Data/
+DimensionalityReduction/.DS_Store
+DimensionalityReduction/logs/
+HelperFunctions/logs/
+LocalitySensitiveHashing/logs/
+MalwareLabelling/logs/
+Miscellaneous/Plots/
+Miscellaneous/input_matrix.dump
+Miscellaneous/logs/
+Miscellaneous/reduced_matrix.dump
+Miscellaneous/some.png
+NonLinearDimensionalityReduction/.DS_Store
+NonLinearDimensionalityReduction/logs/
+ThirdPartyProjects/data/malheurReference_gt.tsv
+ThirdPartyProjects/data/malheurReference_lb.json
+TopicModelling/.DS_Store
+Utils/logs/
+cluster/
+temp.py
