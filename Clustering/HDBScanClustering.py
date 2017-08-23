@@ -28,16 +28,22 @@ class HDBScanClustering:
         accuracy_params = list()
         for min_cluster_size in min_cluster_size_list:
             labels = HDBSCAN(min_cluster_size=min_cluster_size, core_dist_n_jobs=-1).fit_predict(input_matrix)
-
-            cluster_accuracy = self.validation.main(labels=labels, input_matrix_indices=input_matrix_indices)
-            accuracy_params.append(cluster_accuracy)
-            silhouette_coefficient = metrics.silhouette_score(input_matrix, labels=labels)
-            self.log.info(
-                "min_cluster_size : {}\tNo of clusters : {}\tSilhouette Coeff : {}\tcluster accuracy : {}".format(
+            n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+            if n_clusters_ == 0:
+                self.log.info("min_cluster_size : {}\tNo of clusters inferred is : {}".format(
                     min_cluster_size,
-                    len(labels),
-                    silhouette_coefficient,
-                    cluster_accuracy))
+                    len(labels)))
+                continue
+            else:
+                cluster_accuracy = self.validation.main(labels=labels, input_matrix_indices=input_matrix_indices)
+                accuracy_params.append(cluster_accuracy)
+                silhouette_coefficient = metrics.silhouette_score(input_matrix, labels=labels)
+                self.log.info(
+                    "min_cluster_size : {}\tNo of clusters : {}\tSilhouette Coeff : {}\tcluster accuracy : {}".format(
+                        min_cluster_size,
+                        len(labels),
+                        silhouette_coefficient,
+                        cluster_accuracy))
 
         self.log.info("************ HDDBSCAN Clustering started *************")
         self.log.info("Total time taken : {}".format(time() - start_time))
