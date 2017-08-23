@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from Utils.LoggerUtil import LoggerUtil
 
 
-class PcaNew:
+class IterativePca:
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
 

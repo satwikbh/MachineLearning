@@ -9,6 +9,13 @@ class HelperFunction:
         pass
 
     @staticmethod
+    def frange(start, stop, step):
+        x = start
+        while x < stop:
+            yield x
+            x += step
+
+    @staticmethod
     def stack_matrix(list_of_matrices):
         temp = list()
         for each in list_of_matrices:
@@ -70,3 +77,11 @@ class HelperFunction:
     def flatten_list(doc2bow):
         flat_list = [item for sublist in doc2bow.values() for item in sublist]
         return flat_list
+
+    @staticmethod
+    def open_files(list_of_files):
+        matrix = list()
+        for each in list_of_files:
+            fv = hkl.load(each)
+            matrix.append(fv)
+        return matrix

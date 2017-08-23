@@ -7,7 +7,7 @@ from Utils.LoggerUtil import LoggerUtil
 from Clustering.AvclassValidation import AvclassValidation
 
 
-class DBScan:
+class DBScanClustering:
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.labels = defaultdict(list)

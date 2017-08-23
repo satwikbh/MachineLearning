@@ -6,7 +6,7 @@ import json
 
 from collections import defaultdict
 
-from DimensionalityReduction.PcaNew import PcaNew
+from DimensionalityReduction.IterativePca import IterativePca
 from HelperFunctions.ParsingLogic import ParsingLogic
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from Clustering.KMeansImpl import KMeansImpl
@@ -23,7 +23,7 @@ class PrepareDataset:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.db_utils = DBUtils()
         self.parser = ParsingLogic()
-        self.dim_red = PcaNew()
+        self.dim_red = IterativePca()
         self.dis_pool = DistributePoolingSet()
         self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
