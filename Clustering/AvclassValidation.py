@@ -46,7 +46,7 @@ class AvclassValidation:
         for index, value in enumerate(labels):
             md5 = list_of_keys[index]
             cluster_label = variant_labels[md5]
-            clusters[value].append(cluster_label)
+            clusters[value] += cluster_label
         return clusters
 
     def prepare_labels(self, list_of_keys, collection):
@@ -64,13 +64,10 @@ class AvclassValidation:
 
     @staticmethod
     def compute_accuracy(input_labels):
-        list_of_clusters = input_labels.keys()
-        total_no_of_values = len(list_of_clusters)
-
         cluster_dist = dict()
-        for each_label in list_of_clusters:
-            cluster_dist[each_label] = len(input_labels[each_label]) * 1.0 / total_no_of_values
-
+        for cluster_label, family_names in input_labels.items():
+            unique = len(set(family_names))
+            cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
         return cluster_dist
 
     def main(self, labels, input_matrix_indices):
