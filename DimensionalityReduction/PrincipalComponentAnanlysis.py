@@ -63,7 +63,9 @@ class PrincipalComponentAnanlysis:
         start_time = time()
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        reduced_matrix = self.pca(input_matrix.toarray(), min(input_matrix.shape), randomized=True)
+        # 1000 because we analyzed for various num_rows ranging from 100 to 25000.
+        # We found 1st 1000 principal components are more than enough.
+        reduced_matrix = self.pca(input_matrix.toarray(), 1000, randomized=True)
         self.log.info("Saving the model at : {}".format(pca_model_path))
         pi.dump(reduced_matrix, open("pca_reduced_matrix_" + str(num_rows) + ".model", "w"))
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
