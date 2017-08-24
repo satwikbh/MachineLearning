@@ -1,53 +1,51 @@
 import pickle as pi
 
-from sklearn.manifold import LocallyLinearEmbedding
 from time import time
+from sklearn.manifold import TSNE
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
-from Clustering.DBScanClustering import DBScanClustering
-from Clustering.HDBScanClustering import HDBScanClustering
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.Plotting import Plotting
 from PrepareData.LoadData import LoadData
+from Clustering.DBScanClustering import DBScanClustering
+from Clustering.HDBScanClustering import HDBScanClustering
 
 
-class LLE:
+class Tsne:
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
-        self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
+        self.helper = HelperFunction()
         self.plot = Plotting()
         self.load_data = LoadData()
         self.dbscan = DBScanClustering()
         self.hdbscan = HDBScanClustering()
 
-    def plot_matrix(self, reduced_matrix, iteration, plot_path, n_neighbors):
-        plt = self.plot.plot_it_2d(reduced_matrix)
-        plt.savefig(plot_path + "/" + "lle_2d_" + str(iteration) + "_" + str(n_neighbors) + ".png")
+    def plot_matrix(self, Y, iteration, plot_path, init, perplexity):
+        plt = self.plot.plot_it_2d(Y)
+        plt.savefig(plot_path + "/" + "tsne_2d_" + str(iteration) + "_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
-        plt = self.plot.plot_it_3d(reduced_matrix)
-        plt.savefig(plot_path + "/" + "lle_3d_" + str(iteration) + "_" + str(n_neighbors) + ".png")
+        plt = self.plot.plot_it_3d(Y)
+        plt.savefig(plot_path + "/" + "tsne_3d_" + str(iteration) + "_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
 
-    def perform_lle(self, n_components, iteration, partial_matrix, partial_matrix_indices, plot_path, model_path):
-        self.log.info("LLE on iteration #{}".format(iteration))
-        n_neighbors_list = range(2, 20, 2)
-        eigen_solver = "dense"
+    def perform_tsne(self, n_components, iteration, partial_matrix, partial_matrix_indices, plot_path, model_path):
+        self.log.info("tsne on iteration #{}".format(iteration))
+        perplexities = range(5, 55, 5)
+        init = "random"
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
         min_samples_list = range(2, 20, 2)
         min_cluster_size_list = range(2, 20, 2)
-
         dbscan_accuracies = list()
         hdbscan_accuracies = list()
 
-        for n_neighbors in n_neighbors_list:
-            model = LocallyLinearEmbedding(n_components=n_components, n_neighbors=n_neighbors,
-                                           eigen_solver=eigen_solver, n_jobs=-1)
+        for perplexity in perplexities:
+            model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
             self.log.info("Saving current model at : {}".format(model_path))
-            pi.dump(model, open(model_path + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model", "w"))
-            reduced_matrix = model.fit_transform(partial_matrix.toarray())
-            self.plot_matrix(reduced_matrix, iteration, plot_path, n_neighbors)
+            pi.dump(model, open(model_path + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model", "w"))
+            reduced_matrix = model.fit_transform(partial_matrix)
+            self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
                                                                 input_matrix_indices=partial_matrix_indices,
@@ -64,9 +62,9 @@ class LLE:
 
     def main(self):
         start_time = time()
-        plot_path = self.config['plots']['lle']
-        model_path = self.config['models']['lle']
-        results_path = self.config['results']['lle']
+        plot_path = self.config['plots']['tsne']
+        model_path = self.config['models']['tsne']
+        results_path = self.config['results']['tsne']
 
         num_rows = 25000
         batch_size = 1000
@@ -79,21 +77,22 @@ class LLE:
             partial_matrix = input_matrix[counter: counter + batch_size]
             partial_matrix_indices = input_matrix_indices[counter: counter + batch_size]
             counter += batch_size
-
-            dbscan_accuracies, hdbscan_accuracies = self.perform_lle(n_components=3, iteration=index,
-                                                                     partial_matrix=partial_matrix,
-                                                                     partial_matrix_indices=partial_matrix_indices,
-                                                                     plot_path=plot_path, model_path=model_path)
+            dbscan_accuracies, hdbscan_accuracies = self.perform_tsne(n_components=3, iteration=index,
+                                                                      partial_matrix=partial_matrix,
+                                                                      plot_path=plot_path,
+                                                                      partial_matrix_indices=partial_matrix_indices,
+                                                                      model_path=model_path)
 
             self.log.info("DBScan Accuracy for Iteration #{} : {}".format(index, dbscan_accuracies))
             self.log.info("HDBScan Accuracy for Iteration #{} : {}".format(index, hdbscan_accuracies))
             final_accuracies[index] = [dbscan_accuracies, hdbscan_accuracies]
             index += 1
 
+        self.log.info("All the results are stored at : {}".format(results_path))
         pi.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".pickle", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
-    lle = LLE()
-    lle.main()
+    tsne = Tsne()
+    tsne.main()

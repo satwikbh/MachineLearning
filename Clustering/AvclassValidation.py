@@ -106,4 +106,4 @@ class AvclassValidation:
         cluster_accuracy = self.compute_accuracy(input_labels)
 
         self.log.info("Total time taken : {}".format(time() - start_time))
-        return cluster_accuracy
+        return (cluster_accuracy, input_labels)
