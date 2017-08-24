@@ -59,18 +59,21 @@ class PrincipalComponentAnanlysis:
         The main method.
         :return:
         """
-        pca_model_path = self.config["models"]["pca"]
+        model_path = self.config["models"]["pca"]
+        results_path = self.config["results"]["pca"]
         start_time = time()
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         # 1000 because we analyzed for various num_rows ranging from 100 to 25000.
         # We found 1st 1000 principal components are more than enough.
         reduced_matrix = self.pca(input_matrix.toarray(), 1000, randomized=True)
-        self.log.info("Saving the model at : {}".format(pca_model_path))
-        pi.dump(reduced_matrix, open("pca_reduced_matrix_" + str(num_rows) + ".model", "w"))
+        self.log.info("Saving the model at : {}".format(model_path))
+        pi.dump(reduced_matrix, open(model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".model", "w"))
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
         min_samples_list = range(2, 20, 2)
         min_cluster_size_list = range(2, 20, 2)
+
+        final_accuracies = dict()
 
         dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
                                                             input_matrix_indices=input_matrix_indices,
@@ -83,6 +86,12 @@ class PrincipalComponentAnanlysis:
 
         self.log.info("DBScan Accuracy : {}".format(dbscan_accuracy_params))
         self.log.info("HDBScan Accuracy : {}".format(hdbscan_accuracy_params))
+
+        final_accuracies["dbscan"] = dbscan_accuracy_params
+        final_accuracies["hdbscan"] = hdbscan_accuracy_params
+
+        pi.dump(final_accuracies, open(results_path + "/" + "pca_results_" + str(num_rows) + ".pickle", "w"))
+
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
