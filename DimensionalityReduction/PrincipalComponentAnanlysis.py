@@ -1,9 +1,11 @@
+import pickle as pi
 from time import time
 
 from sklearn.decomposition.pca import PCA
 from sklearn.decomposition.kernel_pca import KernelPCA
 
 from Utils.LoggerUtil import LoggerUtil
+from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.LoadData import LoadData
 from Clustering.DBScanClustering import DBScanClustering
@@ -13,6 +15,7 @@ from Clustering.HDBScanClustering import HDBScanClustering
 class PrincipalComponentAnanlysis:
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
+        self.config = ConfigUtil.get_config_instance()
         self.load_data = LoadData()
         self.dbscan = DBScanClustering()
         self.hdbscan = HDBScanClustering()
@@ -56,10 +59,13 @@ class PrincipalComponentAnanlysis:
         The main method.
         :return:
         """
+        pca_model_path = self.config["models"]["pca"]
         start_time = time()
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         reduced_matrix = self.pca(input_matrix.toarray(), min(input_matrix.shape), randomized=True)
+        self.log.info("Saving the model at : {}".format(pca_model_path))
+        pi.dump(reduced_matrix, open("pca_reduced_matrix_" + str(num_rows) + ".model", "w"))
         eps_list = self.helper.frange(0.1, 1.0, 0.1)
         min_samples_list = range(2, 20, 2)
         min_cluster_size_list = range(2, 20, 2)
