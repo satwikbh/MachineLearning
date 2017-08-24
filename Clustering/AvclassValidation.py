@@ -40,13 +40,15 @@ class AvclassValidation:
             list_of_keys.append(each["_id"])
         return list_of_keys
 
-    @staticmethod
-    def labels2clusters(labels, list_of_keys, variant_labels):
+    def labels2clusters(self, labels, list_of_keys, variant_labels):
         clusters = defaultdict(list)
         for index, value in enumerate(labels):
-            md5 = list_of_keys[index]
-            cluster_label = variant_labels[md5]
-            clusters[value] += cluster_label
+            try:
+                md5 = list_of_keys[index]
+                cluster_label = variant_labels[md5]
+                clusters[value] += cluster_label
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
         return clusters
 
     def prepare_labels(self, list_of_keys, collection):
@@ -54,20 +56,24 @@ class AvclassValidation:
         cursor = collection.find({"md5": {"$in": list_of_keys}})
 
         for index, doc in enumerate(cursor):
-            if index % 1000 == 0:
-                self.log.info("Iteration : #{}".format(index / 1000))
-            key = doc["md5"]
-            family = doc["avclass"]["result"]
-            variant_labels[key].append(family)
-
+            try:
+                if index % 1000 == 0:
+                    self.log.info("Iteration : #{}".format(index / 1000))
+                key = doc["md5"]
+                family = doc["avclass"]["result"]
+                variant_labels[key].append(family)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
         return variant_labels
 
-    @staticmethod
-    def compute_accuracy(input_labels):
+    def compute_accuracy(self, input_labels):
         cluster_dist = dict()
         for cluster_label, family_names in input_labels.items():
-            unique = len(set(family_names))
-            cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
+            try:
+                unique = len(set(family_names))
+                cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
         return cluster_dist
 
     def main(self, labels, input_matrix_indices):
@@ -88,7 +94,9 @@ class AvclassValidation:
 
         for index in input_matrix_indices:
             try:
-                val = temp[index].split("_")[1]
+                val = temp[index]
+                if "VirusShare" in val:
+                    val = val.split("_")[1]
                 list_of_keys.append(val)
             except Exception as e:
                 self.log.error("Error : {}".format(e))

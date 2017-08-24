@@ -29,25 +29,30 @@ class DBScanClustering:
         accuracy_params = list()
         for eps in eps_list:
             for min_samples in min_samples_list:
-                dbscan = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=-1).fit(input_matrix)
-                labels = dbscan.labels_
-                n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-                if n_clusters_ == 0:
-                    self.log.info("eps : {}\tmin_samples : {}\tNo of clusters inferred is : {}".format(eps, min_samples,
-                                                                                                       n_clusters_))
-                    continue
-                else:
-                    cluster_accuracy = self.validation.main(labels=labels, input_matrix_indices=input_matrix_indices)
-                    accuracy_params.append(cluster_accuracy)
-                    silhouette_coefficient = metrics.silhouette_score(input_matrix, labels)
+                try:
+                    dbscan = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=-1).fit(input_matrix)
+                    labels = dbscan.labels_
+                    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+                    if n_clusters_ == 0:
+                        self.log.info(
+                            "eps : {}\tmin_samples : {}\tNo of clusters inferred is : {}".format(eps, min_samples,
+                                                                                                 n_clusters_))
+                        continue
+                    else:
+                        cluster_accuracy = self.validation.main(labels=labels,
+                                                                input_matrix_indices=input_matrix_indices)
+                        accuracy_params.append(cluster_accuracy)
+                        silhouette_coefficient = metrics.silhouette_score(input_matrix, labels)
 
-                    self.log.info(
-                        "eps : {}\tmin_samples : {}\tNo of clusters : {}\tSilhouette Coeff : {}\tcluster accuracy : {}".format(
-                            eps,
-                            min_samples,
-                            n_clusters_,
-                            silhouette_coefficient,
-                            cluster_accuracy))
+                        self.log.info(
+                            "eps : {}\tmin_samples : {}\tNo of clusters : {}\tSilhouette Coeff : {}\tcluster accuracy : {}".format(
+                                eps,
+                                min_samples,
+                                n_clusters_,
+                                silhouette_coefficient,
+                                cluster_accuracy))
+                except Exception as e:
+                    self.log.error("Error : {}".format(e))
 
         self.log.info("************ DBSCAN Clustering completed *************")
         self.log.info("Time taken : {}".format(time() - start_time))
