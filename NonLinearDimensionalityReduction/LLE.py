@@ -45,8 +45,8 @@ class LLE:
             model = LocallyLinearEmbedding(n_components=n_components, n_neighbors=n_neighbors,
                                            eigen_solver=eigen_solver, n_jobs=-1)
             self.log.info("Saving current model at : {}".format(model_path))
-            pi.dump(model, open(model_path + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model", "w"))
             reduced_matrix = model.fit_transform(partial_matrix.toarray())
+            pi.dump(model, open(model_path + "/" + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model", "w"))
             self.plot_matrix(reduced_matrix, iteration, plot_path, n_neighbors)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,

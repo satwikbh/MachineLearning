@@ -43,8 +43,8 @@ class Tsne:
         for perplexity in perplexities:
             model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
             self.log.info("Saving current model at : {}".format(model_path))
-            pi.dump(model, open(model_path + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model", "w"))
             reduced_matrix = model.fit_transform(partial_matrix)
+            pi.dump(model, open(model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model", "w"))
             self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
