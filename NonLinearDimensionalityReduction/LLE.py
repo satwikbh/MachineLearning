@@ -1,3 +1,4 @@
+import json
 import pickle as pi
 
 from sklearn.manifold import LocallyLinearEmbedding
@@ -38,8 +39,8 @@ class LLE:
         min_samples_list = range(2, 20, 2)
         min_cluster_size_list = range(2, 20, 2)
 
-        dbscan_accuracies = list()
-        hdbscan_accuracies = list()
+        dbscan_accuracies = dict()
+        hdbscan_accuracies = dict()
 
         for n_neighbors in n_neighbors_list:
             model = LocallyLinearEmbedding(n_components=n_components, n_neighbors=n_neighbors,
@@ -57,8 +58,9 @@ class LLE:
                                                                    input_matrix_indices=partial_matrix_indices,
                                                                    min_cluster_size_list=min_cluster_size_list)
 
-            dbscan_accuracies.append(dbscan_accuracy_params)
-            hdbscan_accuracies.append(hdbscan_accuracy_params)
+            key = "n_neighbors_" + str(n_neighbors)
+            dbscan_accuracies[key] = dbscan_accuracy_params
+            hdbscan_accuracies[key] = hdbscan_accuracy_params
 
         return dbscan_accuracies, hdbscan_accuracies
 
@@ -91,6 +93,7 @@ class LLE:
             index += 1
 
         pi.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".pickle", "w"))
+        json.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".json", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
