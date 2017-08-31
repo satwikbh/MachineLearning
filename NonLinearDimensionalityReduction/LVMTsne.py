@@ -1,4 +1,4 @@
-import pickle as pi
+from sklearn.externals import joblib
 import json
 
 from time import time
@@ -35,9 +35,9 @@ class Tsne:
         self.log.info("tsne on iteration #{}".format(iteration))
         perplexities = range(5, 55, 5)
         init = "random"
-        eps_list = self.helper.frange(0.1, 1.0, 0.1)
-        min_samples_list = range(2, 20, 2)
-        min_cluster_size_list = range(2, 20, 2)
+        eps_list = self.helper.frange(0.1, 1.1, 0.1)
+        min_samples_list = range(2, 22, 2)
+        min_cluster_size_list = range(2, 22, 2)
 
         dbscan_accuracies = dict()
         hdbscan_accuracies = dict()
@@ -46,7 +46,8 @@ class Tsne:
             model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
             self.log.info("Saving current model at : {}".format(model_path))
             reduced_matrix = model.fit_transform(partial_matrix)
-            pi.dump(model, open(model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model", "w"))
+            # Save the model in sklearn's joblib format.
+            joblib.dump(model, model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model")
             self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
@@ -92,7 +93,6 @@ class Tsne:
             index += 1
 
         self.log.info("All the results are stored at : {}".format(results_path))
-        pi.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".pickle", "w"))
         json.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".json", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 

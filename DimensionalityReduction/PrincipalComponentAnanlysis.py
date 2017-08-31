@@ -1,4 +1,6 @@
+import json
 import pickle as pi
+import numpy as np
 from time import time
 
 from sklearn.decomposition.pca import PCA
@@ -68,10 +70,11 @@ class PrincipalComponentAnanlysis:
         # We found 1st 1000 principal components are more than enough.
         reduced_matrix = self.pca(input_matrix.toarray(), 1000, randomized=True)
         self.log.info("Saving the model at : {}".format(model_path))
-        pi.dump(reduced_matrix, open(model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".model", "w"))
-        eps_list = self.helper.frange(0.1, 1.0, 0.1)
-        min_samples_list = range(2, 20, 2)
-        min_cluster_size_list = range(2, 20, 2)
+        fname = model_path + "/" + "pca_reduced_matrix_" + str(num_rows)
+        np.save(file=fname, arr=reduced_matrix)
+        eps_list = self.helper.frange(0.1, 1.1, 0.1)
+        min_samples_list = range(2, 22, 2)
+        min_cluster_size_list = range(2, 22, 2)
 
         final_accuracies = dict()
 
@@ -91,6 +94,7 @@ class PrincipalComponentAnanlysis:
         final_accuracies["hdbscan"] = hdbscan_accuracy_params
 
         pi.dump(final_accuracies, open(results_path + "/" + "pca_results_" + str(num_rows) + ".pickle", "w"))
+        json.dump(final_accuracies, open(results_path + "/" + "pca_results_" + str(num_rows) + ".json", "w"))
 
         self.log.info("Total time taken : {}".format(time() - start_time))
 

@@ -1,6 +1,6 @@
 import json
-import pickle as pi
 
+from sklearn.externals import joblib
 from sklearn.manifold import LocallyLinearEmbedding
 from time import time
 
@@ -33,11 +33,11 @@ class LLE:
 
     def perform_lle(self, n_components, iteration, partial_matrix, partial_matrix_indices, plot_path, model_path):
         self.log.info("LLE on iteration #{}".format(iteration))
-        n_neighbors_list = range(2, 20, 2)
+        n_neighbors_list = range(2, 22, 2)
         eigen_solver = "dense"
-        eps_list = self.helper.frange(0.1, 1.0, 0.1)
-        min_samples_list = range(2, 20, 2)
-        min_cluster_size_list = range(2, 20, 2)
+        eps_list = self.helper.frange(0.1, 1.1, 0.1)
+        min_samples_list = range(2, 22, 2)
+        min_cluster_size_list = range(2, 22, 2)
 
         dbscan_accuracies = dict()
         hdbscan_accuracies = dict()
@@ -47,7 +47,8 @@ class LLE:
                                            eigen_solver=eigen_solver, n_jobs=-1)
             self.log.info("Saving current model at : {}".format(model_path))
             reduced_matrix = model.fit_transform(partial_matrix.toarray())
-            pi.dump(model, open(model_path + "/" + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model", "w"))
+            # Save the model in sklearn's joblib format.
+            joblib.dump(model, model_path + "/" + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model")
             self.plot_matrix(reduced_matrix, iteration, plot_path, n_neighbors)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
@@ -92,7 +93,6 @@ class LLE:
             final_accuracies[index] = [dbscan_accuracies, hdbscan_accuracies]
             index += 1
 
-        pi.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".pickle", "w"))
         json.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".json", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
