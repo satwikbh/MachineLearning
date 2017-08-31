@@ -47,7 +47,7 @@ class Tsne:
             self.log.info("Saving current model at : {}".format(model_path))
             reduced_matrix = model.fit_transform(partial_matrix)
             # Save the model in sklearn's joblib format.
-            joblib.dump(model, model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model")
+            # joblib.dump(model, model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model")
             self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,

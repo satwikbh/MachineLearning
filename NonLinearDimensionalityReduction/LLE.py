@@ -48,7 +48,7 @@ class LLE:
             self.log.info("Saving current model at : {}".format(model_path))
             reduced_matrix = model.fit_transform(partial_matrix.toarray())
             # Save the model in sklearn's joblib format.
-            joblib.dump(model, model_path + "/" + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model")
+            # joblib.dump(model, model_path + "/" + "lle_" + str(iteration) + "_" + str(n_neighbors) + ".model")
             self.plot_matrix(reduced_matrix, iteration, plot_path, n_neighbors)
 
             dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
