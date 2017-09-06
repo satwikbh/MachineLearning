@@ -1,3 +1,5 @@
+import sys
+
 from collections import OrderedDict
 
 from Utils.LoggerUtil import LoggerUtil
@@ -100,7 +102,6 @@ class EstimateClusterParams:
         return best_accuracy
 
     def main(self, results):
-        results = self.config['results']['lle']
         best_params = dict()
         for chunk in results.keys():
             dbscan, hdbscan = results[chunk]
@@ -113,4 +114,4 @@ class EstimateClusterParams:
 
 if __name__ == '__main__':
     estimate = EstimateClusterParams()
-    estimate.main()
+    estimate.main(sys.argv[1])
