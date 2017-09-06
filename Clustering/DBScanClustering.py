@@ -41,7 +41,7 @@ class DBScanClustering:
                     else:
                         cluster_accuracy = self.validation.main(labels=labels,
                                                                 input_matrix_indices=input_matrix_indices)
-                        key = "eps_" + str(eps) + "min_samples_" + str(min_samples)
+                        key = "eps_" + str(eps) + "_min_samples_" + str(min_samples)
                         accuracy_params[key] = cluster_accuracy
                         silhouette_coefficient = metrics.silhouette_score(input_matrix, labels)
 
