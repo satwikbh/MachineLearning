@@ -72,7 +72,10 @@ class AvclassValidation:
             try:
                 new_family_names = [x for x in family_names if "SINGLETON" not in x]
                 unique = len(set(new_family_names))
-                cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(new_family_names))
+                if len(new_family_names) > 0:
+                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(new_family_names))
+                else:
+                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / 10 ** 9)
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         return cluster_dist
