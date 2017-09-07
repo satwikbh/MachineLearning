@@ -1,4 +1,4 @@
-import sys
+import json
 
 from collections import OrderedDict
 
@@ -101,7 +101,8 @@ class EstimateClusterParams:
                 self.log.error("n_neighbors : {} \t error : {}".format(n_neighbors, e))
         return best_accuracy
 
-    def main(self, results):
+    def main(self):
+        results = self.config['results']['iterations']['lle']
         best_params = dict()
         for chunk in results.keys():
             dbscan, hdbscan = results[chunk]
@@ -109,9 +110,11 @@ class EstimateClusterParams:
             hdbscan_best_params = self.hdbscan_stats(hdbscan)
             best_params[chunk]["dbscan"] = dbscan_best_params
             best_params[chunk]["hdbscan"] = hdbscan_best_params
-        return best_params
+        fpath = self.config['results']['params']['lle']
+        json.dump(best_params, open(fpath + "/" + "best_params.json", "w"))
+        self.log.info("The optimum parameters are : {}".format(best_params))
 
 
 if __name__ == '__main__':
     estimate = EstimateClusterParams()
-    estimate.main(sys.argv[1])
+    estimate.main()
