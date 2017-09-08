@@ -1,7 +1,6 @@
 import urllib
 import pickle as pi
 import math
-import numpy as np
 import json
 
 from collections import defaultdict
@@ -52,7 +51,7 @@ class PrepareDataset:
         avclass_collection = db[avclass_collection_name]
         return client, c2db_collection, avclass_collection
 
-    def get_families_data(self, collection, list_of_keys):
+    def get_families_data(self, collection, list_of_keys, config_param_chunk_size):
         entire_families = defaultdict(list)
         classified_families = defaultdict(list)
         unclassified_families = defaultdict(list)
@@ -62,16 +61,22 @@ class PrepareDataset:
         # To revert it return the list_of_keys instead of new_list_of_keys.
         new_list_of_keys = list()
 
-        for each_key in list_of_keys:
+        count = 0
+        iteration = 0
+        while count < len(list_of_keys):
             try:
-                if "VirusShare_" in each_key:
-                    continue
-                md5 = each_key.split("_")[1]
-                query = {"md5": md5}
-                local_cursor = collection.find(query)
-                for each_value in local_cursor:
+                self.log.info("Iteration : {}".format(iteration))
+                if count + config_param_chunk_size < len(list_of_keys):
+                    value = list_of_keys[count:count + config_param_chunk_size]
+                else:
+                    value = list_of_keys[count:]
+                value = [key.split("_")[1] for key in value if "VirusShare_" in key]
+                count += config_param_chunk_size
+                local_cursor = collection.find({"md5": {"$in": value}})
+                for index, each_value in enumerate(local_cursor):
                     family = each_value['avclass']['result']
-                    entire_families[family].append(each_key)
+                    entire_families[family].append(value[index])
+                iteration += 1
             except Exception as e:
                 self.log.error("Error : {}".format(e))
 
@@ -142,15 +147,15 @@ class PrepareDataset:
     def load_data(self):
         client, c2db_collection, avclass_collection = self.get_collection()
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
+        config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         list_of_keys = list()
 
         for each_element in cursor:
             list_of_keys.append(each_element['_id'])
 
         self.log.info("Total keys before AVClass : {}".format(len(list_of_keys)))
-        list_of_keys = self.get_families_data(avclass_collection, list_of_keys)
+        list_of_keys = self.get_families_data(avclass_collection, list_of_keys, config_param_chunk_size)
         self.log.info("Total keys after AVClass : {}".format(len(list_of_keys)))
-        config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
         feature_pool_path = self.config['data']['feature_pool_path']
