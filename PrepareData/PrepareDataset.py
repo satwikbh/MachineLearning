@@ -44,25 +44,54 @@ class PrepareDataset:
 
         db_name = self.config['environment']['mongo']['db_name']
         db = client[db_name]
-        collection_name = self.config['environment']['mongo']['collection_name']
-        collection = db[collection_name]
-        return client, collection
+
+        c2db_collection_name = self.config['environment']['mongo']['c2db_collection_name']
+        avclass_collection_name = self.config['environment']['mongo']['avclass_collection_name']
+
+        c2db_collection = db[c2db_collection_name]
+        avclass_collection = db[avclass_collection_name]
+        return client, c2db_collection, avclass_collection
 
     def get_families_data(self, collection, list_of_keys):
         entire_families = defaultdict(list)
+        classified_families = defaultdict(list)
+        unclassified_families = defaultdict(list)
+
+        # FIXME : IMPORTANT
+        # This will ensure that we work only on the data which is given a label by AVClass.
+        # To revert it return the list_of_keys instead of new_list_of_keys.
+        new_list_of_keys = list()
 
         for each_key in list_of_keys:
-            query = {"feature": "malheur", "key": each_key}
-            local_cursor = collection.find(query)
-            for each_value in local_cursor:
-                key = each_value['key']
-                entire_families[each_value['value'][key]["malheur"]["family"]].append(key)
+            try:
+                if "VirusShare_" in each_key:
+                    continue
+                md5 = each_key.split("_")[1]
+                query = {"md5": md5}
+                local_cursor = collection.find(query)
+                for each_value in local_cursor:
+                    family = each_value['avclass']['result']
+                    entire_families[family].append(each_key)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
 
-        malware_families_path = self.config['data']['malware_families_list'] + "/" + "malware_families.json"
-        entire_families["UNCLASSIFIED"] = entire_families.get("")
-        entire_families.pop("")
-        json.dump(entire_families, open(malware_families_path, "w"))
-        self.log.info("Total Number of families : {} ".format(len(entire_families)))
+        malware_families_path = self.config['data']['malware_families_list']
+        for key, value in entire_families.items():
+            if "SINGLETON" in key:
+                unclassified_families[key].append(value)
+            else:
+                classified_families[key].append(value)
+                new_list_of_keys.append(value)
+
+        json.dump(classified_families, open(malware_families_path + "/" + "classified_families.json", "w"))
+        json.dump(unclassified_families, open(malware_families_path + "/" + "unclassified_families.json", "w"))
+
+        self.log.info("Total Number of families : {} \n"
+                      "Classified : {}\n"
+                      "Unclassified : {}\n".format(len(entire_families),
+                                                   len(classified_families),
+                                                   len(unclassified_families)))
+        return new_list_of_keys
 
     @staticmethod
     def flatten_list(doc2bow):
@@ -87,8 +116,10 @@ class PrepareDataset:
             del doc2bow
         return feature_pool_part_path_list
 
-    def get_data_as_matrix(self, client, collection, list_of_keys, config_param_chunk_size, feature_pool_path,
-                           feature_vector_path):
+    def get_data_as_matrix(self, client, collection,
+                           list_of_keys, config_param_chunk_size,
+                           feature_pool_path, feature_vector_path):
+
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl", path=feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl",
                                                                                   path=feature_vector_path)
@@ -109,14 +140,16 @@ class PrepareDataset:
                                            num_rows=len(list_of_keys))
 
     def load_data(self):
-        client, collection = self.get_collection()
-        cursor = collection.aggregate([{"$group": {"_id": '$key'}}])
+        client, c2db_collection, avclass_collection = self.get_collection()
+        cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
         list_of_keys = list()
 
         for each_element in cursor:
             list_of_keys.append(each_element['_id'])
 
-        self.get_families_data(collection, list_of_keys)
+        self.log.info("Total keys before AVClass : {}".format(len(list_of_keys)))
+        list_of_keys = self.get_families_data(avclass_collection, list_of_keys)
+        self.log.info("Total keys after AVClass : {}".format(len(list_of_keys)))
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
@@ -124,7 +157,7 @@ class PrepareDataset:
         feature_vector_path = self.config['data']['feature_vector_path']
         self.helper.create_dir_if_absent(feature_pool_path)
         self.helper.create_dir_if_absent(feature_vector_path)
-        fv_dist_path_names = self.get_data_as_matrix(client, collection, list_of_keys, config_param_chunk_size,
+        fv_dist_path_names = self.get_data_as_matrix(client, c2db_collection, list_of_keys, config_param_chunk_size,
                                                      feature_pool_path, feature_vector_path)
         self.data_stats.main()
 

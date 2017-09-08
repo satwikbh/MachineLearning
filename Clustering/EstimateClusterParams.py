@@ -1,15 +1,18 @@
 import json
 
 from collections import OrderedDict
+from time import time
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class EstimateClusterParams:
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
+        self.helper = HelperFunction()
 
     def dbscan_stats(self, dbscan):
         """
@@ -76,6 +79,8 @@ class EstimateClusterParams:
                             try:
                                 labels_list = labels[each_cluster]
                                 labels_list = [x for x in labels_list if "SINGLETON" not in x]
+                                if len(labels_list) == 0:
+                                    continue
                                 d = {x: labels_list.count(x) for x in labels_list}
                                 d = OrderedDict(sorted(d.items(), key=lambda x: x[1]))
                                 accuracy[each_cluster] = (max(d.values()) * 1.0 / len(labels_list)) * 100
@@ -102,17 +107,24 @@ class EstimateClusterParams:
         return best_accuracy
 
     def main(self):
-        results = self.config['results']['iterations']['lle']
-        best_params = dict()
-        for chunk in results.keys():
-            dbscan, hdbscan = results[chunk]
-            dbscan_best_params = self.dbscan_stats(dbscan)
-            hdbscan_best_params = self.hdbscan_stats(hdbscan)
-            best_params[chunk]["dbscan"] = dbscan_best_params
-            best_params[chunk]["hdbscan"] = hdbscan_best_params
-        fpath = self.config['results']['params']['lle']
-        json.dump(best_params, open(fpath + "/" + "best_params.json", "w"))
-        self.log.info("The optimum parameters are : {}".format(best_params))
+        start_time = time()
+        file_list = self.helper.get_files_ends_with_extension(path=self.config['results']['iterations']['lle'],
+                                                              extension=".json")
+        for file_name in file_list:
+            results = json.load(open(file_name))
+            best_params = dict()
+            for chunk in results.keys():
+                dbscan, hdbscan = results[chunk]
+                dbscan_best_params = self.dbscan_stats(dbscan)
+                hdbscan_best_params = self.hdbscan_stats(hdbscan)
+                best_params[chunk] = dict()
+                best_params[chunk]["dbscan"] = dbscan_best_params
+                best_params[chunk]["hdbscan"] = hdbscan_best_params
+            fpath = self.config['results']['params']['lle']
+            fname = fpath + "/" + "best_params_" + file_name.split("/")[-1].split(".")[0] + ".json"
+            json.dump(best_params, open(fname, "w"))
+            self.log.info("The optimum parameters are : {}".format(best_params))
+        self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
