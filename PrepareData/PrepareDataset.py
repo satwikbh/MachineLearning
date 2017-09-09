@@ -96,11 +96,11 @@ class PrepareDataset:
                       "Unclassified : {}\n".format(len(entire_families),
                                                    len(classified_families),
                                                    len(unclassified_families)))
-        return new_list_of_keys
+        return self.flatten_list(new_list_of_keys)
 
     @staticmethod
     def flatten_list(doc2bow):
-        flat_list = [item for sublist in doc2bow.values() for item in sublist]
+        flat_list = [item for sublist in doc2bow for item in sublist]
         return flat_list
 
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
