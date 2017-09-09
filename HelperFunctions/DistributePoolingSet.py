@@ -16,7 +16,6 @@ class DistributePoolingSet:
 
     def save_feature_vector(self, feature_vector):
         try:
-
             feature_vector_path = self.config['data']['feature_vector_path']
             file_name = feature_vector_path + "/" + self.feature_vector_ext + ".hkl"
             hkl.dump(feature_vector.tocsr(), file_name, mode='w', compression='gzip')
@@ -26,7 +25,7 @@ class DistributePoolingSet:
 
     def save_feature_pool(self, feature_pool_path, values, index):
         try:
-            file_object = open(feature_pool_path + "/" + "feature_pool_part_" + str(index) + ".hkl", "w")
+            file_object = open(feature_pool_path + "/" + "feature_pool_part_" + str(index) + ".dump", "w")
             pi.dump(values, file_object)
             file_object.close()
         except Exception as e:
