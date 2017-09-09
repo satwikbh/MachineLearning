@@ -101,7 +101,7 @@ class ParsingLogic:
         start_time = time()
         feature_vector_list = list()
         fv_dist_fnames = list()
-        cluster_dict = dict()
+        cluster_dict = defaultdict(list)
         cluster_dict.default_factory = cluster_dict.__len__
 
         for index, each_file in enumerate(feature_pool_part_path_list):
