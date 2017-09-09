@@ -67,15 +67,15 @@ class PrepareDataset:
             try:
                 self.log.info("Iteration : {}".format(iteration))
                 if count + config_param_chunk_size < len(list_of_keys):
-                    value = list_of_keys[count:count + config_param_chunk_size]
+                    p_value = list_of_keys[count:count + config_param_chunk_size]
                 else:
-                    value = list_of_keys[count:]
-                value = [key.split("_")[1] for key in value if "VirusShare_" in key]
+                    p_value = list_of_keys[count:]
+                n_value = [key.split("_")[1] for key in p_value if "VirusShare_" in key]
                 count += config_param_chunk_size
-                local_cursor = collection.find({"md5": {"$in": value}})
+                local_cursor = collection.find({"md5": {"$in": n_value}})
                 for index, each_value in enumerate(local_cursor):
                     family = each_value['avclass']['result']
-                    entire_families[family].append(value[index])
+                    entire_families[family].append("VirusShare_" + str(n_value[index]))
                 iteration += 1
             except Exception as e:
                 self.log.error("Error : {}".format(e))
@@ -116,8 +116,10 @@ class PrepareDataset:
             count += config_param_chunk_size
             doc2bow = self.parser.parse_each_document(value, collection)
             iteration += 1
-            feature_pool_part_path_list.append(
-                self.dis_pool.save_feature_pool(feature_pool_path, doc2bow.values(), iteration))
+            feature_pool_part_path_list_value = self.dis_pool.save_feature_pool(feature_pool_path,
+                                                                                doc2bow.values(),
+                                                                                iteration)
+            feature_pool_part_path_list.append(feature_pool_part_path_list_value)
             del doc2bow
         return feature_pool_part_path_list
 
