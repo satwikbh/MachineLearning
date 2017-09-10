@@ -96,7 +96,7 @@ class PrepareDataset:
                       "Unclassified : {}\n".format(len(entire_families),
                                                    len(classified_families),
                                                    len(unclassified_families)))
-        return self.helper.flatten_list(new_list_of_keys)
+        return self.helper.flatten_list(classified_families.values())
 
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         feature_pool_part_path_list = list()
