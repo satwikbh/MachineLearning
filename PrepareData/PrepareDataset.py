@@ -75,18 +75,16 @@ class PrepareDataset:
                 local_cursor = collection.find({"md5": {"$in": n_value}})
                 for index, each_value in enumerate(local_cursor):
                     family = each_value['avclass']['result']
-                    entire_families[family].append("VirusShare_" + str(n_value[index]))
+                    val = "VirusShare_" + each_value['md5']
+                    if "SINGLETON" in family:
+                        unclassified_families[family].append(val)
+                    else:
+                        classified_families[family].append(val)
                 iteration += 1
             except Exception as e:
                 self.log.error("Error : {}".format(e))
 
         malware_families_path = self.config['data']['malware_families_list']
-        for key, value in entire_families.items():
-            if "SINGLETON" in key:
-                unclassified_families[key].append(value)
-            else:
-                classified_families[key].append(value)
-                new_list_of_keys.append(value)
 
         json.dump(classified_families, open(malware_families_path + "/" + "classified_families.json", "w"))
         json.dump(unclassified_families, open(malware_families_path + "/" + "unclassified_families.json", "w"))
@@ -96,7 +94,7 @@ class PrepareDataset:
                       "Unclassified : {}\n".format(len(entire_families),
                                                    len(classified_families),
                                                    len(unclassified_families)))
-        return self.helper.flatten_list(classified_families.values())
+        return classified_families.values()
 
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         feature_pool_part_path_list = list()
