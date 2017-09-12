@@ -62,7 +62,7 @@ class PrincipalComponentAnanlysis:
         :return:
         """
         model_path = self.config["models"]["pca"]
-        results_path = self.config["results"]["pca"]
+        results_path = self.config["results"]["iterations"]["pca"]
         start_time = time()
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)

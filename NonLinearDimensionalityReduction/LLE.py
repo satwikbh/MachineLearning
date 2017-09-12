@@ -44,7 +44,7 @@ class LLE:
 
         for n_neighbors in n_neighbors_list:
             model = LocallyLinearEmbedding(n_components=n_components, n_neighbors=n_neighbors,
-                                           eigen_solver=eigen_solver, n_jobs=-1)
+                                           eigen_solver=eigen_solver, n_jobs=2)
             self.log.info("Saving current model at : {}".format(model_path))
             reduced_matrix = model.fit_transform(partial_matrix.toarray())
             # Save the model in sklearn's joblib format.
@@ -69,7 +69,7 @@ class LLE:
         start_time = time()
         plot_path = self.config['plots']['lle']
         model_path = self.config['models']['lle']
-        results_path = self.config['results']['lle']
+        results_path = self.config['results']['iterations']['lle']
 
         num_rows = 25000
         batch_size = 1000

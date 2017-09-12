@@ -68,7 +68,7 @@ class Tsne:
         start_time = time()
         plot_path = self.config['plots']['tsne']
         model_path = self.config['models']['tsne']
-        results_path = self.config['results']['tsne']
+        results_path = self.config['results']['iterations']['tsne']
 
         num_rows = 25000
         batch_size = 1000
