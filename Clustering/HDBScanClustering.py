@@ -36,7 +36,7 @@ class HDBScanClustering:
                         len(labels)))
                     continue
                 else:
-                    cluster_accuracy = self.validation.main(labels=labels, input_matrix_indices=input_matrix_indices)
+                    cluster_accuracy = self.validation.main(labels_pred=labels, input_matrix_indices=input_matrix_indices)
                     key = "min_cluster_size_" + str(min_cluster_size)
                     accuracy_params[key] = cluster_accuracy
                     silhouette_coefficient = metrics.silhouette_score(input_matrix, labels=labels)

@@ -43,6 +43,14 @@ class AvclassValidation:
         return list_of_keys
 
     def labels2clusters(self, labels, list_of_keys, variant_labels):
+        """
+        Takes the labels and prepares clusters.
+        All the md5 for a label are taken and their family is inferred and a dict is created out of them
+        :param labels:
+        :param list_of_keys:
+        :param variant_labels:
+        :return:
+        """
         clusters = defaultdict(list)
         for index, value in enumerate(labels):
             try:
@@ -54,6 +62,12 @@ class AvclassValidation:
         return clusters
 
     def prepare_labels(self, list_of_keys, collection):
+        """
+        Take the list of keys and find what the avclass label is inferred for it.
+        :param list_of_keys:
+        :param collection:
+        :return variant_labels: a dict which contains md5 as key and the possible families as values.
+        """
         variant_labels = defaultdict(list)
         cursor = collection.find({"md5": {"$in": list_of_keys}})
 
@@ -82,21 +96,19 @@ class AvclassValidation:
         return cluster_dist
 
     @staticmethod
-    def get_true_labels(labels, input_labels):
+    def get_true_labels(input_labels):
         labels_true = []
-        labels_pred = []
+
         for cluster_label, family_names in input_labels.items():
             labels_true += [int(cluster_label)] * len(family_names)
 
-        for cluster_label, malware_source in labels:
-            labels_pred.append(int(cluster_label))
-        return labels_true, labels_pred
+        return labels_true
 
-    def main(self, labels, input_matrix_indices):
+    def main(self, labels_pred, input_matrix_indices):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
-        :param labels: The labels format is (cluster_label, malware_source).
+        :param labels_pred: The labels format is (cluster_label, malware_source).
         malware_source is found in database and usually starts with VirusShare_.
         :param input_matrix_indices: These indices will be useful to compute the cluster accuracy.
         Since the dataset is distributed, giving the indices will help to locate the correct chunk.
@@ -118,8 +130,9 @@ class AvclassValidation:
                 self.log.error("Error : {}".format(e))
 
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
-        input_labels = self.labels2clusters(labels, list_of_keys, variant_labels)
-        labels_true, labels_pred = self.get_true_labels(labels, input_labels)
+        input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
+        labels_true = self.get_true_labels(input_labels)
+
         ari_score = adjusted_rand_score(labels_true, labels_pred)
         nmi_score = adjusted_mutual_info_score(labels_true, labels_pred)
         acc_score = self.compute_accuracy(input_labels)

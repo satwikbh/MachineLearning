@@ -39,7 +39,7 @@ class DBScanClustering:
                                                                                                  n_clusters_))
                         continue
                     else:
-                        cluster_accuracy = self.validation.main(labels=labels,
+                        cluster_accuracy = self.validation.main(labels_pred=labels,
                                                                 input_matrix_indices=input_matrix_indices)
                         key = "eps_" + str(eps) + "_min_samples_" + str(min_samples)
                         accuracy_params[key] = cluster_accuracy
