@@ -5,7 +5,7 @@ import json
 
 from collections import defaultdict
 
-from DimensionalityReduction.IterativePca import IterativePca
+from LinearDimensionalityReduction.IterativePca import IterativePca
 from HelperFunctions.ParsingLogic import ParsingLogic
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from Clustering.KMeansImpl import KMeansImpl
@@ -120,7 +120,7 @@ class PrepareDataset:
                            list_of_keys, config_param_chunk_size,
                            feature_pool_path, feature_vector_path):
 
-        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl", path=feature_pool_path)
+        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump", path=feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl",
                                                                                   path=feature_vector_path)
 

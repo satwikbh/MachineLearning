@@ -3,6 +3,8 @@ import pickle as pi
 
 from collections import defaultdict
 from time import time
+from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
+
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
@@ -70,15 +72,25 @@ class AvclassValidation:
         cluster_dist = dict()
         for cluster_label, family_names in input_labels.items():
             try:
-                new_family_names = [x for x in family_names if "SINGLETON" not in x]
-                unique = len(set(new_family_names))
-                if len(new_family_names) > 0:
-                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(new_family_names))
+                unique = len(set(family_names))
+                if len(family_names) > 0:
+                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
                 else:
                     cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / 10 ** 9)
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         return cluster_dist
+
+    @staticmethod
+    def get_true_labels(labels, input_labels):
+        labels_true = []
+        labels_pred = []
+        for cluster_label, family_names in input_labels.items():
+            labels_true += [int(cluster_label)] * len(family_names)
+
+        for cluster_label, malware_source in labels:
+            labels_pred.append(int(cluster_label))
+        return labels_true, labels_pred
 
     def main(self, labels, input_matrix_indices):
         """
@@ -107,7 +119,15 @@ class AvclassValidation:
 
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
         input_labels = self.labels2clusters(labels, list_of_keys, variant_labels)
-        cluster_accuracy = self.compute_accuracy(input_labels)
+        labels_true, labels_pred = self.get_true_labels(labels, input_labels)
+        ari_score = adjusted_rand_score(labels_true, labels_pred)
+        nmi_score = adjusted_mutual_info_score(labels_true, labels_pred)
+        acc_score = self.compute_accuracy(input_labels)
+
+        cluster_accuracy = dict()
+        cluster_accuracy['ari'] = ari_score
+        cluster_accuracy['nmi'] = nmi_score
+        cluster_accuracy['acc'] = acc_score
 
         self.log.info("Total time taken : {}".format(time() - start_time))
         return (cluster_accuracy, input_labels)
