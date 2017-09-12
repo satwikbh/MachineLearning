@@ -8,6 +8,7 @@ from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class AvclassValidation:
@@ -15,6 +16,7 @@ class AvclassValidation:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
+        self.helper = HelperFunction()
 
     def get_connection(self):
         username = self.config['environment']['mongo']['username']
@@ -95,12 +97,13 @@ class AvclassValidation:
                 self.log.error("Error : {}".format(e))
         return cluster_dist
 
-    @staticmethod
-    def get_true_labels(input_labels):
+    def get_true_labels(self, variant_labels):
         labels_true = []
+        labels = self.helper.flatten_list(variant_labels.values())
+        unique_labels = set(labels)
 
-        for cluster_label, family_names in input_labels.items():
-            labels_true += [int(cluster_label)] * len(family_names)
+        for index, label in enumerate(unique_labels):
+            labels_true += [index] * labels.count(label)
 
         return labels_true
 
@@ -131,7 +134,7 @@ class AvclassValidation:
 
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
-        labels_true = self.get_true_labels(input_labels)
+        labels_true = self.get_true_labels(variant_labels)
 
         ari_score = adjusted_rand_score(labels_true, labels_pred)
         nmi_score = adjusted_mutual_info_score(labels_true, labels_pred)
