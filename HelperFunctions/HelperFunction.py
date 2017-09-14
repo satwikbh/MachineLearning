@@ -1,6 +1,7 @@
 import os
 import math
 import hickle as hkl
+import numpy as np
 from scipy.sparse import vstack
 
 
@@ -81,3 +82,7 @@ class HelperFunction:
             fv = hkl.load(each)
             matrix.append(fv)
         return matrix
+
+    @staticmethod
+    def mean_square_error(source, target):
+        return math.sqrt(np.mean((source - target) ** 2))
