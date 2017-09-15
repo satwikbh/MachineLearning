@@ -51,7 +51,7 @@ class PrincipalComponentAnalysis:
                 reconstructed_matrix = pca.inverse_transform(reduced_matrix)
                 error_curr = self.helper.mean_square_error(reconstructed_matrix, input_matrix)
                 best_params['n_components_' + str(n_components)] = error_curr
-                if (error_curr - error_prev) * 100 < reconstruction_error:
+                if abs(error_curr - error_prev) * 100 < reconstruction_error:
                     json.dump(best_params, open(results_path + "/" + "best_params_pca_" + str(num_rows) + ".json", "w"))
                     break
                 error_prev = error_curr
