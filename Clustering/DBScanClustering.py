@@ -45,13 +45,13 @@ class DBScanClustering:
                         accuracy_params[key] = cluster_accuracy
                         silhouette_coefficient = metrics.silhouette_score(input_matrix, labels)
 
-                        self.log.info("eps : {}\tmin_samples : {}\t"
-                                      "No of clusters : {}\tSilhouette Coeff : {}\t"
-                                      "cluster accuracy : {}".format(eps,
+                        self.log.info("eps : {}\t"
+                                      "min_samples : {}\t"
+                                      "No of clusters : {}\t"
+                                      "Silhouette Coeff : {}".format(eps,
                                                                      min_samples,
                                                                      n_clusters_,
-                                                                     silhouette_coefficient,
-                                                                     cluster_accuracy))
+                                                                     silhouette_coefficient))
                 except Exception as e:
                     self.log.error("Error : {}".format(e))
 

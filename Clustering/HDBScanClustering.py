@@ -36,15 +36,17 @@ class HDBScanClustering:
                         len(labels)))
                     continue
                 else:
-                    cluster_accuracy = self.validation.main(labels_pred=labels, input_matrix_indices=input_matrix_indices)
+                    cluster_accuracy = self.validation.main(labels_pred=labels,
+                                                            input_matrix_indices=input_matrix_indices)
                     key = "min_cluster_size_" + str(min_cluster_size)
                     accuracy_params[key] = cluster_accuracy
                     silhouette_coefficient = metrics.silhouette_score(input_matrix, labels=labels)
-                    self.log.info("min_cluster_size : {}\tNo of clusters : {}\t"
-                                  "Silhouette Coeff : {}\tcluster accuracy : {}".format(min_cluster_size,
-                                                                                        len(labels),
-                                                                                        silhouette_coefficient,
-                                                                                        cluster_accuracy))
+                    self.log.info("min_cluster_size : {}\t"
+                                  "No of clusters : {}\t"
+                                  "Silhouette Coeff : {}".format(min_cluster_size,
+                                                                 len(labels),
+                                                                 silhouette_coefficient,
+                                                                 cluster_accuracy))
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         self.log.info("************ HDDBSCAN Clustering started *************")
