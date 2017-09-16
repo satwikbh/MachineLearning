@@ -56,6 +56,7 @@ class KPCA:
                         best_params[kernel]['degree_' + str(degree)] = error_curr
                         if (error_curr - error_prev) * 100 < reconstruction_error:
                             break
+                        error_prev = error_curr
                 if kernel in ['rbf', 'sigmoid']:
                     for gamma in gamma_list:
                         self.log.info("Params are \nKernel : {} \t Gamma : {}".format(kernel, gamma))
@@ -68,6 +69,7 @@ class KPCA:
                         best_params[kernel]['gamma_' + str(gamma)] = error_curr
                         if (error_curr - error_prev) * 100 < reconstruction_error:
                             break
+                        error_prev = error_curr
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         json.dump(best_params, open(results_path + "/" + "best_params_kpca.json", "w"))
@@ -82,6 +84,7 @@ class KPCA:
             n_components = best_param_value.split('n_components_')[1]
         else:
             n_components = self.pca.main(cluster_estimation=False)
+        self.log.info("Number of components : {}".format(n_components))
         return n_components
 
     def main(self):
@@ -92,7 +95,7 @@ class KPCA:
         start_time = time()
         kpca_model_path = self.config["models"]["kpca"]["model_path"]
         kpca_results_path = self.config["results"]["iterations"]["kpca"]
-        pca_results_path = self.config['results']['params']['kpca']
+        pca_results_path = self.config["results"]["params"]["pca"]
 
         num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
