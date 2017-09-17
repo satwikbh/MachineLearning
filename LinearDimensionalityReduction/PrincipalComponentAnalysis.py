@@ -60,7 +60,7 @@ class PrincipalComponentAnalysis:
         self.log.info("Exiting the {} class".format(self.pca.__name__))
         return reduced_matrix, n_components
 
-    def main(self, cluster_estimation=True):
+    def main(self, num_rows, cluster_estimation=True):
         """
         The main method.
         :return:
@@ -69,7 +69,6 @@ class PrincipalComponentAnalysis:
         pca_results_path = self.config["results"]["iterations"]["pca"]
 
         start_time = time()
-        num_rows = 25000
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         reduced_matrix, n_components = self.pca(input_matrix=input_matrix.toarray(), num_rows=num_rows, randomized=True)
         self.log.info("Saving the PCA model at : {}".format(pca_model_path))
@@ -108,4 +107,4 @@ class PrincipalComponentAnalysis:
 
 if __name__ == '__main__':
     pca = PrincipalComponentAnalysis()
-    pca.main(cluster_estimation=True)
+    pca.main(num_rows=25000, cluster_estimation=True)
