@@ -94,7 +94,9 @@ class PrepareDataset:
                       "Unclassified : {}\n".format(len(entire_families),
                                                    len(classified_families),
                                                    len(unclassified_families)))
-        return classified_families.values()
+        l = classified_families.values()
+        l = self.helper.is_nested_list(l)
+        return l
 
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         feature_pool_part_path_list = list()
