@@ -6,8 +6,8 @@ from collections import defaultdict
 from scipy.sparse import coo_matrix, vstack
 
 from Utils.LoggerUtil import LoggerUtil
-from DistributePoolingSet import DistributePoolingSet
-from HelperFunction import HelperFunction
+from HelperFunctions.DistributePoolingSet import DistributePoolingSet
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class ParsingLogic:
