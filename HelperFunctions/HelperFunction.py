@@ -86,3 +86,13 @@ class HelperFunction:
     @staticmethod
     def mean_square_error(source, target):
         return math.sqrt(np.mean((source - target) ** 2))
+
+    @staticmethod
+    def is_nested_list(l):
+        return_list = list()
+        for each in l:
+            if isinstance(each, list):
+                return_list += each
+            else:
+                return_list.append(each)
+        return return_list
