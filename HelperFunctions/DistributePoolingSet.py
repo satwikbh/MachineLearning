@@ -1,6 +1,8 @@
 import hickle as hkl
 import pickle as pi
 
+from scipy.sparse import save_npz
+
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from HelperFunction import HelperFunction
@@ -33,9 +35,9 @@ class DistributePoolingSet:
 
     def save_distributed_feature_vector(self, mini_batch_matrix, feature_vector_path, index):
         try:
-            file_name = feature_vector_path + "/" + "feature_vector_part_" + str(index) + ".hkl"
+            file_name = feature_vector_path + "/" + "feature_vector_part_" + str(index) + ".npz"
             file_object = open(file_name, "w")
-            hkl.dump(mini_batch_matrix.tocsr(), file_object, mode="w")
+            save_npz(file_object, mini_batch_matrix, compressed=True)
             file_object.close()
             return file_name
         except Exception as e:
