@@ -50,14 +50,8 @@ class PrepareDataset:
         return client, c2db_collection, avclass_collection
 
     def get_families_data(self, collection, list_of_keys, config_param_chunk_size):
-        entire_families = defaultdict(list)
         classified_families = defaultdict(list)
         unclassified_families = defaultdict(list)
-
-        # FIXME : IMPORTANT
-        # This will ensure that we work only on the data which is given a label by AVClass.
-        # To revert it return the list_of_keys instead of new_list_of_keys.
-        new_list_of_keys = list()
 
         count = 0
         iteration = 0
@@ -87,11 +81,8 @@ class PrepareDataset:
         json.dump(classified_families, open(malware_families_path + "/" + "classified_families.json", "w"))
         json.dump(unclassified_families, open(malware_families_path + "/" + "unclassified_families.json", "w"))
 
-        self.log.info("Total Number of families : {} \n"
-                      "Classified : {}\n"
-                      "Unclassified : {}\n".format(len(entire_families),
-                                                   len(classified_families),
-                                                   len(unclassified_families)))
+        self.log.info("Classified : {} \t Unclassified : {}".format(len(classified_families),
+                                                                    len(unclassified_families)))
         l = classified_families.values()
         l = self.helper.is_nested_list(l)
         return l
@@ -120,7 +111,8 @@ class PrepareDataset:
                            list_of_keys, config_param_chunk_size,
                            feature_pool_path, feature_vector_path):
 
-        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump", path=feature_pool_path)
+        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
+                                                                                path=feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl",
                                                                                   path=feature_vector_path)
 
