@@ -3,7 +3,7 @@ from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
 
 from time import time
-from scipy.sparse import load_npz
+from scipy.sparse import load_npz, save_npz
 
 import numpy as np
 import hickle as hkl
@@ -65,10 +65,12 @@ class DataStats:
         threshold = num_rows * self.config['data']['pruning_threshold']
         cols_to_delete = self.estimate_cols_to_remove(col_wise_dist, threshold)
         for index, each_file in enumerate(feature_vector):
-            fv = load_npz(each_file).tocsr()
+            fv = load_npz(each_file)
             new_mat = self.delete_columns(fv, cols_to_delete)
-            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
-            hkl.dump(new_mat, open(file_name, "w"))
+            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".npz"
+            file_object = open(file_name)
+            save_npz(file_object, new_mat, compressed=True)
+            file_object.close()
 
     def main(self):
         start_time = time()
