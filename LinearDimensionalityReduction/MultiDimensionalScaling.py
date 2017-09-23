@@ -1,15 +1,15 @@
 import json
-import numpy as np
-
 from time import time
-from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
-from sklearn.manifold import MDS
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
+import numpy as np
+from sklearn.manifold import MDS
+from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
+
 from HelperFunctions.HelperFunction import HelperFunction
-from PrepareData.LoadData import LoadData
 from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
+from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class MultiDimensionalScaling:
@@ -69,10 +69,14 @@ class MultiDimensionalScaling:
         self.log.info("Number of components : {}".format(n_components))
         return n_components
 
-    def main(self):
+    def main(self, num_rows):
+        """
+        The main method.
+        :param num_rows: Number of rows in the input matrix
+        :return:
+        """
         start_time = time()
 
-        num_rows = 25000
         seed = np.random.RandomState(seed=3)
 
         mds_model_path = self.config["models"]["mds"]["model_path"]
@@ -93,3 +97,8 @@ class MultiDimensionalScaling:
         # Add clustering code.
 
         self.log.info("Total time taken : {}".format(time() - start_time))
+
+
+if __name__ == '__main__':
+    mds = MultiDimensionalScaling()
+    mds.main(num_rows=25000)

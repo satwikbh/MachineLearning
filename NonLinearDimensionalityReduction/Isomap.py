@@ -1,15 +1,14 @@
 import json
-import pickle as pi
-import numpy as np
 from time import time
 
+import numpy as np
 from sklearn.manifold import isomap
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
-from PrepareData.LoadData import LoadData
 from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
+from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class Isomap:
@@ -57,7 +56,7 @@ class Isomap:
         isomap_model_path = self.config["models"]["isomap"]["model_path"]
         isomap_results_path = self.config["results"]["iterations"]["isomap"]
 
-        n_neighbors_list = range(2, 20, 1)
+        n_neighbors_list = range(2, 21, 1)
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         n_components = self.get_n_components(num_rows, pca_results_path)

@@ -1,17 +1,17 @@
 import json
 import pickle as pi
-import numpy as np
 from time import time
 
+import numpy as np
 from sklearn.decomposition.pca import PCA
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
+from Clustering.DBScanClustering import DBScanClustering
+from Clustering.EstimateClusterParams import EstimateClusterParams
+from Clustering.HDBScanClustering import HDBScanClustering
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.LoadData import LoadData
-from Clustering.DBScanClustering import DBScanClustering
-from Clustering.HDBScanClustering import HDBScanClustering
-from Clustering.EstimateClusterParams import EstimateClusterParams
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class PrincipalComponentAnalysis:
@@ -65,10 +65,9 @@ class PrincipalComponentAnalysis:
         The main method.
         :return:
         """
+        start_time = time()
         pca_model_path = self.config["models"]["pca"]["model_path"]
         pca_results_path = self.config["results"]["iterations"]["pca"]
-
-        start_time = time()
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         reduced_matrix, n_components = self.pca(input_matrix=input_matrix.toarray(), num_rows=num_rows, randomized=True)
         self.log.info("Saving the PCA model at : {}".format(pca_model_path))
