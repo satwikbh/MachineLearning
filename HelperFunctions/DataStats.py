@@ -65,7 +65,7 @@ class DataStats:
         threshold = num_rows * self.config['data']['pruning_threshold']
         cols_to_delete = self.estimate_cols_to_remove(col_wise_dist, threshold)
         for index, each_file in enumerate(feature_vector):
-            fv = hkl.load(each_file).tocsr()
+            fv = load_npz(each_file).tocsr()
             new_mat = self.delete_columns(fv, cols_to_delete)
             file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
             hkl.dump(new_mat, open(file_name, "w"))
@@ -83,6 +83,7 @@ class DataStats:
         feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".npz")
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist, num_rows = self.get_stats(feature_vector)
-        hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
+        np.savez(open(col_dist_path + "/" + "col_wise_dist.dump", "w"), np.asarray(col_wise_dist))
+        # hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
         self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path, num_rows)
         self.log.info("Total time for execution : {}".format(time() - start_time))
