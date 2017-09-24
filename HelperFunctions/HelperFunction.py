@@ -2,7 +2,8 @@ import os
 import math
 import hickle as hkl
 import numpy as np
-from scipy.sparse import vstack
+
+from scipy.sparse import vstack, load_npz
 
 
 class HelperFunction:
