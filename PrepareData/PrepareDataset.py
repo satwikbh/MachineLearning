@@ -113,7 +113,7 @@ class PrepareDataset:
 
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
                                                                                 path=feature_pool_path)
-        feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="hkl",
+        feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                   path=feature_vector_path)
 
         if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):

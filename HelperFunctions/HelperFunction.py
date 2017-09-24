@@ -76,6 +76,14 @@ class HelperFunction:
         return flat_list
 
     @staticmethod
+    def open_np_files(list_of_files):
+        matrix = list()
+        for each in list_of_files:
+            fv = load_npz(each)
+            matrix.append(fv)
+        return matrix
+
+    @staticmethod
     def open_files(list_of_files):
         matrix = list()
         for each in list_of_files:

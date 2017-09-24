@@ -57,8 +57,7 @@ class DataStats:
         matrix = csc_matrix((new_data, (rows, cols)), shape=shape)
         return matrix
 
-    @staticmethod
-    def delete_columns(old_mat, cols_to_delete):
+    def delete_columns(self, old_mat, cols_to_delete):
         all_cols = np.arange(old_mat.shape[1])
         cols_to_keep = np.where(np.logical_not(np.in1d(all_cols, cols_to_delete)))[0]
         old_mat = self.remove_duplicates(old_mat)
@@ -80,10 +79,8 @@ class DataStats:
         for index, each_file in enumerate(feature_vector):
             fv = load_npz(each_file)
             new_mat = self.delete_columns(fv, cols_to_delete)
-            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".npz"
-            file_object = open(file_name)
-            save_npz(file_object, new_mat, compressed=True)
-            file_object.close()
+            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index)
+            save_npz(file_name, new_mat, compressed=True)
 
     def main(self):
         start_time = time()
