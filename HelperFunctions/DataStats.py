@@ -3,7 +3,7 @@ from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
 
 from time import time
-from scipy.sparse import load_npz, save_npz
+from scipy.sparse import load_npz, save_npz, csc_matrix
 
 import numpy as np
 import hickle as hkl
@@ -46,9 +46,22 @@ class DataStats:
         return col_wise_dist, num_rows
 
     @staticmethod
+    def remove_duplicates(old_mat):
+        data, rows, cols, shape = old_mat.data, old_mat.row, old_mat.col, old_mat.shape
+        new_data = list()
+        for c_data in data:
+            if c_data > 1:
+                new_data.append(1)
+            else:
+                new_data.append(c_data)
+        matrix = csc_matrix((new_data, (rows, cols)), shape=shape)
+        return matrix
+
+    @staticmethod
     def delete_columns(old_mat, cols_to_delete):
         all_cols = np.arange(old_mat.shape[1])
         cols_to_keep = np.where(np.logical_not(np.in1d(all_cols, cols_to_delete)))[0]
+        old_mat = self.remove_duplicates(old_mat)
         new_mat = old_mat[:, cols_to_keep]
         return new_mat
 
