@@ -18,7 +18,7 @@ class LoadData:
 
     def scale(self, input_matrix):
         self.log.info("Performing Scaling on the input data")
-        scaler = StandardScaler().fit(input_matrix)
+        scaler = StandardScaler(with_mean=False).fit(input_matrix)
         return scaler.transform(input_matrix)
 
     def main(self, num_rows):
