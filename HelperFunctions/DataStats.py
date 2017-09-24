@@ -47,15 +47,16 @@ class DataStats:
 
     @staticmethod
     def remove_duplicates(old_mat):
-        data, rows, cols, shape = old_mat.data, old_mat.row, old_mat.col, old_mat.shape
+        new_mat = old_mat.tocsr()
+        data = new_mat.data
         new_data = list()
         for c_data in data:
-            if c_data > 1:
-                new_data.append(1)
-            else:
+            if c_data == 1 or c_data == 0:
                 new_data.append(c_data)
-        matrix = csr_matrix((new_data, (rows, cols)), shape=shape)
-        return matrix
+            else:
+                new_data.append(1)
+        new_mat.data = np.asarray(new_data, dtype=np.float32)
+        return new_mat
 
     def delete_columns(self, old_mat, cols_to_delete):
         all_cols = np.arange(old_mat.shape[1])
