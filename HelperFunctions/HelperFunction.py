@@ -4,6 +4,7 @@ import hickle as hkl
 import numpy as np
 
 from scipy.sparse import vstack, load_npz
+from sklearn.metrics import mean_squared_error
 
 
 class HelperFunction:
@@ -94,7 +95,8 @@ class HelperFunction:
 
     @staticmethod
     def mean_square_error(source, target):
-        return math.sqrt(np.mean((source - target) ** 2))
+        mse = mean_squared_error(source, target)
+        return mse
 
     @staticmethod
     def is_nested_list(l):
