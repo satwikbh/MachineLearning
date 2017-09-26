@@ -39,10 +39,8 @@ class PrincipalComponentAnalysis:
         reconstruction_error = self.config['models']['pca']['reconstruction_error']
         n_components_list = range(1000, 5100, 100)
         best_params = dict()
-        error_prev = 0.0
         for n_components in n_components_list:
             try:
-                self.log.info("Trying for n_components : {}".format(n_components))
                 if randomized:
                     pca = PCA(n_components=n_components, svd_solver='randomized')
                 else:
@@ -50,11 +48,11 @@ class PrincipalComponentAnalysis:
                 reduced_matrix = pca.fit_transform(input_matrix)
                 reconstructed_matrix = pca.inverse_transform(reduced_matrix)
                 error_curr = self.helper.mean_square_error(reconstructed_matrix, input_matrix)
+                self.log.info("Model for n_components : {}\tError : {}".format(n_components, error_curr))
                 best_params['n_components_' + str(n_components)] = error_curr
-                if abs(error_curr - error_prev) * 100 < reconstruction_error:
+                if error_curr * 100 < reconstruction_error:
                     json.dump(best_params, open(results_path + "/" + "best_params_pca_" + str(num_rows) + ".json", "w"))
                     break
-                error_prev = error_curr
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         self.log.info("Exiting the {} class".format(self.pca.__name__))

@@ -2,7 +2,9 @@ import os
 import math
 import hickle as hkl
 import numpy as np
-from scipy.sparse import vstack
+
+from scipy.sparse import vstack, load_npz
+from sklearn.metrics import mean_squared_error
 
 
 class HelperFunction:
@@ -76,6 +78,14 @@ class HelperFunction:
         return flat_list
 
     @staticmethod
+    def open_np_files(list_of_files):
+        matrix = list()
+        for each in list_of_files:
+            fv = load_npz(each)
+            matrix.append(fv)
+        return matrix
+
+    @staticmethod
     def open_files(list_of_files):
         matrix = list()
         for each in list_of_files:
@@ -85,7 +95,8 @@ class HelperFunction:
 
     @staticmethod
     def mean_square_error(source, target):
-        return math.sqrt(np.mean((source - target) ** 2))
+        mse = mean_squared_error(source, target)
+        return mse
 
     @staticmethod
     def is_nested_list(l):

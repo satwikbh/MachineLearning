@@ -18,15 +18,15 @@ class LoadData:
 
     def scale(self, input_matrix):
         self.log.info("Performing Scaling on the input data")
-        scaler = StandardScaler().fit(input_matrix)
+        scaler = StandardScaler(with_mean=False).fit(input_matrix)
         return scaler.transform(input_matrix)
 
     def main(self, num_rows):
         num_files = num_rows / 1000
         input_matrix_indices = range(num_rows)
         pruned_fv_path = self.config['data']['pruned_feature_vector_path']
-        list_of_files = self.helper.get_files_ends_with_extension(".hkl", pruned_fv_path)
-        matrix = self.helper.open_files(list_of_files[:num_files])
+        list_of_files = self.helper.get_files_ends_with_extension(".npz", pruned_fv_path)
+        matrix = self.helper.open_np_files(list_of_files[:num_files])
         input_matrix = self.helper.stack_matrix(matrix)
         input_matrix = self.scale(input_matrix)
         nearest_repr = self.helper.nearest_power_of_two(input_matrix.shape[1])

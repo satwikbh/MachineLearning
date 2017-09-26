@@ -3,7 +3,7 @@ from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
 
 from time import time
-from scipy.sparse import load_npz
+from scipy.sparse import load_npz, save_npz, csr_matrix
 
 import numpy as np
 import hickle as hkl
@@ -46,10 +46,24 @@ class DataStats:
         return col_wise_dist, num_rows
 
     @staticmethod
-    def delete_columns(old_mat, cols_to_delete):
+    def remove_duplicates(old_mat):
+        new_mat = old_mat.tocsr()
+        data = new_mat.data
+        new_data = list()
+        for c_data in data:
+            if c_data == 1 or c_data == 0:
+                new_data.append(c_data)
+            else:
+                new_data.append(1)
+        new_mat.data = np.asarray(new_data, dtype=np.float32)
+        return new_mat
+
+    def delete_columns(self, old_mat, cols_to_delete):
         all_cols = np.arange(old_mat.shape[1])
         cols_to_keep = np.where(np.logical_not(np.in1d(all_cols, cols_to_delete)))[0]
+        old_mat = self.remove_duplicates(old_mat)
         new_mat = old_mat[:, cols_to_keep]
+        new_mat = new_mat.astype(np.float32)
         return new_mat
 
     @staticmethod
@@ -65,10 +79,10 @@ class DataStats:
         threshold = num_rows * self.config['data']['pruning_threshold']
         cols_to_delete = self.estimate_cols_to_remove(col_wise_dist, threshold)
         for index, each_file in enumerate(feature_vector):
-            fv = hkl.load(each_file).tocsr()
+            fv = load_npz(each_file)
             new_mat = self.delete_columns(fv, cols_to_delete)
-            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index) + ".hkl"
-            hkl.dump(new_mat, open(file_name, "w"))
+            file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index)
+            save_npz(file_name, new_mat, compressed=True)
 
     def main(self):
         start_time = time()
@@ -83,6 +97,7 @@ class DataStats:
         feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".npz")
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist, num_rows = self.get_stats(feature_vector)
-        hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
+        np.savez(open(col_dist_path + "/" + "col_wise_dist.dump", "w"), np.asarray(col_wise_dist))
+        # hkl.dump(np.asarray(col_wise_dist), open(col_dist_path + "/" + "col_wise_dist.dump", "w"))
         self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path, num_rows)
         self.log.info("Total time for execution : {}".format(time() - start_time))
