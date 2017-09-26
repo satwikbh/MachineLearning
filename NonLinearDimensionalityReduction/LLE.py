@@ -1,16 +1,15 @@
 import json
-
-from sklearn.externals import joblib
-from sklearn.manifold import LocallyLinearEmbedding
 from time import time
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
+from sklearn.manifold import LocallyLinearEmbedding
+
 from Clustering.DBScanClustering import DBScanClustering
 from Clustering.HDBScanClustering import HDBScanClustering
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.Plotting import Plotting
 from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class LLE:

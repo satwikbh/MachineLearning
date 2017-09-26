@@ -3,6 +3,7 @@ from time import time
 
 import numpy as np
 from sklearn.manifold import MDS
+from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -20,18 +21,42 @@ class MultiDimensionalScaling:
         self.helper = HelperFunction()
         self.pca = PrincipalComponentAnalysis()
 
+    @staticmethod
+    def jaccard_distances(input_matrix):
+        x, y = input_matrix.shape
+        similarities = list()
+        for i in xrange(x):
+            temp = list()
+            for j in xrange(y):
+                jaccard_similarity = jaccard_similarity_score(input_matrix[i][j])
+                temp.append(jaccard_similarity)
+            similarities.append(temp)
+        return np.asarray(similarities)
+
+    def pairwise_distance(self, distance_metric, input_matrix):
+        similarities = np.asarray([])
+        if 'euclidean' is distance_metric:
+            similarities = euclidean_distances(input_matrix, input_matrix)
+        if 'cosine' is distance_metric:
+            similarities = cosine_distances(input_matrix, input_matrix)
+        if 'jaccard' is distance_metric:
+            similarities = self.jaccard_distances(input_matrix)
+        else:
+            self.log.error("Distance metric : {} is not in the list of allowed values".format(distance_metric))
+        return similarities
+
     def perform_mds(self, n_components, input_matrix, seed):
         start_time = time()
-        metrics = ['euclidean', 'cosine']
+        metrics = ['cosine', 'jaccard']
         self.log.info("The metrics enabled for MDS are : {}".format(metrics))
         mds = MDS(n_components=n_components, metric=True,
-                  max_iter=3000, eps=1e-12,
+                  max_iter=900, eps=1e-12,
                   dissimilarity="precomputed",
                   random_state=seed, n_jobs=-1,
                   n_init=1)
 
         nmds = MDS(n_components=n_components, metric=False,
-                   max_iter=3000, eps=1e-12,
+                   max_iter=900, eps=1e-12,
                    dissimilarity="precomputed",
                    random_state=seed, n_jobs=-1,
                    n_init=1)
@@ -40,10 +65,8 @@ class MultiDimensionalScaling:
         nmds_reduced_matrix_list = list()
 
         for distance_metric in metrics:
-            if 'euclidean' is distance_metric:
-                similarities = euclidean_distances(input_matrix, input_matrix)
-            if 'cosine' is distance_metric:
-                similarities = cosine_distances(input_matrix, input_matrix)
+            similarities = self.pairwise_distance(distance_metric, input_matrix)
+
             self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
             mds_reduced_matrix = mds.fit_transform(similarities)
             mds_reduced_matrix_list.append(mds_reduced_matrix)
