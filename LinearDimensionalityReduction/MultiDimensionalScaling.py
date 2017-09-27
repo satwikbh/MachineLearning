@@ -21,8 +21,7 @@ class MultiDimensionalScaling:
         self.helper = HelperFunction()
         self.pca = PrincipalComponentAnalysis()
 
-    @staticmethod
-    def jaccard_distances(input_matrix):
+    def jaccard_distances(self, input_matrix):
         x, y = input_matrix.shape
         similarities = list()
         for i in xrange(x):
@@ -45,9 +44,9 @@ class MultiDimensionalScaling:
         similarities = np.asarray([])
         if 'euclidean' is distance_metric:
             similarities = euclidean_distances(input_matrix, input_matrix)
-        if 'cosine' is distance_metric:
+        elif 'cosine' is distance_metric:
             similarities = cosine_distances(input_matrix, input_matrix)
-        if 'jaccard' is distance_metric:
+        elif 'jaccard' is distance_metric:
             similarities = self.jaccard_distances(input_matrix)
         else:
             self.log.error("Distance metric : {} is not in the list of allowed values".format(distance_metric))
@@ -101,7 +100,7 @@ class MultiDimensionalScaling:
         else:
             n_components = self.pca.main(num_rows=num_rows, cluster_estimation=False)
         self.log.info("Number of components : {}".format(n_components))
-        return n_components
+        return int(n_components)
 
     def main(self, num_rows):
         """
