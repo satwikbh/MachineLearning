@@ -43,7 +43,7 @@ class MultiDimensionalScaling:
 
         for distance_metric in metrics:
             try:
-                similarities = np.asarray([])
+                similarities = np.asarray([], dtype=float)
 
                 if distance_metric in self.supported_dist_metrics:
                     similarities = pairwise_distances(input_matrix.toarray(), metric=distance_metric)
@@ -97,6 +97,7 @@ class MultiDimensionalScaling:
         pca_results_path = self.config["results"]["params"]["pca"]
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
+        input_matrix = input_matrix.astype(int)
         n_components = self.get_n_components(num_rows, pca_results_path)
         mds_reduced_matrix_list, nmds_reduced_matrix_list = self.perform_mds(n_components=n_components,
                                                                              input_matrix=input_matrix, seed=seed)
