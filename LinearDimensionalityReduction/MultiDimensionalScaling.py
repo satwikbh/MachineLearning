@@ -3,8 +3,8 @@ from time import time
 
 import numpy as np
 from sklearn.manifold import MDS
-from sklearn.metrics import jaccard_similarity_score
-from sklearn.metrics.pairwise import euclidean_distances, cosine_distances
+from sklearn.metrics.pairwise import pairwise_distances
+
 
 from HelperFunctions.HelperFunction import HelperFunction
 from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
@@ -20,37 +20,7 @@ class MultiDimensionalScaling:
         self.load_data = LoadData()
         self.helper = HelperFunction()
         self.pca = PrincipalComponentAnalysis()
-
-    def jaccard_distances(self, input_matrix):
-        x, y = input_matrix.shape
-        similarities = list()
-        for i in xrange(x):
-            try:
-                temp = list()
-                for j in xrange(y):
-                    if i < j:
-                        jaccard_similarity = 1 - jaccard_similarity_score(input_matrix[i], input_matrix[j])
-                    elif i > j:
-                        jaccard_similarity = similarities[j][i]
-                    else:
-                        jaccard_similarity = 0.0
-                    temp.append(jaccard_similarity)
-                similarities.append(temp)
-            except Exception as e:
-                self.log.error("Error : {}".format(e))
-        return np.asarray(similarities, dtype=float)
-
-    def pairwise_distance(self, distance_metric, input_matrix):
-        similarities = np.asarray([])
-        if 'euclidean' is distance_metric:
-            similarities = euclidean_distances(input_matrix, input_matrix)
-        elif 'cosine' is distance_metric:
-            similarities = cosine_distances(input_matrix, input_matrix)
-        elif 'jaccard' is distance_metric:
-            similarities = self.jaccard_distances(input_matrix)
-        else:
-            self.log.error("Distance metric : {} is not in the list of allowed values".format(distance_metric))
-        return similarities
+        self.supported_dist_metrics = ['euclidean', 'cosine', 'jaccard', 'hamming']
 
     def perform_mds(self, n_components, input_matrix, seed):
         start_time = time()
@@ -73,6 +43,16 @@ class MultiDimensionalScaling:
 
         for distance_metric in metrics:
             try:
+                similarities = np.asarray([])
+
+                if distance_metric in self.supported_dist_metrics:
+                    similarities = pairwise_distances(input_matrix.toarray(), metric=distance_metric)
+                else:
+                    self.log.error("Distance metric : {} is not in the list of allowed values : {}".format(
+                        distance_metric, 
+                        self.supported_dist_metrics)
+                    )
+
                 similarities = self.pairwise_distance(distance_metric, input_matrix)
 
                 self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
