@@ -28,10 +28,15 @@ class MultiDimensionalScaling:
         for i in xrange(x):
             temp = list()
             for j in xrange(y):
-                jaccard_similarity = jaccard_similarity_score(input_matrix[i][j])
+                if i < j:
+                    jaccard_similarity = similarities[j][i]
+                elif i > j:
+                    jaccard_similarity = jaccard_similarity_score(input_matrix[i], input_matrix[j])
+                else:
+                    jaccard_similarity = 0.0
                 temp.append(jaccard_similarity)
             similarities.append(temp)
-        return np.asarray(similarities)
+        return np.asarray(similarities, dtype=float)
 
     def pairwise_distance(self, distance_metric, input_matrix):
         similarities = np.asarray([])
@@ -65,15 +70,18 @@ class MultiDimensionalScaling:
         nmds_reduced_matrix_list = list()
 
         for distance_metric in metrics:
-            similarities = self.pairwise_distance(distance_metric, input_matrix)
+            try:
+                similarities = self.pairwise_distance(distance_metric, input_matrix)
 
-            self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
-            mds_reduced_matrix = mds.fit_transform(similarities)
-            mds_reduced_matrix_list.append(mds_reduced_matrix)
+                self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
+                mds_reduced_matrix = mds.fit_transform(similarities)
+                mds_reduced_matrix_list.append(mds_reduced_matrix)
 
-            self.log.info("Fitting N-MDS with {} distance metric".format(distance_metric))
-            nmds_reduced_matrix = nmds.fit_transform(similarities)
-            nmds_reduced_matrix_list.append(nmds_reduced_matrix)
+                self.log.info("Fitting N-MDS with {} distance metric".format(distance_metric))
+                nmds_reduced_matrix = nmds.fit_transform(similarities)
+                nmds_reduced_matrix_list.append(nmds_reduced_matrix)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
 
         mds_reduced_matrix_list = np.asarray(mds_reduced_matrix_list)
         nmds_reduced_matrix_list = np.asarray(nmds_reduced_matrix_list)
