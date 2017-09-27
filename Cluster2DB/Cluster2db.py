@@ -19,7 +19,7 @@ class Cluster2db(object):
     @staticmethod
     def get_collection(client):
         db = client.get_database("cuckoo")
-        collection = db.get_collection("cluster2db")
+        collection = db.get_collection("Testcluster2db")
         return collection
 
     @staticmethod
@@ -257,7 +257,7 @@ class Cluster2db(object):
         collection = self.get_collection(self.get_client())
         print("Enter the path of the clusters : ")
         # path = str(raw_input())
-        path = "/Users/satwik/Documents/IIIT/MS_Thesis/Cluster/cluster/"
+        path = "/home/satwik/Documents/Cluster/Clusters/cluster/"
         files_list = os.listdir(path)
         print("Total number of files in cluster: {}".format(len(files_list)))
 
@@ -266,13 +266,15 @@ class Cluster2db(object):
 
         bulk = collection.initialize_unordered_bulk_op()
 
-        for each in updated_list:
+        for index, each in enumerate(updated_list):
+            if index % 1000 == 0 and index !=0 :
+                try:
+                    self.log.info("Iteration : #{}".format(index/1000))
+                    bulk.execute()
+                except Exception as e:
+                    self.log.error("Error : {}".format())
             if isfile(join(path, each)):
                 self.dump_to_document(path + each, collection, bulk)
-        try:
-            bulk.execute()
-        except Exception as e:
-            print(e)
         end_time = time.time()
 
         print("Process done")
