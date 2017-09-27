@@ -26,16 +26,19 @@ class MultiDimensionalScaling:
         x, y = input_matrix.shape
         similarities = list()
         for i in xrange(x):
-            temp = list()
-            for j in xrange(y):
-                if i < j:
-                    jaccard_similarity = similarities[j][i]
-                elif i > j:
-                    jaccard_similarity = jaccard_similarity_score(input_matrix[i], input_matrix[j])
-                else:
-                    jaccard_similarity = 0.0
-                temp.append(jaccard_similarity)
-            similarities.append(temp)
+            try:
+                temp = list()
+                for j in xrange(y):
+                    if i < j:
+                        jaccard_similarity = 1 - jaccard_similarity_score(input_matrix[i], input_matrix[j])
+                    elif i > j:
+                        jaccard_similarity = similarities[j][i]
+                    else:
+                        jaccard_similarity = 0.0
+                    temp.append(jaccard_similarity)
+                similarities.append(temp)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
         return np.asarray(similarities, dtype=float)
 
     def pairwise_distance(self, distance_metric, input_matrix):
