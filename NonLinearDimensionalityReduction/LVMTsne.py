@@ -49,6 +49,17 @@ class Tsne:
 
         return model_list, reduced_matrix_list
 
+    def get_n_components(self, num_rows, pca_results_path):
+        fname = pca_results_path + "/" + "best_params_pca_" + str(num_rows) + ".json"
+        if self.helper.is_file_present(fname):
+            best_params = json.load(open(fname))
+            best_param_value = min(best_params, key=best_params.get)
+            n_components = best_param_value.split('n_components_')[1]
+        else:
+            n_components = self.pca.main(num_rows=num_rows, cluster_estimation=False)
+        self.log.info("Number of components : {}".format(n_components))
+        return int(n_components)
+
     def main(self, num_rows):
         start_time = time()
         plot_path = self.config['plots']['tsne']
