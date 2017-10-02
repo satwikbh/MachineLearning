@@ -31,72 +31,50 @@ class Tsne:
         plt.savefig(plot_path + "/" + "tsne_3d_" + str(iteration) + "_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
 
-    def perform_tsne(self, n_components, iteration, partial_matrix, partial_matrix_indices, plot_path, model_path):
-        self.log.info("tsne on iteration #{}".format(iteration))
+    def perform_tsne(self, n_components, plot_path, model_path):
+        start_time = time()
+        model_list = list()
+        reduced_matrix_list = list()
         perplexities = range(5, 55, 5)
-        init = "random"
-        eps_list = self.helper.frange(0.1, 1.1, 0.1)
-        min_samples_list = range(2, 22, 2)
-        min_cluster_size_list = range(2, 22, 2)
-
-        dbscan_accuracies = dict()
-        hdbscan_accuracies = dict()
-
+        init_list = ["random", "pca"]
+        
         for perplexity in perplexities:
-            model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
-            self.log.info("Saving current model at : {}".format(model_path))
-            reduced_matrix = model.fit_transform(partial_matrix)
-            # Save the model in sklearn's joblib format.
-            # joblib.dump(model, model_path + "/" + "tsne_" + str(iteration) + "_" + str(perplexity) + ".model")
-            self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
+            for init in init_list:
+                model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
+                reduced_matrix = model.fit_transform(partial_matrix)
+                model_list.append(model)
+                reduced_matrix_list.append(reduced_matrix)
+                self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
+                self.log.info("Saving 2d & 3d plots for init : {}, perplexity : {}".format(init, perplexity))
 
-            dbscan_accuracy_params = self.dbscan.dbscan_cluster(input_matrix=reduced_matrix,
-                                                                input_matrix_indices=partial_matrix_indices,
-                                                                eps_list=eps_list, min_samples_list=min_samples_list)
+        return model_list, reduced_matrix_list
 
-            hdbscan_accuracy_params = self.hdbscan.hdbscan_cluster(input_matrix=reduced_matrix,
-                                                                   input_matrix_indices=partial_matrix_indices,
-                                                                   min_cluster_size_list=min_cluster_size_list)
-
-            key = "perplexity_" + str(perplexity)
-            dbscan_accuracies[key] = dbscan_accuracy_params
-            hdbscan_accuracies[key] = hdbscan_accuracy_params
-
-        return dbscan_accuracies, hdbscan_accuracies
-
-    def main(self):
+    def main(self, num_rows):
         start_time = time()
         plot_path = self.config['plots']['tsne']
-        model_path = self.config['models']['tsne']
-        results_path = self.config['results']['iterations']['tsne']
+        tsne_model_path = self.config['models']['tsne']
+        tsne_results_path = self.config['results']['iterations']['tsne']
+        pca_results_path = self.config["results"]["params"]["pca"]
 
-        num_rows = 25000
-        batch_size = 1000
-        counter = 0
-        index = 0
         final_accuracies = dict()
-
+        
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        while counter < num_rows:
-            partial_matrix = input_matrix[counter: counter + batch_size]
-            partial_matrix_indices = input_matrix_indices[counter: counter + batch_size]
-            counter += batch_size
-            dbscan_accuracies, hdbscan_accuracies = self.perform_tsne(n_components=3, iteration=index,
-                                                                      partial_matrix=partial_matrix,
-                                                                      plot_path=plot_path,
-                                                                      partial_matrix_indices=partial_matrix_indices,
-                                                                      model_path=model_path)
+        n_components = self.get_n_components(num_rows, pca_results_path)
+        tsne_model_list, tsne_reduced_matrix_list = self.perform_tsne(n_components=n_components, plot_path=plot_path, model_path=tsne_model_path)
+        self.log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
 
-            self.log.info("DBScan Accuracy for Iteration #{} : {}".format(index, dbscan_accuracies))
-            self.log.info("HDBScan Accuracy for Iteration #{} : {}".format(index, hdbscan_accuracies))
-            final_accuracies[index] = [dbscan_accuracies, hdbscan_accuracies]
-            index += 1
+        tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows)
+        np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_model_list)
 
-        self.log.info("All the results are stored at : {}".format(results_path))
-        json.dump(final_accuracies, open(results_path + "/" + "results_" + str(num_rows) + ".json", "w"))
+        tsne_model_fname = tsne_model_path + "/" + "tsne_model_" + str(num_rows)
+        np.savez_compressed(file=tsne_model_fname, arr=tsne_reduced_matrix_list)
+
+        # TODO
+        # Add clustering code.
+
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
     tsne = Tsne()
-    tsne.main()
+    tsne.main(num_rows=25000)
