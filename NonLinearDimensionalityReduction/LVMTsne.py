@@ -1,14 +1,15 @@
-from sklearn.externals import joblib
 import json
-
 from time import time
+
+import numpy as np
 from sklearn.manifold import TSNE
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.Plotting import Plotting
+from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
 from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class Tsne:
@@ -18,30 +19,41 @@ class Tsne:
         self.helper = HelperFunction()
         self.plot = Plotting()
         self.load_data = LoadData()
+        self.pca = PrincipalComponentAnalysis()
 
-    def plot_matrix(self, Y, iteration, plot_path, init, perplexity):
-        plt = self.plot.plot_it_2d(Y)
-        plt.savefig(plot_path + "/" + "tsne_2d_" + str(iteration) + "_" + str(init) + "_" + str(perplexity) + ".png")
+    def plot_matrix(self, reduced_matrix, plot_path, init, perplexity):
+        plt = self.plot.plot_it_2d(reduced_matrix)
+        plt.savefig(plot_path + "/" + "tsne_2d_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
-        plt = self.plot.plot_it_3d(Y)
-        plt.savefig(plot_path + "/" + "tsne_3d_" + str(iteration) + "_" + str(init) + "_" + str(perplexity) + ".png")
+        plt = self.plot.plot_it_3d(reduced_matrix)
+        plt.savefig(plot_path + "/" + "tsne_3d_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
 
-    def perform_tsne(self, n_components, plot_path, model_path, input_matrix):
-        start_time = time()
+    def perform_tsne(self, n_components, plot_path, input_matrix):
         model_list = list()
         reduced_matrix_list = list()
         perplexities = range(5, 55, 5)
+        learning_rate_list = range(10, 1100, 100)
         init_list = ["random", "pca"]
-        
-        for perplexity in perplexities:
-            for init in init_list:
-                model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=1000, n_iter=5000, init=init)
-                reduced_matrix = model.fit_transform(input_matrix)
-                model_list.append(model)
-                reduced_matrix_list.append(reduced_matrix)
-                self.plot_matrix(reduced_matrix, iteration, plot_path, init, perplexity)
-                self.log.info("Saving 2d & 3d plots for init : {}, perplexity : {}".format(init, perplexity))
+
+        for init in init_list:
+            for perplexity in perplexities:
+                for learning_rate in learning_rate_list:
+                    model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
+                                 init=init)
+                    reduced_matrix = model.fit_transform(input_matrix)
+                    model_list.append(model)
+                    reduced_matrix_list.append(reduced_matrix)
+                    self.plot_matrix(reduced_matrix, plot_path, init, perplexity)
+                    self.log.info("Saving 2d & 3d plots")
+                    self.log.info("Model Params : \n"
+                                  "init : {}\t"
+                                  "perplexity : {}\t"
+                                  "learning_rate : {}\t"
+                                  "kl_divergence : {}".format(init,
+                                                              perplexity,
+                                                              learning_rate,
+                                                              model.kl_divergence_))
 
         return model_list, reduced_matrix_list
 
@@ -64,13 +76,13 @@ class Tsne:
         pca_results_path = self.config["results"]["params"]["pca"]
 
         final_accuracies = dict()
-        
+
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         n_components = self.get_n_components(num_rows, pca_results_path)
-        tsne_model_list, tsne_reduced_matrix_list = self.perform_tsne(n_components=n_components, 
-            plot_path=plot_path, 
-            model_path=tsne_model_path,
-            input_matrix=input_matrix)
+        tsne_model_list, tsne_reduced_matrix_list = self.perform_tsne(n_components=n_components,
+                                                                      plot_path=plot_path,
+                                                                      input_matrix=input_matrix)
+
         self.log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
 
         tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows)

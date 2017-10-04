@@ -1,26 +1,41 @@
 import pickle as pi
-import time
-from os.path import isfile, join
+import urllib
+from time import time
 
 import os
-from pymongo import MongoClient
+from os.path import isfile, join
+
+from Utils.ConfigUtil import ConfigUtil
+from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
 
 
 class Cluster2db(object):
-    """docstring for cluster2db."""
+    def __init__(self):
+        self.log = LoggerUtil(self.__class__.__name__).get()
+        self.config = ConfigUtil.get_config_instance()
+        self.db_utils = DBUtils()
 
-    @staticmethod
-    def get_client():
-        # return MongoClient(
-        #     "mongodb://" + "admin" + ":" + urllib.quote("goodDeveloper@123") + "@" + "localhost:27017" + "/" + "admin")
-        return MongoClient(
-            "mongodb://localhost:27017" + "/" + "admin")
+    def get_collection(self):
+        username = self.config['environment']['mongo']['username']
+        pwd = self.config['environment']['mongo']['password']
+        address = self.config['environment']['mongo']['address']
+        port = self.config['environment']['mongo']['port']
+        auth_db = self.config['environment']['mongo']['auth_db']
+        is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
 
-    @staticmethod
-    def get_collection(client):
-        db = client.get_database("cuckoo")
-        collection = db.get_collection("Testcluster2db")
-        return collection
+        password = urllib.quote(pwd)
+
+        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
+                                          username=username, password=password)
+
+        db_name = self.config['environment']['mongo']['db_name']
+        db = client[db_name]
+
+        c2db_collection_name = self.config['environment']['mongo']['c2db_collection_name']
+        c2db_collection = db[c2db_collection_name]
+
+        return c2db_collection
 
     @staticmethod
     def flatten_list(nested_list):
@@ -33,8 +48,7 @@ class Cluster2db(object):
                 flattened_list.append(sublist)
         return flattened_list
 
-    @staticmethod
-    def convert_behavior_dump_to_json(value):
+    def convert_behavior_dump_to_json(self, value):
         """
         Here the Key will be behavior.
         The inner keys of the json are 'files', 'keys', 'summary', 'mutexes', 'executed_commands'.
@@ -48,13 +62,13 @@ class Cluster2db(object):
                 if isinstance(value, set):
                     behavior[key] = list(behavior[key])
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
 
     @staticmethod
     def convert_network_inner_dicts(inner_dict):
         """
 
-        :param value:
+        :param inner_dict:
         :return:
         """
         for key, value in inner_dict.items():
@@ -65,7 +79,8 @@ class Cluster2db(object):
     def convert_network_dump_to_json(self, value):
         """
         Here the Key will be network.
-        The inner keys of the json are 'domains', 'udp', 'hosts', 'dns'. Further the inner_list contain the values which are in set format.
+        The inner keys of the json are 'domains', 'udp', 'hosts', 'dns'.
+        Further the inner_list contain the values which are in set format.
         This method will convert the sets of these keys into list so that they can be converted to JSON.
         :param value:
         :return behavior:
@@ -78,10 +93,9 @@ class Cluster2db(object):
                 if isinstance(value, dict):
                     network[key] = self.convert_network_inner_dicts(value)
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
 
-    @staticmethod
-    def convert_static_dump_to_json(value):
+    def convert_static_dump_to_json(self, value):
         """
 
         :param value:
@@ -93,10 +107,9 @@ class Cluster2db(object):
                 if isinstance(value, set):
                     static[key] = list(static[key])
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
 
-    @staticmethod
-    def convert_statistics_dump_to_json(value):
+    def convert_statistics_dump_to_json(self, value):
         """
 
         :param value:
@@ -105,12 +118,12 @@ class Cluster2db(object):
         try:
             value["statSignatures"] = list(value.get("statSignatures"))
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
 
-    @staticmethod
-    def convert_signatures_dump_to_json(value):
+    def convert_signatures_dump_to_json(self, value):
         """
-        Mongo doesn't accept int keys, this method will convert them to string and also makes the flatten list out of the values.
+        Mongo doesn't accept int keys, this method will convert them to string.
+        Also makes the flatten list out of the values.
         :param value: 
         :return: 
         """
@@ -121,14 +134,12 @@ class Cluster2db(object):
             for key, value in signatures.items():
                 doc[str(key)] = list(set(Cluster2db.flatten_list(value)))
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
         main_doc['signatures'] = doc
         return main_doc
 
-    @staticmethod
-    def convert_unknown_features_to_json(value):
+    def convert_unknown_features_to_json(self, value):
         """
-        
         :param value: 
         :return: 
         """
@@ -136,11 +147,10 @@ class Cluster2db(object):
         try:
             pass
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
         return main_doc
 
-    @staticmethod
-    def convert_malheur_value_to_json(value):
+    def convert_malheur_value_to_json(self, value):
         """
         Convert the malheur result into a json with family and score key's
         :param value: 
@@ -155,7 +165,7 @@ class Cluster2db(object):
             doc['family'] = malheur[0]
             doc['score'] = malheur[1]
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
         main_doc['malheur'] = doc
         return main_doc
 
@@ -221,7 +231,7 @@ class Cluster2db(object):
                     bulk.insert(document)
 
         except Exception as e:
-            print(e)
+            self.log.error("Error : {}".format(e))
 
     @staticmethod
     def key_mapping(key):
@@ -251,36 +261,29 @@ class Cluster2db(object):
         return set(files_list).difference(set(list_of_keys_in_mongo))
 
     def main(self):
-        print("Process started")
+        start_time = time()
+        c2db_collection = self.get_collection()
+        cluster_path = self.config['environment']['cluster_path']
+        files_list = os.listdir(cluster_path)
+        self.log.info("Path of the clusters : {}".format(cluster_path))
+        self.log.info("Total number of files in clusters: {}".format(len(files_list)))
 
-        start_time = time.time()
-        collection = self.get_collection(self.get_client())
-        print("Enter the path of the clusters : ")
-        # path = str(raw_input())
-        path = "/home/satwik/Documents/Cluster/Clusters/cluster/"
-        files_list = os.listdir(path)
-        print("Total number of files in cluster: {}".format(len(files_list)))
+        updated_list = self.present_in_db(c2db_collection, files_list)
+        self.log.info("Total number of files already in mongo: {}".format(len(files_list) - len(updated_list)))
 
-        updated_list = self.present_in_db(collection, files_list)
-        print("Total number of files already in mongo: {}".format(len(files_list) - len(updated_list)))
-
-        bulk = collection.initialize_unordered_bulk_op()
+        bulk = c2db_collection.initialize_unordered_bulk_op()
 
         for index, each in enumerate(updated_list):
-            if index % 1000 == 0 and index !=0 :
-                try:
-                    self.log.info("Iteration : #{}".format(index/1000))
-                    bulk.execute()
-                except Exception as e:
-                    self.log.error("Error : {}".format())
-            if isfile(join(path, each)):
-                self.dump_to_document(path + each, collection, bulk)
-        end_time = time.time()
+            if index % 1000 == 0:
+                self.log.info("Iteration : #{}".format(index / 1000))
+            if isfile(join(cluster_path, each)):
+                self.dump_to_document(cluster_path + each, c2db_collection, bulk)
+        try:
+            bulk.execute()
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
 
-        print("Process done")
-
-        print("Total time taken : {}".format(
-            end_time - start_time))
+        self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
