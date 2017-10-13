@@ -24,7 +24,7 @@ class PrincipalComponentAnalysis:
         self.helper = HelperFunction()
         self.estimate_params = EstimateClusterParams()
 
-    def pca(self, input_matrix, num_rows, randomized=False):
+    def perform_pca(self, input_matrix, num_rows, randomized=False):
         """
         Performs PCA. Here SVD will be solved using randomized algorithms.
         Function is not necessary explicitly as pca has svd_solver set to 'auto' by default which for higher dimension data performs randomized SVD.
@@ -34,7 +34,7 @@ class PrincipalComponentAnalysis:
         Disabled by default.
         :return:
         """
-        self.log.info("Entering the {} class".format(self.pca.__name__))
+        self.log.info("Entering the {} class".format(self.perform_pca.__name__))
         results_path = self.config['results']['params']['pca']
         reconstruction_error = self.config['models']['pca']['reconstruction_error']
         n_components_list = range(1000, 5100, 100)
@@ -55,7 +55,7 @@ class PrincipalComponentAnalysis:
                     break
             except Exception as e:
                 self.log.error("Error : {}".format(e))
-        self.log.info("Exiting the {} class".format(self.pca.__name__))
+        self.log.info("Exiting the {} class".format(self.perform_pca.__name__))
         return reduced_matrix, n_components
 
     def main(self, num_rows, cluster_estimation=True):
@@ -67,7 +67,7 @@ class PrincipalComponentAnalysis:
         pca_model_path = self.config["models"]["pca"]["model_path"]
         pca_results_path = self.config["results"]["iterations"]["pca"]
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        reduced_matrix, n_components = self.pca(input_matrix=input_matrix.toarray(), num_rows=num_rows, randomized=True)
+        reduced_matrix, n_components = self.perform_pca(input_matrix=input_matrix.toarray(), num_rows=num_rows, randomized=True)
         self.log.info("Saving the PCA model at : {}".format(pca_model_path))
         fname = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows)
         np.save(file=fname, arr=reduced_matrix)
