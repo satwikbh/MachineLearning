@@ -1,12 +1,12 @@
+import math
+
+import hickle as hkl
+import matplotlib
+import numpy as np
+import os
 import torch
 import torch.nn.functional as nn
 import torch.optim as optim
-import numpy as np
-import os
-import math
-import hickle as hkl
-
-import matplotlib
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt

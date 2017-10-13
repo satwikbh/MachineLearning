@@ -1,11 +1,11 @@
-import sklearn.preprocessing as prep
-from sklearn.model_selection import train_test_split as tts
 import numpy as np
+import sklearn.preprocessing as prep
 import tensorflow as tf
+from sklearn.model_selection import train_test_split as tts
 
+from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
-from HelperFunctions.HelperFunction import HelperFunction
 
 
 class Autoencoder(object):
