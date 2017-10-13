@@ -61,7 +61,6 @@ class Tsne:
         plot_path = self.config['plots']['tsne']
         tsne_model_path = self.config['models']['tsne']
         tsne_results_path = self.config['results']['iterations']['tsne']
-        pca_results_path = self.config["results"]["params"]["pca"]
         n_components = 3
 
         final_accuracies = dict()

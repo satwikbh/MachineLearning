@@ -24,9 +24,6 @@ class TSNEMulticore:
         plt = self.plot.plot_it_2d(reduced_matrix)
         plt.savefig(plot_path + "/" + "tsne_2d_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
-        plt = self.plot.plot_it_3d(reduced_matrix)
-        plt.savefig(plot_path + "/" + "tsne_3d_" + str(init) + "_" + str(perplexity) + ".png")
-        plt.close()
 
     def perform_tsne(self, n_components, plot_path, input_matrix):
         model_list = list()
@@ -39,7 +36,7 @@ class TSNEMulticore:
             for perplexity in perplexity_list:
                 for learning_rate in learning_rate_list:
                     model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
-                                 init=init, n_jobs=-1)
+                                 init=init, n_jobs=-1, n_iter=1000)
                     reduced_matrix = model.fit_transform(input_matrix.toarray())
                     model_list.append(model)
                     reduced_matrix_list.append(reduced_matrix)
@@ -48,11 +45,9 @@ class TSNEMulticore:
                     self.log.info("Model Params : \n"
                                   "init : {}\t"
                                   "perplexity : {}\t"
-                                  "learning_rate : {}\t"
-                                  "kl_divergence : {}".format(init,
-                                                              perplexity,
-                                                              learning_rate,
-                                                              model.kl_divergence_))
+                                  "learning_rate : {}\t".format(init,
+                                                                perplexity,
+                                                                learning_rate))
 
         return model_list, reduced_matrix_list
 
