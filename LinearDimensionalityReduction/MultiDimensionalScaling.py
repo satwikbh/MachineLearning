@@ -2,9 +2,8 @@ import json
 from time import time
 
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
 from sklearn.manifold import MDS
-from sklearn.metrics.pairwise import pairwise_distances
-
 
 from HelperFunctions.HelperFunction import HelperFunction
 from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
@@ -26,6 +25,7 @@ class MultiDimensionalScaling:
         start_time = time()
         metrics = ['cosine', 'jaccard']
         self.log.info("The metrics enabled for MDS are : {}".format(metrics))
+
         mds = MDS(n_components=n_components, metric=True,
                   max_iter=900, eps=1e-12,
                   dissimilarity="precomputed",
@@ -46,21 +46,18 @@ class MultiDimensionalScaling:
                 similarities = np.asarray([], dtype=float)
 
                 if distance_metric in self.supported_dist_metrics:
-                    similarities = pairwise_distances(input_matrix.toarray(), metric=distance_metric)
+                    similarities = pdist(input_matrix.toarray(), metric=distance_metric)
                 else:
                     self.log.error("Distance metric : {} is not in the list of allowed values : {}".format(
-                        distance_metric, 
-                        self.supported_dist_metrics)
-                    )
-
-                similarities = self.pairwise_distance(distance_metric, input_matrix)
+                        distance_metric,
+                        self.supported_dist_metrics))
 
                 self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
-                mds_reduced_matrix = mds.fit_transform(similarities)
+                mds_reduced_matrix = mds.fit_transform(squareform(similarities))
                 mds_reduced_matrix_list.append(mds_reduced_matrix)
 
                 self.log.info("Fitting N-MDS with {} distance metric".format(distance_metric))
-                nmds_reduced_matrix = nmds.fit_transform(similarities)
+                nmds_reduced_matrix = nmds.fit_transform(squareform(similarities))
                 nmds_reduced_matrix_list.append(nmds_reduced_matrix)
             except Exception as e:
                 self.log.error("Error : {}".format(e))
@@ -97,7 +94,7 @@ class MultiDimensionalScaling:
         pca_results_path = self.config["results"]["params"]["pca"]
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        input_matrix = input_matrix.astype(int)
+        input_matrix = input_matrix.astype(np.float32)
         n_components = self.get_n_components(num_rows, pca_results_path)
         mds_reduced_matrix_list, nmds_reduced_matrix_list = self.perform_mds(n_components=n_components,
                                                                              input_matrix=input_matrix, seed=seed)
