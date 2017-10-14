@@ -1,16 +1,22 @@
-from multiprocessing import Pool
+import json
+from logging.config import dictConfig
+from multiprocessing import Pool, get_logger
 from time import time
 
 import numpy as np
+import os
 from sklearn.manifold import TSNE
 
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.Plotting import Plotting
 from PrepareData.LoadData import LoadData
 from Utils.ConfigUtil import ConfigUtil
-from Utils.LoggerUtil import LoggerUtil
 
-log = LoggerUtil(__name__).get()
+path = os.path.dirname(__file__) + "/" + "logging.json"
+logging_config = json.load(open(path))
+dictConfig(logging_config)
+log = get_logger()
+
 config = ConfigUtil().get_config_instance()
 helper = HelperFunction()
 plot = Plotting()
