@@ -1,10 +1,8 @@
-import json
-from logging.config import dictConfig
+import logging
 from multiprocessing import Pool, get_logger
 from time import time
 
 import numpy as np
-import os
 from sklearn.manifold import TSNE
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -12,15 +10,21 @@ from HelperFunctions.Plotting import Plotting
 from PrepareData.LoadData import LoadData
 from Utils.ConfigUtil import ConfigUtil
 
-path = os.path.dirname(__file__) + "/" + "logging.json"
-logging_config = json.load(open(path))
-dictConfig(logging_config)
-log = get_logger()
-
 config = ConfigUtil().get_config_instance()
 helper = HelperFunction()
 plot = Plotting()
 load_data = LoadData()
+
+
+def create_logger():
+    logger = get_logger()
+    logger.setLevel(logging.INFO)
+    fh = logging.FileHandler("process.log")
+    fmt = '%(asctime)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(fmt)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger
 
 
 def plot_matrix(reduced_matrix, plot_path, init, perplexity):
@@ -101,4 +105,5 @@ def main(num_rows):
     log.info("Total time taken : {}".format(time() - start_time))
 
 
+log = create_logger()
 main(num_rows=25000)
