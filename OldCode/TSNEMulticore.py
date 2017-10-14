@@ -59,7 +59,7 @@ class TSNEMulticore:
         else:
             n_components = self.pca.main(num_rows=num_rows, cluster_estimation=False)
         self.log.info("Number of components : {}".format(n_components))
-        fname = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows)
+        fname = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
         pca_reduced_matrix = np.load(file=fname)
         return pca_reduced_matrix
 
