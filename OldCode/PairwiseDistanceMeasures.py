@@ -1,6 +1,5 @@
-from scipy.spatial import distance
-
 import matplotlib
+from scipy.spatial import distance
 
 matplotlib.use('Agg')
 
@@ -9,7 +8,7 @@ import time
 from Clustering import KMeansImpl
 from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
-from HelperFunctions.ParsingLogic import ParsingLogic
+from PrepareData.ParsingLogic import ParsingLogic
 
 from sklearn.neighbors import DistanceMetric
 from leven import levenshtein

@@ -61,15 +61,20 @@ def perform_tsne(n_components, plot_path, input_matrix):
     learning_rate_list = range(10, 1100, 100)
     init_list = ["random", "pca"]
 
-    pool = Pool(processes=32)
     final_result = list()
 
     for init in init_list:
         temp = list()
         for perplexity in perplexity_list:
+            log.info("Number of threads used are : {}".format(len(learning_rate_list)))
+            pool = Pool(processes=len(learning_rate_list))
             params = [[n_components, perplexity, place_holder, init, input_matrix, plot_path] for place_holder in
                       learning_rate_list]
-            result = pool.map(tsne_model, params)
+            # result = pool.map(tsne_model, params)
+            p_place_holder = pool.map_async(tsne_model, params)
+            result = p_place_holder.get()
+            pool.join()
+            pool.close()
             temp.append(result)
         final_result.append(temp)
 
