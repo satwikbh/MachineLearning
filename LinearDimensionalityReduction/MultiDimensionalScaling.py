@@ -43,21 +43,21 @@ class MultiDimensionalScaling:
 
         for distance_metric in metrics:
             try:
-                similarities = np.asarray([], dtype=float)
+                dissimilarities = np.asarray([], dtype=float)
 
                 if distance_metric in self.supported_dist_metrics:
-                    similarities = pdist(input_matrix.toarray(), metric=distance_metric)
+                    dissimilarities = pdist(input_matrix.toarray(), metric=distance_metric)
                 else:
                     self.log.error("Distance metric : {} is not in the list of allowed values : {}".format(
                         distance_metric,
                         self.supported_dist_metrics))
 
                 self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
-                mds_reduced_matrix = mds.fit_transform(squareform(similarities))
+                mds_reduced_matrix = mds.fit_transform(squareform(dissimilarities))
                 mds_reduced_matrix_list.append(mds_reduced_matrix)
 
                 self.log.info("Fitting N-MDS with {} distance metric".format(distance_metric))
-                nmds_reduced_matrix = nmds.fit_transform(squareform(similarities))
+                nmds_reduced_matrix = nmds.fit_transform(squareform(dissimilarities))
                 nmds_reduced_matrix_list.append(nmds_reduced_matrix)
             except Exception as e:
                 self.log.error("Error : {}".format(e))

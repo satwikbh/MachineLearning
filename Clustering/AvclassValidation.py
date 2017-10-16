@@ -1,14 +1,13 @@
-import urllib
 import pickle as pi
-
+import urllib
 from collections import defaultdict
 from time import time
-from sklearn.metrics import adjusted_mutual_info_score, adjusted_rand_score
 
-from Utils.LoggerUtil import LoggerUtil
+from ClusterMetrics import ClusterMetrics
+from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
-from HelperFunctions.HelperFunction import HelperFunction
+from Utils.LoggerUtil import LoggerUtil
 
 
 class AvclassValidation:
@@ -17,6 +16,7 @@ class AvclassValidation:
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
         self.helper = HelperFunction()
+        self.metrics = ClusterMetrics()
 
     def get_connection(self):
         username = self.config['environment']['mongo']['username']
@@ -84,19 +84,6 @@ class AvclassValidation:
                 self.log.error("Error : {}".format(e))
         return variant_labels
 
-    def compute_accuracy(self, input_labels):
-        cluster_dist = dict()
-        for cluster_label, family_names in input_labels.items():
-            try:
-                unique = len(set(family_names))
-                if len(family_names) > 0:
-                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
-                else:
-                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / 10 ** 9)
-            except Exception as e:
-                self.log.error("Error : {}".format(e))
-        return cluster_dist
-
     def get_true_labels(self, variant_labels):
         labels_true = []
         labels = self.helper.flatten_list(variant_labels.values())
@@ -136,9 +123,9 @@ class AvclassValidation:
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
         labels_true = self.get_true_labels(variant_labels)
 
-        ari_score = adjusted_rand_score(labels_true, labels_pred)
-        nmi_score = adjusted_mutual_info_score(labels_true, labels_pred)
-        acc_score = self.compute_accuracy(input_labels)
+        nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
+        ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
+        acc_score = self.metrics.compute_accuracy(input_labels)
 
         cluster_accuracy = dict()
         cluster_accuracy['ari'] = ari_score
