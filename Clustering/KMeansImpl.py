@@ -38,8 +38,8 @@ class KMeansImpl:
     @staticmethod
     def core_model(input_matrix, k):
         model = KMeans(n_clusters=k)
-        model.fit(input_matrix)
-        return model
+        labels = model.fit_predict(input_matrix)
+        return labels
 
     def perform_kmeans(self, input_matrix, input_matrix_indices):
         results_list = list()
