@@ -130,7 +130,7 @@ class AvclassValidation:
         cluster_accuracy = dict()
         cluster_accuracy['ari'] = ari_score
         cluster_accuracy['nmi'] = nmi_score
-        cluster_accuracy['acc'] = acc_score
+        cluster_accuracy['purity'] = acc_score
 
         self.log.info("Total time taken : {}".format(time() - start_time))
         return (cluster_accuracy, input_labels)

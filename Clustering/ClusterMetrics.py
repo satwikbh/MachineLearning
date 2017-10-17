@@ -27,11 +27,12 @@ class ClusterMetrics:
         cluster_dist = dict()
         for cluster_label, family_names in input_labels.items():
             try:
-                unique = len(set(family_names))
                 if len(family_names) > 0:
-                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / len(family_names))
+                    unique = set(family_names)
+                    purity = max([family_names.count(x) for x in unique]) * 1.0 / len(family_names)
+                    cluster_dist[str(cluster_label)] = purity
                 else:
-                    cluster_dist[cluster_label] = 1.0 - (unique * 1.0 / 10 ** 9)
+                    cluster_dist[str(cluster_label)] = 0.0
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         return cluster_dist

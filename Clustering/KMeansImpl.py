@@ -49,7 +49,7 @@ class KMeansImpl:
             s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
             cluster_accuracy['s_score'] = s_score
             results_list.append(cluster_accuracy)
-            self.log.info(json.dumps(cluster_accuracy))
+            self.log.info(cluster_accuracy)
         results_array = np.asarray(results_list)
         return results_array
 
