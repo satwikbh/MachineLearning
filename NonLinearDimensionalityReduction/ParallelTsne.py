@@ -19,7 +19,7 @@ load_data = LoadData()
 def create_logger():
     logger = get_logger()
     logger.setLevel(logging.INFO)
-    fh = logging.FileHandler("process.log")
+    fh = logging.FileHandler("logs/multi_process.log")
     fmt = '%(asctime)s - %(levelname)s - %(message)s'
     formatter = logging.Formatter(fmt)
     fh.setFormatter(formatter)
@@ -87,7 +87,7 @@ def main(num_rows):
     tsne_model_path = config['models']['tsne']
     tsne_results_path = config['results']['iterations']['tsne']
 
-    n_components = 2
+    n_components = 3
 
     final_accuracies = dict()
 
