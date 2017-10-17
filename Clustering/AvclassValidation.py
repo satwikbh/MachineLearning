@@ -123,13 +123,17 @@ class AvclassValidation:
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
         labels_true = self.get_true_labels(variant_labels)
 
-        nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
         ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
-        acc_score = self.metrics.compute_accuracy(input_labels)
+        nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
+        homogeneity_score = self.metrics.homogeneity_score(labels_true=labels_true, labels_pred=labels_pred)
+        fw_score = self.metrics.fowlkes_mallow_score(labels_true=labels_true, labels_pred=labels_pred)
+        acc_score = self.metrics.cluster_purity(input_labels)
 
         cluster_accuracy = dict()
         cluster_accuracy['ari'] = ari_score
         cluster_accuracy['nmi'] = nmi_score
+        cluster_accuracy['homogeneity_score'] = homogeneity_score
+        cluster_accuracy['fw_score'] = fw_score
         cluster_accuracy['purity'] = acc_score
 
         self.log.info("Total time taken : {}".format(time() - start_time))

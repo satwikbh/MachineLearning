@@ -43,11 +43,13 @@ class KMeansImpl:
 
     def perform_kmeans(self, input_matrix, input_matrix_indices):
         results_list = list()
-        for k_value in range(5, len(input_matrix_indices)):
+        for k_value in range(2, 500):
             cluster_labels = self.core_model(input_matrix, k_value)
             cluster_accuracy, input_labels = self.validation.main(cluster_labels, input_matrix_indices)
             s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
+            ch_score = self.metric.calinski_harabaz_score(input_matrix, cluster_labels)
             cluster_accuracy['s_score'] = s_score
+            cluster_accuracy['ch_score'] = ch_score
             results_list.append(cluster_accuracy)
             self.log.info(cluster_accuracy)
         results_array = np.asarray(results_list)
