@@ -27,12 +27,12 @@ def create_logger():
     return logger
 
 
-def plot_matrix(reduced_matrix, plot_path, init, perplexity):
+def plot_matrix(reduced_matrix, plot_path, init, perplexity, learning_rate):
     plt = plot.plot_it_2d(reduced_matrix)
-    plt.savefig(plot_path + "/" + "tsne_2d_" + str(init) + "_" + str(perplexity) + ".png")
+    plt.savefig(plot_path + "/" + "tsne_2d_" + str(init) + "_" + str(perplexity) + "_" + str(learning_rate) + ".png")
     plt.close()
     plt = plot.plot_it_3d(reduced_matrix)
-    plt.savefig(plot_path + "/" + "tsne_3d_" + str(init) + "_" + str(perplexity) + ".png")
+    plt.savefig(plot_path + "/" + "tsne_3d_" + str(init) + "_" + str(perplexity) + "_" + str(learning_rate) + ".png")
     plt.close()
 
 
@@ -47,7 +47,7 @@ def tsne_model(args):
     model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
                  init=init)
     reduced_matrix = model.fit_transform(input_matrix.toarray())
-    plot_matrix(reduced_matrix, plot_path, init, perplexity)
+    plot_matrix(reduced_matrix, plot_path, init, perplexity, learning_rate)
     params = {"init": init, "perplexity": perplexity,
               "learning_rate": learning_rate,
               "kl_divergence": model.kl_divergence_}
