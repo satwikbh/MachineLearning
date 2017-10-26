@@ -24,7 +24,7 @@ class ClusterMetrics:
     @staticmethod
     def homogeneity_score(labels_true, labels_pred):
         homogeneity_score = metrics.homogeneity_completeness_v_measure(labels_pred=labels_pred, labels_true=labels_true)
-        return homogeneity_score
+        return [homogeneity_score]
 
     @staticmethod
     def fowlkes_mallow_score(labels_true, labels_pred):

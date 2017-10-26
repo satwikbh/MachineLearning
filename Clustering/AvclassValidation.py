@@ -1,5 +1,3 @@
-import pickle as pi
-import urllib
 from collections import defaultdict
 from time import time
 
@@ -17,25 +15,6 @@ class AvclassValidation:
         self.db_utils = DBUtils()
         self.helper = HelperFunction()
         self.metrics = ClusterMetrics()
-
-    def get_connection(self):
-        username = self.config['environment']['mongo']['username']
-        pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
-        address = self.config['environment']['mongo']['address']
-        port = self.config['environment']['mongo']['port']
-        auth_db = self.config['environment']['mongo']['auth_db']
-        is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
-
-        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
-                                          username=username, password=password)
-
-        db_name = self.config['environment']['mongo']['db_name']
-        avclass_collection_name = self.config['environment']['mongo']['avclass_collection_name']
-
-        db = client[db_name]
-        avclass_collection = db[avclass_collection_name]
-        return client, avclass_collection
 
     @staticmethod
     def cursor2list(cursor):
@@ -94,31 +73,18 @@ class AvclassValidation:
 
         return labels_true
 
-    def main(self, labels_pred, input_matrix_indices):
+    def main(self, labels_pred, list_of_keys, avclass_collection):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
+        :param list_of_keys:
+        :param avclass_collection:
         :param labels_pred: The labels format is (cluster_label, malware_source).
         malware_source is found in database and usually starts with VirusShare_.
-        :param input_matrix_indices: These indices will be useful to compute the cluster accuracy.
         Since the dataset is distributed, giving the indices will help to locate the correct chunk.
         :return: A dict which contains the a cluster label and the accuracy it has over all the variants.
         """
         start_time = time()
-        client, avclass_collection = self.get_connection()
-        names_path = self.config["data"]["list_of_keys"]
-        temp = pi.load(open(names_path + "/" + "names.dump"))
-        list_of_keys = list()
-
-        for index in input_matrix_indices:
-            try:
-                val = temp[index]
-                if "VirusShare" in val:
-                    val = val.split("_")[1]
-                list_of_keys.append(val)
-            except Exception as e:
-                self.log.error("Error : {}".format(e))
-
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
         labels_true = self.get_true_labels(variant_labels)
@@ -137,4 +103,4 @@ class AvclassValidation:
         cluster_accuracy['purity'] = acc_score
 
         self.log.info("Total time taken : {}".format(time() - start_time))
-        return (cluster_accuracy, input_labels)
+        return cluster_accuracy, input_labels

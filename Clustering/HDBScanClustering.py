@@ -1,3 +1,5 @@
+import pickle as pi
+import urllib
 from collections import defaultdict
 from time import time
 
@@ -8,6 +10,7 @@ from AvclassValidation import AvclassValidation
 from ClusterMetrics import ClusterMetrics
 from PrepareData.LoadData import LoadData
 from Utils.ConfigUtil import ConfigUtil
+from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
 
 
@@ -19,6 +22,26 @@ class HDBScanClustering:
         self.labels = defaultdict(list)
         self.validation = AvclassValidation()
         self.metric = ClusterMetrics()
+        self.db_utils = DBUtils()
+
+    def get_connection(self):
+        username = self.config['environment']['mongo']['username']
+        pwd = self.config['environment']['mongo']['password']
+        password = urllib.quote(pwd)
+        address = self.config['environment']['mongo']['address']
+        port = self.config['environment']['mongo']['port']
+        auth_db = self.config['environment']['mongo']['auth_db']
+        is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
+
+        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
+                                          username=username, password=password)
+
+        db_name = self.config['environment']['mongo']['db_name']
+        avclass_collection_name = self.config['environment']['mongo']['avclass_collection_name']
+
+        db = client[db_name]
+        avclass_collection = db[avclass_collection_name]
+        return client, avclass_collection
 
     @staticmethod
     def get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows):
@@ -47,12 +70,12 @@ class HDBScanClustering:
             input_matrix)
         return cluster_labels
 
-    def perform_hdbscan(self, input_matrix, input_matrix_indices):
+    def perform_hdbscan(self, input_matrix, list_of_keys, avclass_collection):
         """
         Takes as input a list of min_cluster_size and the performs hdbscan and returns an list of accuracies for each.
+        :param avclass_collection:
+        :param list_of_keys:
         :param input_matrix: A input matrix in ndarray format.
-        :param input_matrix_indices: These indices will be useful to compute the cluster accuracy.
-        Since the dataset is distributed, giving the indices will help to locate the correct chunk.
         :return:
         """
         results_list = list()
@@ -68,7 +91,9 @@ class HDBScanClustering:
                         len(cluster_labels)))
                     continue
                 else:
-                    cluster_accuracy, input_labels = self.validation.main(cluster_labels, input_matrix_indices)
+                    cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
+                                                                          list_of_keys=list_of_keys,
+                                                                          avclass_collection=avclass_collection)
                     s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
                     ch_score = self.metric.calinski_harabaz_score(input_matrix, cluster_labels)
                     cluster_accuracy['s_score'] = s_score
@@ -80,7 +105,7 @@ class HDBScanClustering:
         results_array = np.asarray(results_list)
         return results_array
 
-    def prepare_hdbscan(self, dr_matrices, input_matrix_indices):
+    def prepare_hdbscan(self, dr_matrices, list_of_keys, avclass_collection):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "pca":
@@ -93,7 +118,7 @@ class HDBScanClustering:
                 self.log.info("Performing HDBSCAN on TSNE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
-            dr_results_array[dr_name] = self.perform_hdbscan(dr_matrix, input_matrix_indices)
+            dr_results_array[dr_name] = self.perform_hdbscan(dr_matrix, list_of_keys, avclass_collection)
         return dr_results_array
 
     def save_results(self, num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path):
@@ -113,6 +138,22 @@ class HDBScanClustering:
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
 
+    def avclass_labeller(self, input_matrix_indices):
+        client, avclass_collection = self.get_connection()
+        names_path = self.config["data"]["list_of_keys"]
+        temp = pi.load(open(names_path + "/" + "names.dump"))
+        list_of_keys = list()
+
+        for index in input_matrix_indices:
+            try:
+                val = temp[index]
+                if "VirusShare" in val:
+                    val = val.split("_")[1]
+                list_of_keys.append(val)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
+        return list_of_keys, avclass_collection
+
     def main(self, num_rows):
         start_time = time()
         pca_model_path = self.config["models"]["pca"]["model_path"]
@@ -124,8 +165,10 @@ class HDBScanClustering:
         tsne_results_path = self.config["results"]["iterations"]["tsne"]
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
 
+        list_of_keys, avclass_collection = self.avclass_labeller(input_matrix_indices)
+
         dr_matrices = self.get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows)
-        dr_results_array = self.prepare_hdbscan(dr_matrices, input_matrix_indices)
+        dr_results_array = self.prepare_hdbscan(dr_matrices, list_of_keys, avclass_collection)
 
         self.save_results(num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path)
 
