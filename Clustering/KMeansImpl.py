@@ -64,13 +64,13 @@ class KMeansImpl:
         labels = model.fit_predict(input_matrix)
         return labels
 
-    def perform_kmeans(self, input_matrix, list_of_keys, avclass_collection):
+    def perform_kmeans(self, input_matrix, list_of_keys, variant_labels):
         results_list = list()
         for k_value in range(2, 400):
             cluster_labels = self.core_model(input_matrix, k_value)
             cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                   list_of_keys=list_of_keys,
-                                                                  avclass_collection=avclass_collection)
+                                                                  variant_labels=variant_labels)
             s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
             ch_score = self.metric.calinski_harabaz_score(input_matrix, cluster_labels)
             cluster_accuracy['s_score'] = s_score
@@ -80,7 +80,7 @@ class KMeansImpl:
         results_array = np.asarray(results_list)
         return results_array
 
-    def prepare_kmeans(self, dr_matrices, list_of_keys, avclass_collection):
+    def prepare_kmeans(self, dr_matrices, list_of_keys, variant_labels):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "pca":
@@ -93,7 +93,7 @@ class KMeansImpl:
                 self.log.info("Performing K-Means on TSNE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
-            dr_results_array[dr_name] = self.perform_kmeans(dr_matrix, list_of_keys, avclass_collection)
+            dr_results_array[dr_name] = self.perform_kmeans(dr_matrix, list_of_keys, variant_labels)
         return dr_results_array
 
     @staticmethod
@@ -150,6 +150,27 @@ class KMeansImpl:
                 self.log.error("Error : {}".format(e))
         return list_of_keys, avclass_collection
 
+    def prepare_labels(self, list_of_keys, collection):
+        """
+        Take the list of keys and find what the avclass label is inferred for it.
+        :param list_of_keys:
+        :param collection:
+        :return variant_labels: a dict which contains md5 as key and the possible families as values.
+        """
+        variant_labels = defaultdict(list)
+        cursor = collection.find({"md5": {"$in": list_of_keys}})
+
+        for index, doc in enumerate(cursor):
+            try:
+                if index % 1000 == 0:
+                    self.log.info("Iteration : #{}".format(index / 1000))
+                key = doc["md5"]
+                family = doc["avclass"]["result"]
+                variant_labels[key].append(family)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
+        return variant_labels
+
     def main(self, num_rows):
         start_time = time()
 
@@ -163,9 +184,10 @@ class KMeansImpl:
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
 
         list_of_keys, avclass_collection = self.avclass_labeller(input_matrix_indices)
+        variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
 
         dr_matrices = self.get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows)
-        dr_results_array = self.prepare_kmeans(dr_matrices, list_of_keys, avclass_collection)
+        dr_results_array = self.prepare_kmeans(dr_matrices, list_of_keys, variant_labels)
 
         self.save_results(num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path)
 

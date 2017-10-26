@@ -42,27 +42,6 @@ class AvclassValidation:
                 self.log.error("Error : {}".format(e))
         return clusters
 
-    def prepare_labels(self, list_of_keys, collection):
-        """
-        Take the list of keys and find what the avclass label is inferred for it.
-        :param list_of_keys:
-        :param collection:
-        :return variant_labels: a dict which contains md5 as key and the possible families as values.
-        """
-        variant_labels = defaultdict(list)
-        cursor = collection.find({"md5": {"$in": list_of_keys}})
-
-        for index, doc in enumerate(cursor):
-            try:
-                if index % 1000 == 0:
-                    self.log.info("Iteration : #{}".format(index / 1000))
-                key = doc["md5"]
-                family = doc["avclass"]["result"]
-                variant_labels[key].append(family)
-            except Exception as e:
-                self.log.error("Error : {}".format(e))
-        return variant_labels
-
     def get_true_labels(self, variant_labels):
         labels_true = []
         labels = self.helper.flatten_list(variant_labels.values())
@@ -73,19 +52,18 @@ class AvclassValidation:
 
         return labels_true
 
-    def main(self, labels_pred, list_of_keys, avclass_collection):
+    def main(self, labels_pred, list_of_keys, variant_labels):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
+        :param variant_labels:
         :param list_of_keys:
-        :param avclass_collection:
         :param labels_pred: The labels format is (cluster_label, malware_source).
         malware_source is found in database and usually starts with VirusShare_.
         Since the dataset is distributed, giving the indices will help to locate the correct chunk.
         :return: A dict which contains the a cluster label and the accuracy it has over all the variants.
         """
         start_time = time()
-        variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
         labels_true = self.get_true_labels(variant_labels)
 
