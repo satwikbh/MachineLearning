@@ -5,9 +5,11 @@ from time import time
 
 import numpy as np
 from hdbscan import HDBSCAN
+from scipy.spatial.distance import pdist, squareform
 
 from AvclassValidation import AvclassValidation
 from ClusterMetrics import ClusterMetrics
+from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.LoadData import LoadData
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
@@ -23,6 +25,7 @@ class HDBScanClustering:
         self.validation = AvclassValidation()
         self.metric = ClusterMetrics()
         self.db_utils = DBUtils()
+        self.helper = HelperFunction()
 
     def get_connection(self):
         username = self.config['environment']['mongo']['username']
@@ -59,16 +62,32 @@ class HDBScanClustering:
         dr_matrices["nmds"] = nmds_reduced_matrix
 
         tsne_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
-        tsne_reduced_matrix = np.load(tsne_file_name)
+        tsne_reduced_matrix = np.load(tsne_file_name)['arr'][0]
         dr_matrices["tsne"] = tsne_reduced_matrix
 
         return dr_matrices
 
     @staticmethod
     def core_model(input_matrix, min_cluster_size):
-        cluster_labels = HDBSCAN(min_cluster_size=min_cluster_size, core_dist_n_jobs=-1).fit_predict(
-            input_matrix)
+        hdbscan_model = HDBSCAN(min_cluster_size=min_cluster_size, core_dist_n_jobs=-1)
+        cluster_labels = hdbscan_model.fit_predict(input_matrix)
         return cluster_labels
+
+    def get_cluster_centers(self, cluster_labels, input_matrix):
+        cluster_centers = list()
+        d = dict()
+        for index, value in enumerate(cluster_labels):
+            if value in d:
+                d[value].append(index)
+            else:
+                d[value] = [index]
+
+        for cluster_label, cluster_data_points in d.items():
+            arr = [input_matrix[each] for each in cluster_data_points]
+            cluster_i_centroid = self.helper.centroid_np(arr)
+            cluster_centers.append(cluster_i_centroid)
+
+        return cluster_centers
 
     def perform_hdbscan(self, input_matrix, list_of_keys, variant_labels):
         """
@@ -81,9 +100,14 @@ class HDBScanClustering:
         results_list = list()
         min_cluster_size_list = range(2, 22, 2)
 
+        self.log.info("Computing distance matrix")
+        distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
+        self.log.info("distance matrix shape : {}".format(distance_matrix.shape))
+
         for min_cluster_size in min_cluster_size_list:
             try:
                 cluster_labels = self.core_model(input_matrix, min_cluster_size)
+                cluster_centers = self.get_cluster_centers(cluster_labels, input_matrix)
                 n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
                 if n_clusters == 0:
                     self.log.info("min_cluster_size : {}\tNo of clusters inferred is : {}".format(
@@ -93,11 +117,10 @@ class HDBScanClustering:
                 else:
                     cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                           list_of_keys=list_of_keys,
-                                                                          variant_labels=variant_labels)
-                    s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
-                    ch_score = self.metric.calinski_harabaz_score(input_matrix, cluster_labels)
-                    cluster_accuracy['s_score'] = s_score
-                    cluster_accuracy['ch_score'] = ch_score
+                                                                          variant_labels=variant_labels,
+                                                                          cluster_centers=cluster_centers,
+                                                                          input_matrix=input_matrix,
+                                                                          distance_matrix=distance_matrix)
                     results_list.append(cluster_accuracy)
                     self.log.info(cluster_accuracy)
             except Exception as e:

@@ -5,6 +5,7 @@ from collections import defaultdict
 from time import time
 
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 
 from AvclassValidation import AvclassValidation
@@ -62,19 +63,21 @@ class KMeansImpl:
     def core_model(input_matrix, k):
         model = KMeans(n_clusters=k)
         labels = model.fit_predict(input_matrix)
-        return labels
+        return labels, model.cluster_centers_
 
     def perform_kmeans(self, input_matrix, list_of_keys, variant_labels):
         results_list = list()
+        self.log.info("Computing distance matrix")
+        distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
+        self.log.info("distance matrix shape : {}".format(distance_matrix.shape))
         for k_value in range(2, 400):
-            cluster_labels = self.core_model(input_matrix, k_value)
+            cluster_labels, cluster_centers_ = self.core_model(input_matrix, k_value)
             cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                   list_of_keys=list_of_keys,
-                                                                  variant_labels=variant_labels)
-            s_score = self.metric.silhouette_score(input_matrix, cluster_labels)
-            ch_score = self.metric.calinski_harabaz_score(input_matrix, cluster_labels)
-            cluster_accuracy['s_score'] = s_score
-            cluster_accuracy['ch_score'] = ch_score
+                                                                  variant_labels=variant_labels,
+                                                                  input_matrix=input_matrix,
+                                                                  distance_matrix=distance_matrix,
+                                                                  cluster_centers=cluster_centers_)
             results_list.append(cluster_accuracy)
             self.log.info(cluster_accuracy)
         results_array = np.asarray(results_list)
@@ -112,7 +115,7 @@ class KMeansImpl:
         dr_matrices["nmds"] = nmds_reduced_matrix
 
         tsne_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
-        tsne_reduced_matrix = np.load(tsne_file_name)
+        tsne_reduced_matrix = np.load(tsne_file_name)['arr'][0]
         dr_matrices["tsne"] = tsne_reduced_matrix
 
         return dr_matrices
