@@ -1,8 +1,8 @@
-import os
 import math
+
 import hickle as hkl
 import numpy as np
-
+import os
 from scipy.sparse import vstack, load_npz
 from sklearn.metrics import mean_squared_error
 
@@ -107,3 +107,15 @@ class HelperFunction:
             else:
                 return_list.append(each)
         return return_list
+
+    @staticmethod
+    def centroid_np(arr):
+        """
+        Find the centroid of a array of points.
+        :param arr:
+        :return:
+        """
+        length = arr.shape[0]
+        sum_x = np.sum(arr[:, 0])
+        sum_y = np.sum(arr[:, 1])
+        return sum_x / length, sum_y / length

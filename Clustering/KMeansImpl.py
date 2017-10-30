@@ -70,7 +70,7 @@ class KMeansImpl:
         self.log.info("Computing distance matrix")
         distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
         self.log.info("distance matrix shape : {}".format(distance_matrix.shape))
-        for k_value in range(2, 400):
+        for k_value in range(2, 200):
             cluster_labels, cluster_centers_ = self.core_model(input_matrix, k_value)
             cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                   list_of_keys=list_of_keys,
