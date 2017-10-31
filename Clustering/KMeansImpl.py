@@ -76,8 +76,7 @@ class KMeansImpl:
                                                                   list_of_keys=list_of_keys,
                                                                   variant_labels=variant_labels,
                                                                   input_matrix=input_matrix,
-                                                                  distance_matrix=distance_matrix,
-                                                                  cluster_centers=cluster_centers_)
+                                                                  distance_matrix=distance_matrix)
             results_list.append(cluster_accuracy)
             self.log.info(cluster_accuracy)
         results_array = np.asarray(results_list)

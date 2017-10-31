@@ -73,22 +73,6 @@ class HDBScanClustering:
         cluster_labels = hdbscan_model.fit_predict(input_matrix)
         return cluster_labels
 
-    def get_cluster_centers(self, cluster_labels, input_matrix):
-        cluster_centers = list()
-        d = dict()
-        for index, value in enumerate(cluster_labels):
-            if value in d:
-                d[value].append(index)
-            else:
-                d[value] = [index]
-
-        for cluster_label, cluster_data_points in d.items():
-            arr = [input_matrix[each] for each in cluster_data_points]
-            cluster_i_centroid = self.helper.centroid_np(arr)
-            cluster_centers.append(cluster_i_centroid)
-
-        return cluster_centers
-
     def perform_hdbscan(self, input_matrix, list_of_keys, variant_labels):
         """
         Takes as input a list of min_cluster_size and the performs hdbscan and returns an list of accuracies for each.
@@ -107,7 +91,6 @@ class HDBScanClustering:
         for min_cluster_size in min_cluster_size_list:
             try:
                 cluster_labels = self.core_model(input_matrix, min_cluster_size)
-                cluster_centers = self.get_cluster_centers(cluster_labels, input_matrix)
                 n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
                 if n_clusters == 0:
                     self.log.info("min_cluster_size : {}\tNo of clusters inferred is : {}".format(
@@ -118,7 +101,6 @@ class HDBScanClustering:
                     cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                           list_of_keys=list_of_keys,
                                                                           variant_labels=variant_labels,
-                                                                          cluster_centers=cluster_centers,
                                                                           input_matrix=input_matrix,
                                                                           distance_matrix=distance_matrix)
                     results_list.append(cluster_accuracy)

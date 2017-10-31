@@ -52,21 +52,10 @@ class AvclassValidation:
 
         return labels_true
 
-    @staticmethod
-    def prepare_for_db_index(labels_pred):
-        d = dict()
-        for index, value in enumerate(labels_pred):
-            if value in d:
-                d[value].append(index)
-            else:
-                d[value] = [index]
-        return d.values()
-
-    def main(self, labels_pred, list_of_keys, variant_labels, input_matrix, distance_matrix, cluster_centers):
+    def main(self, labels_pred, list_of_keys, variant_labels, input_matrix, distance_matrix):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
-        :param cluster_centers:
         :param distance_matrix:
         :param variant_labels:
         :param list_of_keys:
@@ -80,7 +69,6 @@ class AvclassValidation:
         start_time = time()
         input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
         labels_true = self.get_true_labels(variant_labels)
-        k_list = self.prepare_for_db_index(labels_pred)
 
         # Internal Indices
         ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
@@ -99,7 +87,7 @@ class AvclassValidation:
         s_score = self.metrics.silhouette_score(input_matrix, labels_pred)
         ch_score = self.metrics.calinski_harabaz_score(input_matrix, labels_pred)
         dunn_index = self.metrics.dunn_index(distance_matrix, labels=labels_pred)
-        db_index = self.metrics.davis_bouldin_index(k_list=k_list, k_centers=cluster_centers)
+        db_index = self.metrics.davis_bouldin_index(input_matrix=input_matrix, labels=labels_pred)
 
         cluster_accuracy['s_score'] = s_score
         cluster_accuracy['ch_score'] = ch_score

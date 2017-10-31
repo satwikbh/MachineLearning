@@ -1,8 +1,7 @@
 import numpy as np
-
+from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_X_y
-from sklearn import metrics
 
 from Utils.LoggerUtil import LoggerUtil
 
@@ -172,8 +171,7 @@ class ExternalIndices:
     @staticmethod
     def check_number_of_labels(n_labels, n_samples):
         if not 1 < n_labels < n_samples:
-            self.log.error("Number of labels is {}. " +
-                "Valid values are 2 to n_samples - 1 (inclusive)".format(n_labels))
+            raise ValueError("Number of labels is {}. Valid values are 2 to n_samples - 1 (inclusive)".format(n_labels))
 
     def davies_bouldin_index(self, input_matrix, labels):
         """Compute the Davies Bouldin index.
@@ -181,7 +179,7 @@ class ExternalIndices:
         and between-cluster distances.
         Parameters
         ----------
-        X : array-like, shape (``n_samples``, ``n_features``)
+        input_matrix : array-like, shape (``n_samples``, ``n_features``)
             List of ``n_features``-dimensional data points. Each row corresponds
             to a single data point.
         labels : array-like, shape (``n_samples``,)
@@ -196,28 +194,26 @@ class ExternalIndices:
            "A Cluster Separation Measure". IEEE Transactions on
            Pattern Analysis and Machine Intelligence. PAMI-1 (2): 224-227`_
         """
-        X = input_matrix
-        X, labels = check_X_y(X, labels)
+        input_matrix, labels = check_X_y(input_matrix, labels)
         le = LabelEncoder()
         labels = le.fit_transform(labels)
-        n_samples, _ = X.shape
+        n_samples, _ = input_matrix.shape
         n_labels = len(le.classes_)
 
         self.check_number_of_labels(n_labels, n_samples)
         intra_dists = np.zeros(n_labels)
-        centroids = np.zeros((n_labels, len(X[0])), np.float32)
+        centroids = np.zeros((n_labels, len(input_matrix[0])), np.float32)
         for k in range(n_labels):
-            cluster_k = X[labels == k]
+            cluster_k = input_matrix[labels == k]
             mean_k = np.mean(cluster_k, axis=0)
             centroids[k] = mean_k
             intra_dists[k] = np.average(metrics.pairwise_distances(cluster_k, [mean_k]))
 
         centroid_distances = metrics.pairwise_distances(centroids)
         with np.errstate(divide='ignore', invalid='ignore'):
-            if np.all((intra_dists[:, None] + intra_dists) == 0.0) or \
-               np.all(centroid_distances == 0.0):
+            if np.all((intra_dists[:, None] + intra_dists) == 0.0) or np.all(centroid_distances == 0.0):
                 return 0.0
-            scores = (intra_dists[:, None] + intra_dists)/centroid_distances
+            scores = (intra_dists[:, None] + intra_dists) / centroid_distances
             # remove inf values
             scores[scores == np.inf] = np.nan
         return np.mean(np.nanmax(scores, axis=1))
