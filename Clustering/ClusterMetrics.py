@@ -51,8 +51,8 @@ class ClusterMetrics:
         dunn_index_value = self.external_index.dunn_fast(distances=distances, labels=labels)
         return dunn_index_value
 
-    def davis_bouldin_index(self, k_list, k_centers):
-        davis_bouldin_index_value = self.external_index.davis_bouldin_index(k_list=k_list, k_centers=k_centers)
+    def davis_bouldin_index(self, input_matrix, labels):
+        davis_bouldin_index_value = self.external_index.davies_bouldin_index(input_matrix, labels)
         return davis_bouldin_index_value
 
 
@@ -175,7 +175,7 @@ class ExternalIndices:
             self.log.error("Number of labels is {}. " +
                 "Valid values are 2 to n_samples - 1 (inclusive)".format(n_labels))
 
-    def davies_bouldin_index(self, X, labels):
+    def davies_bouldin_index(self, input_matrix, labels):
         """Compute the Davies Bouldin index.
         The index is defined as the ratio of within-cluster
         and between-cluster distances.
@@ -196,14 +196,14 @@ class ExternalIndices:
            "A Cluster Separation Measure". IEEE Transactions on
            Pattern Analysis and Machine Intelligence. PAMI-1 (2): 224-227`_
         """
-
+        X = input_matrix
         X, labels = check_X_y(X, labels)
         le = LabelEncoder()
         labels = le.fit_transform(labels)
         n_samples, _ = X.shape
         n_labels = len(le.classes_)
 
-        check_number_of_labels(n_labels, n_samples)
+        self.check_number_of_labels(n_labels, n_samples)
         intra_dists = np.zeros(n_labels)
         centroids = np.zeros((n_labels, len(X[0])), np.float32)
         for k in range(n_labels):
