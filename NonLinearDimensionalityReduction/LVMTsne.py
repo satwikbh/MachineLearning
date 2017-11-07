@@ -59,23 +59,22 @@ class Tsne:
     def get_best_params(self, tsne_model_list, tsne_reduced_matrix_list):
         self.log.info("Finding the best params for least error")
         main_list = list()
-        for perplexity_params in tsne_model_list:
-            for learning_rate_params in perplexity_params:
-                temp = learning_rate_params['params']
-                p_reduced_matrix = learning_rate_params['reduced_matrix']
-                temp['reduced_matrix'] = p_reduced_matrix
-                main_list.append(temp)
+        for perplexity_params_ml in tsne_model_list:
+            for learning_rate_params_ml in perplexity_params_ml:
+                temp1 = learning_rate_params_ml['params']
+                temp1['reduced_matrix'] = learning_rate_params_ml['reduced_matrix']
+                main_list.append(temp1)
         df1 = pd.DataFrame(main_list)
-        tsne_model = df1.loc[df['error'].idxmin()]['mat']
+        tsne_model = df1.loc[df1['kl_divergence'].idxmin()]['reduced_matrix']
 
-        for perplexity_params in tsne_reduced_matrix_list:
-            for learning_rate_params in perplexity_params:
-                temp = learning_rate_params['params']
-                p_reduced_matrix = learning_rate_params['reduced_matrix']
-                temp['reduced_matrix'] = p_reduced_matrix
-                main_list.append(temp)
+        main_list = list()
+        for perplexity_params_rml in tsne_reduced_matrix_list:
+            for learning_rate_params_rml in perplexity_params_rml:
+                temp2 = learning_rate_params_rml['params']
+                temp2['reduced_matrix'] = learning_rate_params_rml['reduced_matrix']
+                main_list.append(temp2)
         df2 = pd.DataFrame(main_list)
-        tsne_reduced_matrix = df2.loc[df['error'].idxmin()]['mat']
+        tsne_reduced_matrix = df2.loc[df2['kl_divergence'].idxmin()]['reduced_matrix']
 
         return tsne_reduced_matrix, tsne_model
 
