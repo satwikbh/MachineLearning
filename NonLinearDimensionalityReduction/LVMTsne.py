@@ -40,8 +40,8 @@ class Tsne:
                 for learning_rate in learning_rate_list:
                     model = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate,
                                  init=init)
-                    reduced_matrix = model.fit_transform(input_matrix.toarray())
                     model_list.append(model)
+                    reduced_matrix = model.fit_transform(input_matrix.toarray())
                     reduced_matrix_list.append(reduced_matrix)
                     self.plot_matrix(reduced_matrix, plot_path, init, perplexity)
                     self.log.info("Saving 2d & 3d plots")
@@ -55,6 +55,29 @@ class Tsne:
                                                               model.kl_divergence_))
 
         return model_list, reduced_matrix_list
+
+    def get_best_params(self, tsne_model_list, tsne_reduced_matrix_list):
+        self.log.info("Finding the best params for least error")
+        main_list = list()
+        for perplexity_params in tsne_model_list:
+            for learning_rate_params in perplexity_params:
+                temp = learning_rate_params['params']
+                p_reduced_matrix = learning_rate_params['reduced_matrix']
+                temp['reduced_matrix'] = p_reduced_matrix
+                main_list.append(temp)
+        df1 = pd.DataFrame(main_list)
+        tsne_model = df1.loc[df['error'].idxmin()]['mat']
+
+        for perplexity_params in tsne_reduced_matrix_list:
+            for learning_rate_params in perplexity_params:
+                temp = learning_rate_params['params']
+                p_reduced_matrix = learning_rate_params['reduced_matrix']
+                temp['reduced_matrix'] = p_reduced_matrix
+                main_list.append(temp)
+        df2 = pd.DataFrame(main_list)
+        tsne_reduced_matrix = df2.loc[df['error'].idxmin()]['mat']
+
+        return tsne_reduced_matrix, tsne_model
 
     def main(self, num_rows):
         start_time = time()
@@ -72,11 +95,22 @@ class Tsne:
 
         self.log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
 
+        all_params_dir = tsne_model_path + "/" + "all_params"
+        self.helper.create_dir_if_absent(all_params_dir)
+
+        tsne_all_reduced_matrix_fname = all_params_dir + "/" + "tsne_reduced_matrix_" + str(num_rows)
+        np.savez_compressed(file=tsne_all_reduced_matrix_fname, arr=tsne_reduced_matrix_list)
+
+        tsne_all_model_fname = all_params_dir + "/" + "tsne_model_" + str(num_rows)
+        np.savez_compressed(file=tsne_all_model_fname, arr=tsne_model_list)
+
+        tsne_reduced_matrix, tsne_model = self.get_best_params(tsne_model_list, tsne_reduced_matrix_list)
+
         tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows)
-        np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_model_list)
+        np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix)
 
         tsne_model_fname = tsne_model_path + "/" + "tsne_model_" + str(num_rows)
-        np.savez_compressed(file=tsne_model_fname, arr=tsne_reduced_matrix_list)
+        np.savez_compressed(file=tsne_model_fname, arr=tsne_model)
 
         # TODO
         # Add clustering code.
