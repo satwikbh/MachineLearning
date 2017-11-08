@@ -98,11 +98,11 @@ def main(num_rows):
 
     log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
 
-    tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows)
-    np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_model_list)
+    tsne_model_fname = tsne_model_path + "/all_params/" + "tsne_model_" + str(num_rows)
+    np.savez_compressed(file=tsne_model_fname, arr=tsne_model_list)
 
-    tsne_model_fname = tsne_model_path + "/" + "tsne_model_" + str(num_rows)
-    np.savez_compressed(file=tsne_model_fname, arr=tsne_reduced_matrix_list)
+    tsne_reduced_matrix_fname = tsne_model_path + "/all_params/" + "tsne_reduced_matrix_" + str(num_rows)
+    np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_list)
 
     # TODO
     # Add clustering code.
