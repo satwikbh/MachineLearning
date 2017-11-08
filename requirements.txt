@@ -11,3 +11,5 @@ ipdb
 h5py
 tensorflow
 hickle
+numpy
+scipy
