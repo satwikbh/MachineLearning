@@ -111,13 +111,13 @@ class DBScanClustering:
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "pca":
-                self.log.info("Performing HDBSCAN on PCA")
+                self.log.info("Performing DBSCAN on PCA")
             elif dr_name is "mds":
-                self.log.info("Performing HDBSCAN on Metric MDS")
+                self.log.info("Performing DBSCAN on Metric MDS")
             elif dr_name is "nmds":
-                self.log.info("Performing HDBSCAN on Non-Metric MDS")
+                self.log.info("Performing DBSCAN on Non-Metric MDS")
             elif dr_name is "tsne":
-                self.log.info("Performing HDBSCAN on TSNE")
+                self.log.info("Performing DBSCAN on TSNE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_dbscan(dr_matrix, list_of_keys, variant_labels)

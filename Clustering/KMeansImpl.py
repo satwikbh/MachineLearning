@@ -183,6 +183,7 @@ class KMeansImpl:
         pca_results_path = self.config["results"]["iterations"]["pca"]
         mds_results_path = self.config["results"]["iterations"]["mds"]
         tsne_results_path = self.config["results"]["iterations"]["tsne"]
+
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
 
         list_of_keys, avclass_collection = self.avclass_labeller(input_matrix_indices)

@@ -1,6 +1,7 @@
 from time import time
 
 import numpy as np
+import pandas as pd
 from sklearn.manifold import TSNE
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -85,8 +86,6 @@ class Tsne:
         tsne_results_path = self.config['results']['iterations']['tsne']
         n_components = 3
 
-        final_accuracies = dict()
-
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         tsne_model_list, tsne_reduced_matrix_list = self.perform_tsne(n_components=n_components,
                                                                       plot_path=plot_path,
@@ -103,13 +102,13 @@ class Tsne:
         tsne_all_model_fname = all_params_dir + "/" + "tsne_model_" + str(num_rows)
         np.savez_compressed(file=tsne_all_model_fname, arr=tsne_model_list)
 
-        tsne_reduced_matrix, tsne_model = self.get_best_params(tsne_model_list, tsne_reduced_matrix_list)
+        best_tsne_reduced_matrix, best_tsne_model = self.get_best_params(tsne_model_list, tsne_reduced_matrix_list)
 
-        tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows)
-        np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix)
+        tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_" + str(num_rows)
+        np.savez_compressed(file=tsne_reduced_matrix_fname, arr=best_tsne_reduced_matrix)
 
-        tsne_model_fname = tsne_model_path + "/" + "tsne_model_" + str(num_rows)
-        np.savez_compressed(file=tsne_model_fname, arr=tsne_model)
+        tsne_model_fname = tsne_results_path + "/" + "tsne_model_" + str(num_rows)
+        np.savez_compressed(file=tsne_model_fname, arr=best_tsne_model)
 
         # TODO
         # Add clustering code.

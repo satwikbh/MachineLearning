@@ -1,3 +1,4 @@
+pandas
 gensim=2.0.0
 pymongo
 sklearn
