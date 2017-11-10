@@ -2,13 +2,13 @@ import json
 import math
 import pickle as pi
 import urllib
+
 from collections import defaultdict
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
-from LinearDimensionalityReduction.IterativePca import IterativePca
 from PrepareData.ParsingLogic import ParsingLogic
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
@@ -20,7 +20,6 @@ class PrepareDataset:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.db_utils = DBUtils()
         self.parser = ParsingLogic()
-        self.dim_red = IterativePca()
         self.dis_pool = DistributePoolingSet()
         self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
@@ -152,18 +151,6 @@ class PrepareDataset:
         fv_dist_path_names = self.get_data_as_matrix(client, c2db_collection, list_of_keys, config_param_chunk_size,
                                                      feature_pool_path, feature_vector_path)
         self.data_stats.main()
-
-        # rows, columns = hkl.load(open(fv_dist_path_names[0])).shape
-        # rows = len(fv_dist_path_names) * rows
-        # self.log.info("Final Matrix shape : {}".format(rows, columns))
-
-        # reduced_matrix = self.dim_red.prepare_data_for_pca(config_param_chunk_size, fv_dist_path_names)
-        # self.log.info("Reduced Matrix Shape : {}".format(reduced_matrix.shape))
-        # dbscan = DBSCAN()
-        # dbscan.fit(reduced_matrix)
-        # self.log.info("DBScan labels : {}".format(dbscan.labels_.tolist()))
-        # kmeans_clusters = self.kmeans.get_clusters_kmeans(reduced_matrix, names=list_of_keys, k=16)
-        # families = self.kmeans.get_family_names(collection, kmeans_clusters)
 
 
 if __name__ == "__main__":

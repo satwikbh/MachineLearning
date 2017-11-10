@@ -6,7 +6,6 @@ import numpy as np
 
 import HelperFunctions.HelperFunction as utils
 from Utils.DBUtils import DBUtils
-from Clustering.BirchClustering import BirchClustering
 from Clustering.DBScanClustering import DBScan
 from Clustering.SingleLinkageClustering import SingleLinkageClustering
 from DatasketchLsh import DatasketchLsh
@@ -29,7 +28,6 @@ class DriverClass:
 
         self.slc = SingleLinkageClustering()
         self.dbscan = DBScan()
-        self.birch = BirchClustering()
 
     def main(self, num_variants):
         username = "admin"
