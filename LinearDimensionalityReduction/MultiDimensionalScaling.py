@@ -1,9 +1,10 @@
 import json
-from time import time
-
 import numpy as np
+
+from time import time
 from scipy.spatial.distance import pdist, squareform
 from sklearn.manifold import MDS
+from sklearn.preprocessing import Imputer
 
 from HelperFunctions.HelperFunction import HelperFunction
 from LinearDimensionalityReduction.PrincipalComponentAnalysis import PrincipalComponentAnalysis
@@ -40,6 +41,7 @@ class MultiDimensionalScaling:
 
         mds_reduced_matrix_list = list()
         nmds_reduced_matrix_list = list()
+        imputer = Imputer(missing_values='NaN', strategy='mean', axis=0)
 
         for distance_metric in metrics:
             try:
@@ -47,13 +49,15 @@ class MultiDimensionalScaling:
 
                 if distance_metric in self.supported_dist_metrics:
                     dissimilarities = pdist(input_matrix.toarray(), metric=distance_metric)
+                    dissimilarities = imputer.fit_transform(dissimilarities)
+                    dissimilarities = squareform(dissimilarities)
                 else:
                     self.log.error("Distance metric : {} is not in the list of allowed values : {}".format(
                         distance_metric,
                         self.supported_dist_metrics))
 
                 self.log.info("Fitting MDS with {} distance metric".format(distance_metric))
-                mds_reduced_matrix = mds.fit_transform(squareform(dissimilarities))
+                mds_reduced_matrix = mds.fit_transform(dissimilarities)
                 mds_reduced_matrix_list.append(mds_reduced_matrix)
 
                 self.log.info("Fitting N-MDS with {} distance metric".format(distance_metric))
