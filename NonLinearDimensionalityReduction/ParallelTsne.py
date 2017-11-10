@@ -3,6 +3,7 @@ from multiprocessing import Pool, get_logger
 from time import time
 
 import numpy as np
+import pandas as pd
 from sklearn.manifold import TSNE
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -53,7 +54,7 @@ def tsne_model(args):
               "kl_divergence": model.kl_divergence_}
     log.info("Saving 2d & 3d plots")
     log.info("Model Params : {}".format(params))
-    return {"model": model, "reduced_matrix": reduced_matrix, "params": params}
+    return {"reduced_matrix": reduced_matrix, "params": params}
 
 
 def perform_tsne(n_components, plot_path, input_matrix):
@@ -70,15 +71,29 @@ def perform_tsne(n_components, plot_path, input_matrix):
             pool = Pool(processes=len(learning_rate_list))
             params = [[n_components, perplexity, place_holder, init, input_matrix, plot_path] for place_holder in
                       learning_rate_list]
-            # result = pool.map(tsne_model, params)
             p_place_holder = pool.map_async(tsne_model, params)
             result = p_place_holder.get()
-            pool.join()
             pool.close()
+            pool.join()
             temp.append(result)
         final_result.append(temp)
-
     return final_result
+
+
+def get_best_params(tsne_model_list):
+    log.info("Finding the best params for least error")
+    tsne_reduced_matrix_dict = dict()
+
+    for init in tsne_model_list:
+        main_list = list()
+        for perplexity in init:
+            for learning_rate in perplexity:
+                main_list.append(learning_rate)
+        df = pd.DataFrame(main_list)
+        reduced_matrix = df.loc[df['kl_divergence'].idxmin()]['reduced_matrix']
+        tsne_reduced_matrix_dict[init] = reduced_matrix
+
+    return tsne_reduced_matrix_dict
 
 
 def main(num_rows):
@@ -87,22 +102,24 @@ def main(num_rows):
     tsne_model_path = config['models']['tsne']
     tsne_results_path = config['results']['iterations']['tsne']
 
+    all_params_dir = tsne_model_path + "/" + "all_params"
+    helper.create_dir_if_absent(all_params_dir)
+
     n_components = 3
-
-    final_accuracies = dict()
-
     input_matrix, input_matrix_indices = load_data.main(num_rows=num_rows)
-    tsne_model_list, tsne_reduced_matrix_list = perform_tsne(n_components=n_components,
-                                                             plot_path=plot_path,
-                                                             input_matrix=input_matrix)
+    tsne_model_list = perform_tsne(n_components=n_components,
+                                   plot_path=plot_path,
+                                   input_matrix=input_matrix)
 
     log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
 
     tsne_model_fname = tsne_model_path + "/all_params/" + "tsne_model_" + str(num_rows)
     np.savez_compressed(file=tsne_model_fname, arr=tsne_model_list)
 
-    tsne_reduced_matrix_fname = tsne_model_path + "/all_params/" + "tsne_reduced_matrix_" + str(num_rows)
-    np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_list)
+    tsne_reduced_matrix_dict = get_best_params(tsne_model_list)
+
+    tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_all_inits_" + str(num_rows)
+    np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_dict)
 
     # TODO
     # Add clustering code.
