@@ -76,7 +76,7 @@ class DBScanClustering:
     def perform_dbscan(self, input_matrix, list_of_keys, variant_labels):
         results_list = list()
         eps_list = self.helper.frange(0.1, 1.1, 0.1)
-        min_samples_list = range(2, 22, 2)
+        min_samples_list = range(5, 22, 2)
 
         self.log.info("Computing distance matrix")
         distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
@@ -87,6 +87,7 @@ class DBScanClustering:
                 try:
                     cluster_labels = self.core_model(input_matrix=input_matrix, eps=eps, min_samples=min_samples)
                     n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+                    noise = len([x for x in cluster_labels if x == -1])
                     if n_clusters == 0:
                         self.log.info("eps : {}\tmin_samples : {}\tNo of clusters inferred is : {}".format(
                             eps,
@@ -99,6 +100,7 @@ class DBScanClustering:
                                                                               variant_labels=variant_labels,
                                                                               input_matrix=input_matrix,
                                                                               distance_matrix=distance_matrix)
+                        cluster_accuracy['noise'] = noise
                         results_list.append(cluster_accuracy)
                         self.log.info(cluster_accuracy)
                 except Exception as e:

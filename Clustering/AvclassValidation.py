@@ -65,34 +65,38 @@ class AvclassValidation:
         :param input_matrix:
         :return: A dict which contains the a cluster label and the accuracy it has over all the variants.
         """
-        cluster_accuracy = dict()
-        start_time = time()
-        input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
-        labels_true = self.get_true_labels(variant_labels)
+        try:
+            cluster_accuracy = dict()
+            start_time = time()
+            input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
+            labels_true = self.get_true_labels(variant_labels)
 
-        # Internal Indices
-        ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
-        nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
-        homogeneity_score = self.metrics.homogeneity_score(labels_true=labels_true, labels_pred=labels_pred)
-        fw_score = self.metrics.fowlkes_mallow_score(labels_true=labels_true, labels_pred=labels_pred)
-        acc_score = self.metrics.cluster_purity(input_labels)
+            # Internal Indices
+            ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
+            nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
+            homogeneity_score = self.metrics.homogeneity_score(labels_true=labels_true, labels_pred=labels_pred)
+            fw_score = self.metrics.fowlkes_mallow_score(labels_true=labels_true, labels_pred=labels_pred)
+            acc_score = self.metrics.cluster_purity(input_labels)
 
-        cluster_accuracy['ari'] = ari_score
-        cluster_accuracy['nmi'] = nmi_score
-        cluster_accuracy['homogeneity_score'] = homogeneity_score
-        cluster_accuracy['fm_score'] = fw_score
-        cluster_accuracy['purity'] = acc_score
+            cluster_accuracy['ari'] = ari_score
+            cluster_accuracy['nmi'] = nmi_score
+            cluster_accuracy['homogeneity_score'] = homogeneity_score
+            cluster_accuracy['fm_score'] = fw_score
+            cluster_accuracy['purity'] = acc_score
 
-        # External Indices
-        s_score = self.metrics.silhouette_score(input_matrix, labels_pred)
-        ch_score = self.metrics.calinski_harabaz_score(input_matrix, labels_pred)
-        dunn_index = self.metrics.dunn_index(distance_matrix, labels=labels_pred)
-        db_index = self.metrics.davis_bouldin_index(input_matrix=input_matrix, labels=labels_pred)
+            # External Indices
+            s_score = self.metrics.silhouette_score(input_matrix, labels_pred)
+            ch_score = self.metrics.calinski_harabaz_score(input_matrix, labels_pred)
+            dunn_index = self.metrics.dunn_index(distance_matrix, labels=labels_pred)
+            db_index = self.metrics.davis_bouldin_index(input_matrix=input_matrix, labels=labels_pred)
 
-        cluster_accuracy['s_score'] = s_score
-        cluster_accuracy['ch_score'] = ch_score
-        cluster_accuracy['dunn_index'] = dunn_index
-        cluster_accuracy['davies_bouldin_index'] = db_index
+            cluster_accuracy['s_score'] = s_score
+            cluster_accuracy['ch_score'] = ch_score
+            cluster_accuracy['dunn_index'] = dunn_index
+            cluster_accuracy['davies_bouldin_index'] = db_index
 
-        self.log.info("Total time taken : {}".format(time() - start_time))
+            self.log.info("Total time taken : {}".format(time() - start_time))
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
+            
         return cluster_accuracy, input_labels

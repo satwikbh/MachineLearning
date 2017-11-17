@@ -92,6 +92,7 @@ class HDBScanClustering:
             try:
                 cluster_labels = self.core_model(input_matrix, min_cluster_size)
                 n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+                noise = len([x for x in cluster_labels if x == -1])
                 if n_clusters == 0:
                     self.log.info("min_cluster_size : {}\tNo of clusters inferred is : {}".format(
                         min_cluster_size,
@@ -103,6 +104,7 @@ class HDBScanClustering:
                                                                           variant_labels=variant_labels,
                                                                           input_matrix=input_matrix,
                                                                           distance_matrix=distance_matrix)
+                    cluster_accuracy['noise'] = noise
                     results_list.append(cluster_accuracy)
                     self.log.info(cluster_accuracy)
             except Exception as e:
