@@ -90,6 +90,7 @@ def get_best_params(tsne_model_list):
             for learning_rate in perplexity:
                 main_list.append(learning_rate)
         df = pd.DataFrame(main_list)
+        # Todo: There is a bug in the below line. Check logs and then rectify it.
         reduced_matrix = df.loc[df['kl_divergence'].idxmin()]['reduced_matrix']
         tsne_reduced_matrix_dict[init] = reduced_matrix
 
