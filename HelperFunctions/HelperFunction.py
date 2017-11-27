@@ -12,6 +12,13 @@ class HelperFunction:
         pass
 
     @staticmethod
+    def cursor_to_list(cursor, identifier):
+        list_of_keys = list()
+        for each in cursor:
+            list_of_keys.append(each[identifier])
+        return list_of_keys
+
+    @staticmethod
     def frange(start, stop, step):
         x = start
         while x < stop:
