@@ -10,7 +10,7 @@ class PerformAnalysis:
     """
 
     def __init__(self):
-        self.log = LoggerUtil.get(self.__class__.__name__)
+        self.log = LoggerUtil(self.__class__.__name__).get()
 
     def submit_2_cuckoo(self, file_path):
         """
