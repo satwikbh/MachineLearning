@@ -1,8 +1,6 @@
-import json
 import urllib
 import sys
 
-from collections import defaultdict
 from sshtunnel import SSHTunnelForwarder
 from pymongo import MongoClient
 
@@ -59,44 +57,6 @@ class ClusterFeaturePool:
         family_collection = clusters_db[family_name]
         return local_client, c2db_collection, family_collection
 
-    def get_families_data(self, collection, list_of_keys, config_param_chunk_size):
-        classified_families = defaultdict(list)
-        unclassified_families = defaultdict(list)
-
-        count = 0
-        iteration = 0
-        while count < len(list_of_keys):
-            try:
-                self.log.info("Iteration : {}".format(iteration))
-                if count + config_param_chunk_size < len(list_of_keys):
-                    p_value = list_of_keys[count:count + config_param_chunk_size]
-                else:
-                    p_value = list_of_keys[count:]
-                n_value = [key.split("_")[1] for key in p_value if "VirusShare_" in key]
-                count += config_param_chunk_size
-                local_cursor = collection.find({"md5": {"$in": n_value}})
-                for index, each_value in enumerate(local_cursor):
-                    family = each_value['avclass']['result']
-                    val = "VirusShare_" + each_value['md5']
-                    if "SINGLETON" in family:
-                        unclassified_families[family].append(val)
-                    else:
-                        classified_families[family].append(val)
-                iteration += 1
-            except Exception as e:
-                self.log.error("Error : {}".format(e))
-
-        malware_families_path = self.config['data']['malware_families_list']
-
-        json.dump(classified_families, open(malware_families_path + "/" + "classified_families.json", "w"))
-        json.dump(unclassified_families, open(malware_families_path + "/" + "unclassified_families.json", "w"))
-
-        self.log.info("Classified : {} \t Unclassified : {}".format(len(classified_families),
-                                                                    len(unclassified_families)))
-        l_value = classified_families.values()
-        l_value = self.helper.is_nested_list(l_value)
-        return l_value
-
     def split_into_sub_lists(self, bulk_list, avclass_collection, family_name):
         chunk_size = 10000
         count, local_iter = 0, 0
@@ -135,6 +95,8 @@ class ClusterFeaturePool:
                 size = sys.getsizeof(values) * 1.0 / 10 ** 6
                 self.log.info("Number of docs : {}\tSize of docs in MB : {}".format(len(values), size))
                 iteration += 1
+                value = [x.split("_")[1] for x in value]
+                avclass_collection.insert_one({"md5": value})
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         values = list(set(values))
@@ -145,7 +107,7 @@ class ClusterFeaturePool:
     def main(self, list_of_keys, family_name):
         client, c2db_collection, family_collection = self.get_collection(family_name)
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
-        self.log.info("Total keys before AVClass : {}".format(len(list_of_keys)))
+        self.log.info("Total keys : {}".format(len(list_of_keys)))
         self.generate_feature_pool(c2db_collection, family_collection, list_of_keys, config_param_chunk_size,
                                    family_name)
         client.close()
