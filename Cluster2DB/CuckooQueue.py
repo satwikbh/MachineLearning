@@ -1,4 +1,8 @@
+import json
+
 from Utils.LoggerUtil import LoggerUtil
+from Utils.KafkaUtil import KafkaUtil
+from Utils.ConfigUtil import ConfigUtil
 from PerformAnalysis import PerformAnalysis
 
 
@@ -11,22 +15,30 @@ class CuckooQueue:
 
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
+        self.config = ConfigUtil.get_config_instance()
         self.queue = Queue()
         self.cuckoo_object = PerformAnalysis()
 
-    def producer(self, md5_value, md5_path):
+    def producer(self, kafka, topic_name, md5_value, md5_path):
         """
         This method adds the executable and its path to the queue collection.
         Behavioral analysis is performed for elements in this collection.
+        :param kafka:
+        :param topic_name:
         :param md5_value:
         :param md5_path:
         :return:
         """
         meta_list = self.queue.insert_in_queue(md5_value, md5_path)
-        # TODO : Insert this meta_list item in the channel so that PerformAnalysis class consumer can consume it.
+        message = json.dumps(meta_list)
+        producer = kafka.get_producer()
+        producer.send(topic_name, value=message)
 
     def main(self, md5_value, md5_path):
-        self.producer(md5_value, md5_path)
+        broker_list = self.config["environment"]["kafka"]["broker_list"]
+        topic_name = self.config["environment"]["kafka"]["broker_list"]
+        kafka = KafkaUtil(broker_list=broker_list)
+        self.producer(kafka, topic_name, md5_value, md5_path)
 
 
 class Queue:
