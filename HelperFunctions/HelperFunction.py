@@ -19,6 +19,13 @@ class HelperFunction:
         return list_of_keys
 
     @staticmethod
+    def convert_to_vs_keys(list_of_keys):
+        new_list_of_keys = list()
+        for each_key in list_of_keys:
+            new_list_of_keys.append("VirusShare_" + each_key)
+        return new_list_of_keys
+
+    @staticmethod
     def frange(start, stop, step):
         x = start
         while x < stop:
