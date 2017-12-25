@@ -3,6 +3,7 @@ import sys
 
 from sshtunnel import SSHTunnelForwarder
 from pymongo import MongoClient
+from collections import defaultdict
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
@@ -15,6 +16,12 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class ClusterFeaturePool:
+    """
+    This class generates the collections in the clusters database.
+    Aggregates all the features of the cluster and then splits them into even sized chunks.
+    Each chunk is inserted as a document.
+    """
+
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.db_utils = DBUtils()
@@ -52,10 +59,14 @@ class ClusterFeaturePool:
         c2db_collection_name = self.config['environment']['mongo']['c2db_collection_name']
         c2db_collection = cuckoo_db[c2db_collection_name]
 
+        avclass_collection_name = self.config['environment']['mongo']['avclass_collection_name']
+        avclass_collection = cuckoo_db[avclass_collection_name]
+
         if family_name not in clusters_db.collection_names():
             clusters_db.create_collection(family_name)
         family_collection = clusters_db[family_name]
-        return local_client, c2db_collection, family_collection
+
+        return local_client, c2db_collection, family_collection, avclass_collection
 
     def split_into_sub_lists(self, bulk_list, avclass_collection, family_name):
         chunk_size = 10000
@@ -80,6 +91,17 @@ class ClusterFeaturePool:
 
     def generate_feature_pool(self, c2db_collection, avclass_collection, list_of_keys, config_param_chunk_size,
                               family_name):
+        """
+        Retrieves all the features of the malware's with the keys and aggregates them.
+        Splits them into equal sized chunks which are inserted as documents in the collection.
+        The name of the collection matches the family name.
+        :param c2db_collection:
+        :param avclass_collection:
+        :param list_of_keys:
+        :param config_param_chunk_size:
+        :param family_name:
+        :return:
+        """
         count, iteration = 0, 0
         values = list()
         while count < len(list_of_keys):
@@ -104,15 +126,36 @@ class ClusterFeaturePool:
                                   avclass_collection=avclass_collection,
                                   family_name=family_name)
 
-    def main(self, list_of_keys, family_name):
-        client, c2db_collection, family_collection = self.get_collection(family_name)
+    def get_keys_for_collection(self, family_name, avclass_collection):
+        """
+        Takes the family_name and searches it in the avclass_collection.
+        Returns the list of md5's which belong to the family in the VirusShare_ format.
+        :param family_name:
+        :param avclass_collection:
+        :return:
+        """
+        family_keys_list = defaultdict(list)
+        cursor = avclass_collection.find({"avclass.result": family_name}, {"avclass.result": 1, "md5": 1})
+        for doc in cursor:
+            try:
+                family = doc["avclass"]["result"]
+                md5 = doc["md5"]
+                family_keys_list[family].append(md5)
+            except Exception as e:
+                self.log.error("Error : {}".format(e))
+        list_of_keys = self.helper.convert_to_vs_keys(family_keys_list.values())
+        return list_of_keys
+
+    def main(self, family_name):
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
+        local_client, c2db_collection, family_collection, avclass_collection = self.get_collection(family_name)
+        list_of_keys = self.get_keys_for_collection(family_name, avclass_collection)
         self.log.info("Total keys : {}".format(len(list_of_keys)))
         self.generate_feature_pool(c2db_collection, family_collection, list_of_keys, config_param_chunk_size,
                                    family_name)
-        client.close()
+        local_client.close()
 
 
 if __name__ == "__main__":
     cfp = ClusterFeaturePool()
-    cfp.main(list_of_keys=[], family_name="name")
+    cfp.main(family_name="")
