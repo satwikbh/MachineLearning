@@ -4,6 +4,7 @@ import sys
 from sshtunnel import SSHTunnelForwarder
 from pymongo import MongoClient
 from collections import defaultdict
+from time import time
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
@@ -143,16 +144,18 @@ class ClusterFeaturePool:
                 family_keys_list[family].append(md5)
             except Exception as e:
                 self.log.error("Error : {}".format(e))
-        list_of_keys = self.helper.convert_to_vs_keys(family_keys_list.values())
+        list_of_keys = self.helper.convert_to_vs_keys(family_keys_list[family_name])
         return list_of_keys
 
     def main(self, family_name):
+        start_time = time()
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         local_client, c2db_collection, family_collection, avclass_collection = self.get_collection(family_name)
         list_of_keys = self.get_keys_for_collection(family_name, avclass_collection)
         self.log.info("Total keys : {}".format(len(list_of_keys)))
         self.generate_feature_pool(c2db_collection, family_collection, list_of_keys, config_param_chunk_size,
                                    family_name)
+        self.log.info("Total time taken : {}".format(time() - start_time))
         local_client.close()
 
 
