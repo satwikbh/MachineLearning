@@ -63,6 +63,7 @@
     "phylogenetic": "/home/satwik/Documents/MachineLearning/Data_50k/phylogeny/",
     "clustal":"/home/satwik/Documents/Tools/clustalw-2.1/src/clustalw2",
     "mafft":"mafft",
+    "fasttree":"/home/satwik/Documents/Tools/FastTree/FastTree",
     "gpu_id": [
       "0"
     ],
@@ -80,10 +81,14 @@
       "db_name": "cuckoo",
       "clusters_db_name": "clusters",
       "signatures_db_name" : "signatures",
-      "c2db_collection_name": "cluster2db",
+      "c2db_collection_name": "Cluster2db",
+      "c2db_test_collection_name": "Cluster2dbTest",
       "malheur_collection_name": "MalheurLabels",
+      "malheur_test_collection_name": "MalheurLabelsTest",
       "virus_total_collection_name": "VirusTotalResults",
-      "avclass_collection_name": "AVClassLabels"
+      "virus_total_test_collection_name": "VirusTotalResultsTest",
+      "avclass_collection_name": "AVClassLabels",
+      "avclass_test_collection_name": "AVClassLabelsTest"
     }
   },
   "autoencoder_params": {
