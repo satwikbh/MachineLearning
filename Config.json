@@ -61,15 +61,15 @@
   },
   "environment": {
     "phylogenetic": "/home/satwik/Documents/MachineLearning/Data_50k/phylogeny/",
-    "clustal":"/home/satwik/Documents/Tools/clustalw-2.1/src/clustalw2",
-    "mafft":"mafft",
-    "fasttree":"/home/satwik/Documents/Tools/FastTree/FastTree",
+    "clustal": "/home/satwik/Documents/Tools/clustalw-2.1/src/clustalw2",
+    "mafft": "mafft",
+    "fasttree": "/home/satwik/Documents/Tools/FastTree/FastTree",
     "gpu_id": [
       "0"
     ],
     "kafka": {
-     "broker_list": "10.2.40.13:9092",
-     "topic_name": "test"
+      "broker_list": "10.2.40.13:9092",
+      "topic_name": "test"
     },
     "mongo": {
       "username": "admin",
@@ -80,7 +80,7 @@
       "is_auth_enabled": true,
       "db_name": "cuckoo",
       "clusters_db_name": "clusters",
-      "signatures_db_name" : "signatures",
+      "signatures_db_name": "signatures",
       "c2db_collection_name": "Cluster2db",
       "c2db_test_collection_name": "Cluster2dbTest",
       "malheur_collection_name": "MalheurLabels",
@@ -96,11 +96,11 @@
     "batch_size": 128,
     "display_step": 1
   },
-  "yara":{
+  "yara": {
     "threshold": 0.1,
-    "encoding_method":"new",
+    "encoding_method": "new",
     "compute_cosine": false,
-    "num_retrieve_malware":5,
+    "num_retrieve_malware": 5,
     "author": "satwik",
     "rule_path": "/home/satwik/Documents/MachineLearning/Data_50k/yara_rules/"
   }
