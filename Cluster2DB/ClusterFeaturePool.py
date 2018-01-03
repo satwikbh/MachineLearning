@@ -2,7 +2,7 @@ import urllib
 import sys
 
 from sshtunnel import SSHTunnelForwarder
-from pymongo import MongoClient
+from pymongo import MongoClient, InsertOne
 from collections import defaultdict
 from time import time
 
@@ -46,16 +46,11 @@ class ClusterFeaturePool:
                                                 is_auth_enabled=is_auth_enabled,
                                                 username=username, password=password)
 
-        server = SSHTunnelForwarder("10.2.40.13", ssh_username="satwik", ssh_password="aith0561",
-                                    remote_bind_address=('127.0.0.1', 27017))
-        server.start()
-        remote_client = MongoClient('127.0.0.1', server.local_bind_port)
-
         db_name = self.config['environment']['mongo']['db_name']
         cuckoo_db = local_client[db_name]
 
         clusters_db_name = self.config['environment']['mongo']['clusters_db_name']
-        clusters_db = remote_client[clusters_db_name]
+        clusters_db = local_client[clusters_db_name]
 
         c2db_collection_name = self.config['environment']['mongo']['c2db_collection_name']
         c2db_collection = cuckoo_db[c2db_collection_name]
@@ -65,30 +60,10 @@ class ClusterFeaturePool:
 
         if family_name not in clusters_db.collection_names():
             clusters_db.create_collection(family_name)
+
         family_collection = clusters_db[family_name]
 
         return local_client, c2db_collection, family_collection, avclass_collection
-
-    def split_into_sub_lists(self, bulk_list, avclass_collection, family_name):
-        chunk_size = 10000
-        count, local_iter = 0, 0
-        success, failure = 0, 0
-        while count < len(bulk_list):
-            try:
-                avclass_collection.insert_one({'family_name': family_name, 'feature_pool': [], "index": local_iter})
-                if count + chunk_size < len(bulk_list):
-                    values = bulk_list[count:count + chunk_size]
-                else:
-                    values = bulk_list[count:]
-                avclass_collection.update_one({'family_name': family_name, 'index': local_iter},
-                                              {'$push': {'feature_pool': values}})
-                count += chunk_size
-                success += 1
-                local_iter += 1
-            except Exception as e:
-                failure += 1
-                self.log.error("Error : {}".format(e))
-        self.log.info("Success : {}\tFailure : {}".format(success, failure))
 
     def generate_feature_pool(self, c2db_collection, avclass_collection, list_of_keys, config_param_chunk_size,
                               family_name):
@@ -108,24 +83,27 @@ class ClusterFeaturePool:
         while count < len(list_of_keys):
             try:
                 self.log.info("Iteration : {}".format(iteration))
+                bulk_request_list = list()
                 if count + config_param_chunk_size < len(list_of_keys):
                     value = list_of_keys[count:count + config_param_chunk_size]
                 else:
                     value = list_of_keys[count:]
                 count += config_param_chunk_size
                 doc2bow = self.parser.parse_each_document(value, c2db_collection)
-                values += self.helper.flatten_list(doc2bow.values())
-                size = sys.getsizeof(values) * 1.0 / 10 ** 6
-                self.log.info("Number of docs : {}\tSize of docs in MB : {}".format(len(values), size))
+                for d_key, d_value in doc2bow.items():
+                    value = d_key.split("_")[1]
+                    doc = dict()
+                    doc["md5"] = value
+                    doc["feature_pool"] = d_value
+                    doc["malware_source"] = d_key
+                    bulk_request_list.append(InsertOne(doc))
                 iteration += 1
-                value = [x.split("_")[1] for x in value]
-                avclass_collection.insert_one({"md5": value})
+                try:
+                    avclass_collection.bulk_write(bulk_request_list)
+                except Exception as e:
+                    self.log.error("Bulk Write Error : {}".format(e))
             except Exception as e:
                 self.log.error("Error : {}".format(e))
-        values = list(set(values))
-        self.split_into_sub_lists(bulk_list=values,
-                                  avclass_collection=avclass_collection,
-                                  family_name=family_name)
 
     def get_keys_for_collection(self, family_name, avclass_collection):
         """
@@ -155,8 +133,8 @@ class ClusterFeaturePool:
         self.log.info("Total keys : {}".format(len(list_of_keys)))
         self.generate_feature_pool(c2db_collection, family_collection, list_of_keys, config_param_chunk_size,
                                    family_name)
-        self.log.info("Total time taken : {}".format(time() - start_time))
         local_client.close()
+        self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == "__main__":

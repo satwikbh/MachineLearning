@@ -28,3 +28,6 @@ The value is a list with 2 values
     - Each element in the above list is a tuple where the first value is cluster accuracy and the second value is the input labels.
     - The cluster accuracy is a dict and contains the accuracies of each cluster.
     - The input labels are the corresponding **avclass** labels of the malware. 
+
+## Time Taken
+Test malware on Lab machine : 22
