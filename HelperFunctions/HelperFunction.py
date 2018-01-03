@@ -26,6 +26,13 @@ class HelperFunction:
         return new_list_of_keys
 
     @staticmethod
+    def convert_from_vs_keys(list_of_vs_keys):
+        new_list_of_keys = list()
+        for each_key in list_of_vs_keys:
+            new_list_of_keys.append(each_key.split("_")[1])
+        return new_list_of_keys
+
+    @staticmethod
     def frange(start, stop, step):
         x = start
         while x < stop:
@@ -133,3 +140,15 @@ class HelperFunction:
         sum_x = np.sum(arr[:, 0])
         sum_y = np.sum(arr[:, 1])
         return sum_x / length, sum_y / length
+
+    @staticmethod
+    def check_if_already_scanned(md5_value_list, c2db_collection):
+        status_dict = dict()
+        for md5_value in md5_value_list:
+            key = "VirusShare_" + str(md5_value)
+            cursor = c2db_collection.find({"key": key})
+            if cursor.count() > 0:
+                status_dict[md5_value] = True
+            else:
+                status_dict[md5_value] = False
+        return status_dict
