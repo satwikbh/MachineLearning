@@ -51,9 +51,8 @@ class Tsne:
                                                       learning_rate,
                                                       model.kl_divergence_))
             self.log.info("Saving the TSNE Reduced Matrix at : {}".format(tsne_results_path))
-            tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_init_" + str(init) + \
-                                        "_perplexity_" + str(perplexity) + \
-                                        "_learning_rate_" + str(learning_rate) + str(num_rows)
+            tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_init_" + str(
+                init) + "_perplexity_" + str(perplexity) + "_learning_rate_" + str(learning_rate) + str(num_rows)
             np.savez_compressed(file=tsne_reduced_matrix_fname, arr=reduced_matrix)
 
     @staticmethod
@@ -83,6 +82,7 @@ class Tsne:
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
         params = self.get_params()
+
         self.perform_tsne(n_components=n_components,
                           plot_path=plot_path,
                           input_matrix=input_matrix,

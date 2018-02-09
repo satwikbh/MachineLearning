@@ -3,15 +3,15 @@ import time
 import urllib
 
 import numpy as np
+from HelperFunctions.ParsingLogic import ParsingLogic
 
 import HelperFunctions.HelperFunction as utils
-from Utils.DBUtils import DBUtils
 from Clustering.DBScanClustering import DBScan
-from Clustering.SingleLinkageClustering import SingleLinkageClustering
 from DatasketchLsh import DatasketchLsh
 from FalconnLsh import FalconnLsh
-from HelperFunctions.ParsingLogic import ParsingLogic
 from NearpyLsh import NearpyLsh
+from OldCode.SingleLinkageClustering import SingleLinkageClustering
+from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
 
 

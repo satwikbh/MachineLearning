@@ -122,9 +122,6 @@ def main(num_rows):
     tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_all_inits_" + str(num_rows)
     np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_dict)
 
-    # TODO
-    # Add clustering code.
-
     log.info("Total time taken : {}".format(time() - start_time))
 
 

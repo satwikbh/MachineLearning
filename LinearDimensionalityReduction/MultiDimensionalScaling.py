@@ -108,9 +108,6 @@ class MultiDimensionalScaling:
         np.savez_compressed(file=mds_fname, arr=mds_reduced_matrix_list)
         np.savez_compressed(file=nmds_fname, arr=nmds_reduced_matrix_list)
 
-        # TODO
-        # Add clustering code.
-
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
