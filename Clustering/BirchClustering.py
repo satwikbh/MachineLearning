@@ -81,13 +81,14 @@ class BirchClustering:
         return variant_labels
 
     @staticmethod
-    def get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows):
+    def get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, sae_model_path, num_rows):
         """
         Takes the dimensionality reduction techniques model_path's, loads the matrices.
         Returns the matrices as a dict.
         :param pca_model_path:
         :param mds_model_path:
         :param tsne_model_path:
+        :param sae_model_path:
         :param num_rows:
         :return:
         """
@@ -111,6 +112,10 @@ class BirchClustering:
         tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
         tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
         dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
+
+        sae_file_name = sae_model_path + "/" + "sae_reduced_matrix_" + str(num_rows) + ".npz"
+        sae_reduced_matrix = np.load(sae_file_name)['arr_0']
+        dr_matrices['sae'] = sae_reduced_matrix
 
         return dr_matrices
 
@@ -184,12 +189,15 @@ class BirchClustering:
                 self.log.info("Performing Birch on TSNE with random init")
             elif dr_name is "tsne_pca":
                 self.log.info("Performing Birch on TSNE with pca init")
+            elif dr_name is "sae":
+                self.log.info("Performing Birch on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_birch(dr_matrix, list_of_keys, variant_labels)
         return dr_results_array
 
-    def save_results(self, num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path):
+    def save_results(self, num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path,
+                     sae_results_path):
         for dr_name, dr_results in dr_results_array.items():
             if dr_name is "pca":
                 pca_fname = pca_results_path + "birch_pca_" + str(num_rows)
@@ -206,27 +214,38 @@ class BirchClustering:
             elif dr_name is "tsne_pca":
                 tsne_pca_fname = tsne_results_path + "birch_tsne_pca" + str(num_rows)
                 np.savez_compressed(tsne_pca_fname, dr_results)
+            elif dr_name is "sae":
+                sae_fname = sae_results_path + "birch_sae_" + str(num_rows)
+                np.savez_compressed(sae_fname, dr_results)
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
 
     def main(self, num_rows):
         start_time = time()
+
         pca_model_path = self.config["models"]["pca"]["model_path"]
         mds_model_path = self.config["models"]["mds"]["model_path"]
-        tsne_model_path = self.config["models"]["tsne"]
+        tsne_model_path = self.config["models"]["tsne"]["model_path"]
+        sae_model_path = self.config["models"]["sae"]["model_path"]
 
-        pca_results_path = self.config["results"]["iterations"]["pca"]
-        mds_results_path = self.config["results"]["iterations"]["mds"]
-        tsne_results_path = self.config["results"]["iterations"]["tsne"]
+        pca_results_path = self.config["results"]["clustering_results"]["pca"]
+        mds_results_path = self.config["results"]["clustering_results"]["mds"]
+        tsne_results_path = self.config["results"]["clustering_results"]["tsne"]
+        sae_results_path = self.config["results"]["clustering_results"]["sae"]
+
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
 
         list_of_keys, avclass_collection = self.avclass_labeller(input_matrix_indices)
         variant_labels = self.prepare_labels(list_of_keys, avclass_collection)
 
-        dr_matrices = self.get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows)
+        dr_matrices = self.get_dr_matrices(pca_model_path=pca_model_path, mds_model_path=mds_model_path,
+                                           tsne_model_path=tsne_model_path, sae_model_path=sae_model_path,
+                                           num_rows=num_rows)
         dr_results_array = self.prepare_birch(dr_matrices, list_of_keys, variant_labels)
 
-        self.save_results(num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path)
+        self.save_results(num_rows=num_rows, dr_results_array=dr_results_array, pca_results_path=pca_results_path,
+                          mds_results_path=mds_results_path, tsne_results_path=tsne_results_path,
+                          sae_results_path=sae_results_path)
 
         self.log.info("Time taken : {}".format(time() - start_time))
 
