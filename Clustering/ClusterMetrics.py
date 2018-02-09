@@ -21,65 +21,65 @@ class ClusterMetrics:
     def ari_score(self, labels_true, labels_pred):
         try:
             ari_score = self.internal_index.ari_score(labels_pred=labels_pred, labels_true=labels_true)
+            return ari_score
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return ari_score
 
     def nmi_score(self, labels_true, labels_pred):
         try:
             nmi_score = self.internal_index.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
+            return nmi_score
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return nmi_score
 
     def homogeneity_score(self, labels_true, labels_pred):
         try:
             homogeneity_score = self.internal_index.homogeneity_score(labels_pred=labels_pred, labels_true=labels_true)
+            return [x for x in homogeneity_score]
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return [x for x in homogeneity_score]
 
     def fowlkes_mallow_score(self, labels_true, labels_pred):
         try:
             fm_score = self.internal_index.fowlkes_mallow_score(labels_true=labels_true, labels_pred=labels_pred)
+            return fm_score
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return fm_score
 
     def calinski_harabaz_score(self, input_matrix, labels):
         try:
             ch_score = self.internal_index.calinski_harabaz_score(input_matrix=input_matrix, labels=labels)
+            return ch_score
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return ch_score
 
     def silhouette_score(self, input_matrix, labels):
         try:
             s_score = self.external_index.silhouette_score(input_matrix=input_matrix, labels=labels)
+            return s_score
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return s_score
 
     def cluster_purity(self, input_labels):
         try:
             cluster_dist = self.external_index.cluster_purity(input_labels=input_labels, log=self.log)
+            return cluster_dist
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return cluster_dist
 
     def dunn_index(self, distances, labels):
         try:
             dunn_index_value = self.external_index.dunn_fast(distances=distances, labels=labels)
+            return dunn_index_value
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return dunn_index_value
 
     def davis_bouldin_index(self, input_matrix, labels):
         try:
             davis_bouldin_index_value = self.external_index.davies_bouldin_index(input_matrix, labels)
+            return davis_bouldin_index_value
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return davis_bouldin_index_value
 
 
 class InternalIndices:
@@ -257,8 +257,10 @@ class ExternalIndices:
             try:
                 if len(family_names) > 0:
                     unique = set(family_names)
-                    purity = max([family_names.count(x) for x in unique]) * 1.0 / len(family_names)
-                    cluster_dist[str(cluster_label)] = purity
+                    numerator = max([family_names.count(x) for x in unique])
+                    denominator = len(family_names)
+                    purity = numerator * 1.0 / denominator
+                    cluster_dist[str(cluster_label)] = [purity, numerator, denominator]
                 else:
                     cluster_dist[str(cluster_label)] = 0.0
             except Exception as e:

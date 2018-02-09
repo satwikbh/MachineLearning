@@ -22,7 +22,10 @@ class LoadData:
         return scaler.transform(input_matrix)
 
     def main(self, num_rows):
-        num_files = num_rows / 1000
+        if num_rows % 1000 > 0:
+            num_files = (num_rows / 1000) + 1
+        else:
+            num_files = num_rows / 1000
         input_matrix_indices = range(num_rows)
         pruned_fv_path = self.config['data']['pruned_feature_vector_path']
         list_of_files = self.helper.get_files_ends_with_extension(".npz", pruned_fv_path)

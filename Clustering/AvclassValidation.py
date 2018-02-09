@@ -52,11 +52,11 @@ class AvclassValidation:
 
         return labels_true
 
-    def main(self, labels_pred, list_of_keys, variant_labels, input_matrix, distance_matrix):
+    def main(self, labels_pred, list_of_keys, variant_labels, input_matrix, distance_matrices):
         """
         The labels are sent as input.
         The output is each cluster with its accuracy and labels.
-        :param distance_matrix:
+        :param distance_matrices:
         :param variant_labels:
         :param list_of_keys:
         :param labels_pred: The labels format is (cluster_label, malware_source).
@@ -71,7 +71,7 @@ class AvclassValidation:
             input_labels = self.labels2clusters(labels_pred, list_of_keys, variant_labels)
             labels_true = self.get_true_labels(variant_labels)
 
-            # Internal Indices
+            # External Indices
             ari_score = self.metrics.ari_score(labels_true=labels_true, labels_pred=labels_pred)
             nmi_score = self.metrics.nmi_score(labels_true=labels_true, labels_pred=labels_pred)
             homogeneity_score = self.metrics.homogeneity_score(labels_true=labels_true, labels_pred=labels_pred)
@@ -84,19 +84,22 @@ class AvclassValidation:
             cluster_accuracy['fm_score'] = fw_score
             cluster_accuracy['purity'] = acc_score
 
-            # External Indices
+            # Internal Indices
+            dunn_index_dict = dict()
+
             s_score = self.metrics.silhouette_score(input_matrix, labels_pred)
             ch_score = self.metrics.calinski_harabaz_score(input_matrix, labels_pred)
-            dunn_index = self.metrics.dunn_index(distance_matrix, labels=labels_pred)
             db_index = self.metrics.davis_bouldin_index(input_matrix=input_matrix, labels=labels_pred)
+            for metric, distance_matrix in distance_matrices.items():
+                dunn_index = self.metrics.dunn_index(distances=distance_matrix, labels=labels_pred)
+                dunn_index_dict[metric] = dunn_index
 
             cluster_accuracy['s_score'] = s_score
             cluster_accuracy['ch_score'] = ch_score
-            cluster_accuracy['dunn_index'] = dunn_index
+            cluster_accuracy['dunn_index'] = dunn_index_dict
             cluster_accuracy['davies_bouldin_index'] = db_index
 
             self.log.info("Total time taken : {}".format(time() - start_time))
+            return cluster_accuracy, input_labels
         except Exception as e:
             self.log.error("Error : {}".format(e))
-            
-        return cluster_accuracy, input_labels

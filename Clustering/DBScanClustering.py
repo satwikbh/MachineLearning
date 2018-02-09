@@ -48,6 +48,15 @@ class DBScanClustering:
 
     @staticmethod
     def get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows):
+        """
+        Takes the dimensionality reduction techniques model_path's, loads the matrices.
+        Returns the matrices as a dict.
+        :param pca_model_path:
+        :param mds_model_path:
+        :param tsne_model_path:
+        :param num_rows:
+        :return:
+        """
         dr_matrices = dict()
         pca_file_name = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
         pca_reduced_matrix = np.load(pca_file_name)
@@ -61,9 +70,13 @@ class DBScanClustering:
         nmds_reduced_matrix = np.load(nmds_file_name)['arr'][0]
         dr_matrices["nmds"] = nmds_reduced_matrix
 
-        tsne_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
-        tsne_reduced_matrix = np.load(tsne_file_name)['arr'][0]
-        dr_matrices["tsne"] = tsne_reduced_matrix
+        tsne_random_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
+        dr_matrices["tsne_random"] = tsne_random_reduced_matrix
+
+        tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
+        dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
 
         return dr_matrices
 
@@ -74,13 +87,24 @@ class DBScanClustering:
         return cluster_labels
 
     def perform_dbscan(self, input_matrix, list_of_keys, variant_labels):
+        """
+        Performs hdbscan and returns an list of accuracies for each.
+        :param input_matrix:
+        :param list_of_keys:
+        :param variant_labels:
+        :return:
+        """
         results_list = list()
         eps_list = self.helper.frange(0.1, 1.1, 0.1)
         min_samples_list = range(5, 22, 2)
+        metric_list = ["euclidean", "jaccard", "cosine"]
+        distance_matrices = dict()
 
-        self.log.info("Computing distance matrix")
-        distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
-        self.log.info("distance matrix shape : {}".format(distance_matrix.shape))
+        for metric in metric_list:
+            self.log.info("Computing distance matrix for metric : {}".format(metric))
+            distance_matrix = squareform(pdist(input_matrix, metric=metric))
+            self.log.info("Distance matrix shape : {}".format(distance_matrix.shape))
+            distance_matrices[metric] = distance_matrix
 
         for eps in eps_list:
             for min_samples in min_samples_list:
@@ -99,7 +123,7 @@ class DBScanClustering:
                                                                               list_of_keys=list_of_keys,
                                                                               variant_labels=variant_labels,
                                                                               input_matrix=input_matrix,
-                                                                              distance_matrix=distance_matrix)
+                                                                              distance_matrices=distance_matrices)
                         cluster_accuracy['noise'] = noise
                         results_list.append(cluster_accuracy)
                         self.log.info(cluster_accuracy)
@@ -118,8 +142,10 @@ class DBScanClustering:
                 self.log.info("Performing DBSCAN on Metric MDS")
             elif dr_name is "nmds":
                 self.log.info("Performing DBSCAN on Non-Metric MDS")
-            elif dr_name is "tsne":
-                self.log.info("Performing DBSCAN on TSNE")
+            elif dr_name is "tsne_random":
+                self.log.info("Performing DBSCAN on TSNE with random init")
+            elif dr_name is "tsne_pca":
+                self.log.info("Performing DBSCAN on TSNE with pca init")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_dbscan(dr_matrix, list_of_keys, variant_labels)
@@ -128,21 +154,30 @@ class DBScanClustering:
     def save_results(self, num_rows, dr_results_array, pca_results_path, mds_results_path, tsne_results_path):
         for dr_name, dr_results in dr_results_array.items():
             if dr_name is "pca":
-                pca_fname = pca_results_path + "kmeans_pca_" + str(num_rows)
+                pca_fname = pca_results_path + "dbscan_pca_" + str(num_rows)
                 np.savez_compressed(pca_fname, dr_results)
             elif dr_name is "mds":
-                mds_fname = mds_results_path + "kmeans_mds_" + str(num_rows)
+                mds_fname = mds_results_path + "dbscan_mds_" + str(num_rows)
                 np.savez_compressed(mds_fname, dr_results)
             elif dr_name is "nmds":
-                nmds_fname = mds_results_path + "kmeans_nmds_" + str(num_rows)
+                nmds_fname = mds_results_path + "dbscan_nmds_" + str(num_rows)
                 np.savez_compressed(nmds_fname, dr_results)
-            elif dr_name is "tsne":
-                tsne_fname = tsne_results_path + "kmeans_tsne_" + str(num_rows)
-                np.savez_compressed(tsne_fname, dr_results)
+            elif dr_name is "tsne_random":
+                tsne_random_fname = tsne_results_path + "dbscan_tsne_random" + str(num_rows)
+                np.savez_compressed(tsne_random_fname, dr_results)
+            elif dr_name is "tsne_pca":
+                tsne_pca_fname = tsne_results_path + "dbscan_tsne_pca" + str(num_rows)
+                np.savez_compressed(tsne_pca_fname, dr_results)
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
 
     def avclass_labeller(self, input_matrix_indices):
+        """
+        Takes the names pickle file and then splits into a md5 list.
+        Returns the md5 list and the avclass collection instance.
+        :param input_matrix_indices:
+        :return:
+        """
         client, avclass_collection = self.get_connection()
         names_path = self.config["data"]["list_of_keys"]
         temp = pi.load(open(names_path + "/" + "names.dump"))

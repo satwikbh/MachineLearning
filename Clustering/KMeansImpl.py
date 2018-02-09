@@ -66,17 +66,30 @@ class KMeansImpl:
         return labels, model.cluster_centers_
 
     def perform_kmeans(self, input_matrix, list_of_keys, variant_labels):
+        """
+        Performs K-Means and returns an list of accuracies for each.
+        :param variant_labels:
+        :param list_of_keys:
+        :param input_matrix: A input matrix in ndarray format.
+        :return:
+        """
         results_list = list()
-        self.log.info("Computing distance matrix")
-        distance_matrix = squareform(pdist(input_matrix, metric="euclidean"))
-        self.log.info("distance matrix shape : {}".format(distance_matrix.shape))
+        metric_list = ["euclidean", "jaccard", "cosine"]
+        distance_matrices = dict()
+
+        for metric in metric_list:
+            self.log.info("Computing distance matrix for metric : {}".format(metric))
+            distance_matrix = squareform(pdist(input_matrix, metric=metric))
+            self.log.info("Distance matrix shape : {}".format(distance_matrix.shape))
+            distance_matrices[metric] = distance_matrix
+
         for k_value in range(2, 200):
             cluster_labels, cluster_centers_ = self.core_model(input_matrix, k_value)
             cluster_accuracy, input_labels = self.validation.main(labels_pred=cluster_labels,
                                                                   list_of_keys=list_of_keys,
                                                                   variant_labels=variant_labels,
                                                                   input_matrix=input_matrix,
-                                                                  distance_matrix=distance_matrix)
+                                                                  distance_matrices=distance_matrices)
             results_list.append(cluster_accuracy)
             self.log.info(cluster_accuracy)
         results_array = np.asarray(results_list)
@@ -91,8 +104,10 @@ class KMeansImpl:
                 self.log.info("Performing K-Means on Metric MDS")
             elif dr_name is "nmds":
                 self.log.info("Performing K-Means on Non-Metric MDS")
-            elif dr_name is "tsne":
-                self.log.info("Performing K-Means on TSNE")
+            elif dr_name is "tsne_random":
+                self.log.info("Performing K-Means on TSNE with random init")
+            elif dr_name is "tsne_pca":
+                self.log.info("Performing K-Means on TSNE with pca init")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_kmeans(dr_matrix, list_of_keys, variant_labels)
@@ -100,6 +115,15 @@ class KMeansImpl:
 
     @staticmethod
     def get_dr_matrices(pca_model_path, mds_model_path, tsne_model_path, num_rows):
+        """
+        Takes the dimensionality reduction techniques model_path's, loads the matrices.
+        Returns the matrices as a dict.
+        :param pca_model_path:
+        :param mds_model_path:
+        :param tsne_model_path:
+        :param num_rows:
+        :return:
+        """
         dr_matrices = dict()
         pca_file_name = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
         pca_reduced_matrix = np.load(pca_file_name)
@@ -113,9 +137,13 @@ class KMeansImpl:
         nmds_reduced_matrix = np.load(nmds_file_name)['arr'][0]
         dr_matrices["nmds"] = nmds_reduced_matrix
 
-        tsne_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
-        tsne_reduced_matrix = np.load(tsne_file_name)['arr'][0]
-        dr_matrices["tsne"] = tsne_reduced_matrix
+        tsne_random_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
+        dr_matrices["tsne_random"] = tsne_random_reduced_matrix
+
+        tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
+        dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
 
         return dr_matrices
 
@@ -130,13 +158,22 @@ class KMeansImpl:
             elif dr_name is "nmds":
                 nmds_fname = mds_results_path + "kmeans_nmds_" + str(num_rows)
                 np.savez_compressed(nmds_fname, dr_results)
-            elif dr_name is "tsne":
-                tsne_fname = tsne_results_path + "kmeans_tsne_" + str(num_rows)
-                np.savez_compressed(tsne_fname, dr_results)
+            elif dr_name is "tsne_random":
+                tsne_random_fname = tsne_results_path + "kmeans_tsne_random" + str(num_rows)
+                np.savez_compressed(tsne_random_fname, dr_results)
+            elif dr_name is "tsne_pca":
+                tsne_pca_fname = tsne_results_path + "kmeans_tsne_pca" + str(num_rows)
+                np.savez_compressed(tsne_pca_fname, dr_results)
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
 
     def avclass_labeller(self, input_matrix_indices):
+        """
+        Takes the names pickle file and then splits into a md5 list.
+        Returns the md5 list and the avclass collection instance.
+        :param input_matrix_indices:
+        :return:
+        """
         client, avclass_collection = self.get_connection()
         names_path = self.config["data"]["list_of_keys"]
         temp = pi.load(open(names_path + "/" + "names.dump"))
