@@ -33,7 +33,7 @@ class Tsne:
         plt.savefig(plot_path + "/" + "tsne_3d_" + str(init) + "_" + str(perplexity) + ".png")
         plt.close()
 
-    def perform_tsne(self, n_components, plot_path, input_matrix, params_list, tsne_results_path, num_rows):
+    def perform_tsne(self, n_components, plot_path, input_matrix, params_list, tsne_model_path, num_rows):
         for params in params_list:
             init = params["init"]
             perplexity = params["perplexity"]
@@ -50,9 +50,9 @@ class Tsne:
                                                       perplexity,
                                                       learning_rate,
                                                       model.kl_divergence_))
-            self.log.info("Saving the TSNE Reduced Matrix at : {}".format(tsne_results_path))
-            tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_init_" + str(
-                init) + "_perplexity_" + str(perplexity) + "_learning_rate_" + str(learning_rate) + str(num_rows)
+            self.log.info("Saving the TSNE Reduced Matrix at : {}".format(tsne_model_path))
+            tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_init_" + str(
+                init) + "_perplexity_" + str(perplexity) + "_learning_rate_" + str(learning_rate) + "_" + str(num_rows)
             np.savez_compressed(file=tsne_reduced_matrix_fname, arr=reduced_matrix)
 
     @staticmethod
@@ -77,7 +77,8 @@ class Tsne:
     def main(self, num_rows):
         start_time = time()
         plot_path = self.config['plots']['tsne']
-        tsne_results_path = self.config['results']['iterations']['tsne']
+        # The path where the reduced matrix will be stored.
+        tsne_model_path = self.config['models']['tsne']
         n_components = 3
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
@@ -87,7 +88,7 @@ class Tsne:
                           plot_path=plot_path,
                           input_matrix=input_matrix,
                           params_list=params,
-                          tsne_results_path=tsne_results_path,
+                          tsne_model_path=tsne_model_path,
                           num_rows=num_rows)
 
         self.log.info("Total time taken : {}".format(time() - start_time))

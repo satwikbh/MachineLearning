@@ -16,6 +16,11 @@ helper = HelperFunction()
 plot = Plotting()
 load_data = LoadData()
 
+"""
+Parallel Tsne will be used to perform GridSearch across all params.
+Once the best params are chosen manually, we use LVMTsne for those params to get the reduced matrix.
+"""
+
 
 def create_logger():
     logger = get_logger()
@@ -81,6 +86,12 @@ def perform_tsne(n_components, plot_path, input_matrix):
 
 
 def get_best_params(tsne_model_list):
+    """
+    To pick the best params for the model and get the reduced matrix.
+    Obsolete as of now.
+    :param tsne_model_list:
+    :return:
+    """
     log.info("Finding the best params for least error")
     tsne_reduced_matrix_dict = dict()
 
@@ -100,27 +111,26 @@ def get_best_params(tsne_model_list):
 def main(num_rows):
     start_time = time()
     plot_path = config['plots']['tsne']
-    tsne_model_path = config['models']['tsne']
-    tsne_results_path = config['results']['iterations']['tsne']
-
-    all_params_dir = tsne_model_path + "/" + "all_params"
-    helper.create_dir_if_absent(all_params_dir)
+    # tsne_model_path = config['models']['tsne']
+    tsne_dr_params_path = config['results']['dr_params']['tsne']
 
     n_components = 3
     input_matrix, input_matrix_indices = load_data.main(num_rows=num_rows)
-    tsne_model_list = perform_tsne(n_components=n_components,
+    tsne_params_list = perform_tsne(n_components=n_components,
                                    plot_path=plot_path,
                                    input_matrix=input_matrix)
 
-    log.info("Saving the TSNE model & Reduced Matrix at : {}".format(tsne_model_path))
+    log.info("Saving the TSNE all params at : {}".format(tsne_dr_params_path))
 
-    tsne_model_fname = tsne_model_path + "/all_params/" + "tsne_model_" + str(num_rows)
-    np.savez_compressed(file=tsne_model_fname, arr=tsne_model_list)
+    # TSNE model's for all possible params will be saved at model_path
+    tsne_params_fname = tsne_dr_params_path + "/" + "all_params" + "/" + "tsne_model_" + str(num_rows)
+    np.savez_compressed(file=tsne_params_fname, arr=tsne_params_list)
 
-    tsne_reduced_matrix_dict = get_best_params(tsne_model_list)
+    # The best param's reduced matrix will be saved at dr_results_path
+    # tsne_reduced_matrix_dict = get_best_params(tsne_model_list)
 
-    tsne_reduced_matrix_fname = tsne_results_path + "/" + "tsne_reduced_matrix_all_inits_" + str(num_rows)
-    np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_dict)
+    # tsne_reduced_matrix_fname = tsne_model_path + "/" + "tsne_reduced_matrix_all_inits_" + str(num_rows)
+    # np.savez_compressed(file=tsne_reduced_matrix_fname, arr=tsne_reduced_matrix_dict)
 
     log.info("Total time taken : {}".format(time() - start_time))
 

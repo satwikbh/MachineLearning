@@ -21,5 +21,10 @@ Link to dataset
 
 https://www.dropbox.com/sh/d3fjjzic5zbga9r/AACnk2e5q537DrJD-876LAF5a?dl=0
 
+### IMP:
+* All the models are stored at **models** in config file.
+* Best parameters for Dim Red. are stored at **dr_params**.
+* Clustering results are stored at **clustering_results**.
+
 ### Authors:
 Satwik
