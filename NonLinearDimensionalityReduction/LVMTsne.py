@@ -68,6 +68,7 @@ class Tsne:
         inner_param["learning_rate"] = 100
         params.append(inner_param)
 
+        inner_param = dict()
         inner_param["perplexity"] = 5
         inner_param["init"] = "pca"
         inner_param["learning_rate"] = 100
@@ -78,7 +79,7 @@ class Tsne:
         start_time = time()
         plot_path = self.config['plots']['tsne']
         # The path where the reduced matrix will be stored.
-        tsne_model_path = self.config['models']['tsne']
+        tsne_model_path = self.config['models']['tsne']['model_path']
         n_components = 3
 
         input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
