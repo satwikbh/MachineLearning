@@ -1,3 +1,5 @@
+import pickle as pi
+
 from sklearn.preprocessing import StandardScaler
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -20,6 +22,21 @@ class LoadData:
         self.log.info("Performing Scaling on the input data")
         scaler = StandardScaler(with_mean=False).fit(input_matrix)
         return scaler.transform(input_matrix)
+
+    def get_data_with_labels(self, num_rows, data_path, labels_path):
+        if num_rows % 1000 > 0:
+            num_files = (num_rows / 1000) + 1
+        else:
+            num_files = num_rows / 1000
+        input_matrix_indices = range(num_rows)
+        list_of_files = self.helper.get_files_ends_with_extension(".npz", data_path)
+        matrix = self.helper.open_np_files(list_of_files[:num_files])
+        input_matrix = self.helper.stack_matrix(matrix)
+        input_matrix = self.scale(input_matrix)
+        nearest_repr = self.helper.nearest_power_of_two(input_matrix.shape[1])
+        self.log.info("Input matrix dimension : {}\tNearest power of 2 : {}".format(input_matrix.shape, nearest_repr))
+        labels = pi.load(open(labels_path + "/" + "labels.pkl"))
+        return input_matrix, input_matrix_indices, labels
 
     def main(self, num_rows):
         if num_rows % 1000 > 0:

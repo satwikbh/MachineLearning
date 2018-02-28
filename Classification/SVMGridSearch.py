@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
+from sklearn.multiclass import OneVsRestClassifier
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -44,7 +45,7 @@ class SVMGridSearch(object):
 
     def perform_grid_search(self, tuned_parameters, x_train, x_test, y_train, y_test):
         for score in self.scores:
-            clf = GridSearchCV(SVC(), tuned_parameters, cv=5, scoring='%s_macro' % score)
+            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=-1, scoring='%s_macro' % score)
             clf.fit(x_train, y_train)
             best_params = clf.best_params_
             self.log.info("Best parameters set found on development set : \n{}".format(best_params))
