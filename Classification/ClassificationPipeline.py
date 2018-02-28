@@ -1,6 +1,6 @@
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.feature_selection import SelectKBest, SelectPercentile, chi2
+from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
@@ -62,6 +62,14 @@ class ClassificationPipeline:
         x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=0.25, random_state=13)
         return x_train, x_test, y_train, y_test
 
+    def get_pruning_threshold(self, threshold, input_matrix):
+        try:
+            sel = VarianceThreshold(threshold=(threshold * (1 - threshold)))
+            pruned_input = sel.fit_transform(input_matrix)
+            return pruned_input.shape
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
+
     def main(self, num_rows):
         fv_path = self.config['data']['feature_vector_path']
         labels_path = self.config['data']['labels_path']
@@ -69,7 +77,7 @@ class ClassificationPipeline:
         input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
                                                                                          data_path=fv_path,
                                                                                          labels_path=labels_path)
-        num_features = input_matrix.shape[0] * pruning_threshold
+        num_variants, num_features = self.get_pruning_threshold(threshold=pruning_threshold, input_matrix=input_matrix)
         self.log.info("Features pruned from {} to {}".format(input_matrix.shape[1], num_features))
         estimators = self.set_estimators(num_features=num_features)
         x_train, x_test, y_train, y_test = self.test_split(input_matrix=input_matrix, labels=labels)
@@ -85,4 +93,4 @@ class ClassificationPipeline:
 
 if __name__ == '__main__':
     cp = ClassificationPipeline()
-    cp.main(num_rows=407000)
+    cp.main(num_rows=28000)
