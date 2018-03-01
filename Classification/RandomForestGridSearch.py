@@ -6,15 +6,15 @@ from time import time
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
-from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from PrepareData.LoadData import LoadData
 
 
-class SVMGridSearch(object):
+class RandomForestGridSearch(object):
     """
     Performs GridSearch to find the best params for SVM
     """
@@ -28,8 +28,8 @@ class SVMGridSearch(object):
     @staticmethod
     def tuned_parameters():
         tuned_params = [
-            {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
-            {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+            {'estimator__n_estimators': range(10, 100, 10), 'estimator__min_samples_leaf': range(50, 100, 25),
+             'estimator__random_state': 11, 'estimator__oob_score': True}
         ]
         return tuned_params
 
@@ -79,7 +79,7 @@ class SVMGridSearch(object):
         cr_report_dict = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         for score in self.scores:
-            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30,
+            clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30,
                                scoring='%s_macro' % score)
             clf.fit(x_train, y_train)
             best_params = clf.best_params_
@@ -99,15 +99,15 @@ class SVMGridSearch(object):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "base_data":
-                self.log.info("Performing GridSearch for SVM on Base Data")
+                self.log.info("Performing GridSearch for Random Forest on Base Data")
             elif dr_name is "pca":
-                self.log.info("Performing GridSearch for SVM on PCA")
+                self.log.info("Performing GridSearch for Random Forest on PCA")
             elif dr_name is "tsne_random":
-                self.log.info("Performing GridSearch for SVM on TSNE with random init")
+                self.log.info("Performing GridSearch for Random Forest on TSNE with random init")
             elif dr_name is "tsne_pca":
-                self.log.info("Performing GridSearch for SVM on TSNE with pca init")
+                self.log.info("Performing GridSearch for Random Forest on TSNE with pca init")
             elif dr_name is "sae":
-                self.log.info("Performing GridSearch for SVM on on SAE")
+                self.log.info("Performing GridSearch for Random Forest on on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_grid_search(tuned_parameters=tuned_parameters,
@@ -117,14 +117,14 @@ class SVMGridSearch(object):
 
     def main(self, num_rows):
         start_time = time()
-        self.log.info("GridSearch on SVM started")
+        self.log.info("GridSearch on Random Forest started")
 
         labels_path = self.config["data"]["labels_path"]
         base_data_path = self.config["data"]["pruned_feature_vector_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
-        svm_results_path = self.config["models"]["svm"]["results_path"]
+        random_forest_results_path = self.config["models"]["random_forest"]["results_path"]
 
         tuned_params = self.tuned_parameters()
         dr_matrices, labels = self.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
@@ -132,11 +132,11 @@ class SVMGridSearch(object):
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
                                                    labels=labels)
-        np.savetxt(fname=svm_results_path + "/" + "svm_gridsearch", X=dr_results_array)
-        self.log.info("GridSearch on SVM completed")
+        np.savetxt(fname=random_forest_results_path + "/" + "random_forest_gridsearch", X=dr_results_array)
+        self.log.info("GridSearch on Random Forest completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
-    svm_grid_search = SVMGridSearch()
-    svm_grid_search.main(num_rows=50000)
+    random_forest_gs = RandomForestGridSearch()
+    random_forest_gs.main(num_rows=50000)
