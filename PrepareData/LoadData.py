@@ -28,10 +28,10 @@ class LoadData:
             num_files = (num_rows / 1000) + 1
         else:
             num_files = num_rows / 1000
-        input_matrix_indices = range(num_rows)
         list_of_files = self.helper.get_files_ends_with_extension(".npz", data_path)
         matrix = self.helper.open_np_files(list_of_files[:num_files])
         input_matrix = self.helper.stack_matrix(matrix)
+        input_matrix_indices = range(input_matrix.shape[0])
         input_matrix = self.scale(input_matrix)
         nearest_repr = self.helper.nearest_power_of_two(input_matrix.shape[1])
         self.log.info("Input matrix dimension : {}\tNearest power of 2 : {}".format(input_matrix.shape, nearest_repr))

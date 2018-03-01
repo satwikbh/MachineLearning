@@ -1,9 +1,10 @@
 import pickle as pi
 import urllib
+import numpy as np
+import glob
+
 from collections import defaultdict
 from time import time
-
-import numpy as np
 from hdbscan import HDBSCAN
 from scipy.spatial.distance import pdist, squareform
 
@@ -71,11 +72,11 @@ class HDBScanClustering:
         nmds_reduced_matrix = np.load(nmds_file_name)['arr'][0]
         dr_matrices["nmds"] = nmds_reduced_matrix
 
-        tsne_random_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_random_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_random_*")[0]
         tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
         dr_matrices["tsne_random"] = tsne_random_reduced_matrix
 
-        tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_pca_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_pca_*")[0]
         tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
         dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
 

@@ -1,5 +1,5 @@
 import numpy as np
-import pickle as pi
+import glob
 
 from time import time
 
@@ -52,20 +52,20 @@ class SVMGridSearch(object):
         """
         dr_matrices = dict()
 
-        input_matrix, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
-                                                                   data_path=base_data_path,
-                                                                   labels_path=labels_path)
+        input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
+                                                                                         data_path=base_data_path,
+                                                                                         labels_path=labels_path)
         dr_matrices['base_data'] = input_matrix
 
         pca_file_name = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
         pca_reduced_matrix = np.load(pca_file_name)
         dr_matrices["pca"] = pca_reduced_matrix
 
-        tsne_random_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_random_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_random_*")[0]
         tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
         dr_matrices["tsne_random"] = tsne_random_reduced_matrix
 
-        tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_pca_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_pca_*")[0]
         tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
         dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
 
