@@ -1,3 +1,4 @@
+import numpy as np
 import pickle as pi
 
 from time import time
@@ -24,12 +25,6 @@ class SVMGridSearch(object):
         self.config = ConfigUtil.get_config_instance()
         self.scores = ['precision', 'recall']
 
-    def get_data(self, num_rows):
-        labels_path = self.config['data']['labels_path']
-        input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
-        labels = pi.load(open(labels_path + "labels.pkl"))
-        return input_matrix, labels
-
     @staticmethod
     def tuned_parameters():
         tuned_params = [
@@ -43,9 +38,49 @@ class SVMGridSearch(object):
         x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
         return x_train, x_test, y_train, y_test
 
-    def perform_grid_search(self, tuned_parameters, x_train, x_test, y_train, y_test):
+    def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows):
+        """
+        Takes the dimensionality reduction techniques model_path's, loads the matrices.
+        Returns the matrices as a dict.
+        :param labels_path:
+        :param base_data_path:
+        :param pca_model_path:
+        :param tsne_model_path:
+        :param sae_model_path:
+        :param num_rows:
+        :return:
+        """
+        dr_matrices = dict()
+
+        input_matrix, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
+                                                                   data_path=base_data_path,
+                                                                   labels_path=labels_path)
+        dr_matrices['base_data'] = input_matrix
+
+        pca_file_name = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
+        pca_reduced_matrix = np.load(pca_file_name)
+        dr_matrices["pca"] = pca_reduced_matrix
+
+        tsne_random_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
+        dr_matrices["tsne_random"] = tsne_random_reduced_matrix
+
+        tsne_pca_file_name = tsne_model_path + "/" + "tsne_reduced_matrix_" + str(num_rows) + ".npz"
+        tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
+        dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
+
+        sae_file_name = sae_model_path + "/" + "sae_reduced_matrix_" + str(num_rows) + ".npz"
+        sae_reduced_matrix = np.load(sae_file_name)['arr_0']
+        dr_matrices['sae'] = sae_reduced_matrix
+
+        return dr_matrices, labels
+
+    def perform_grid_search(self, tuned_parameters, input_matrix, labels):
+        cr_report_dict = dict()
+        x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         for score in self.scores:
-            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=-1, scoring='%s_macro' % score)
+            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=-1,
+                               scoring='%s_macro' % score)
             clf.fit(x_train, y_train)
             best_params = clf.best_params_
             self.log.info("Best parameters set found on development set : \n{}".format(best_params))
@@ -57,17 +92,47 @@ class SVMGridSearch(object):
             self.log.info("The model is trained on the full development set.")
             self.log.info("The scores are computed on the full evaluation set.")
             y_true, y_pred = y_test, clf.predict(x_test)
-            self.log.info(classification_report(y_true, y_pred))
+            cr_report_dict[score] = classification_report(y_true, y_pred)
+        return cr_report_dict
+
+    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
+        dr_results_array = dict()
+        for dr_name, dr_matrix in dr_matrices.items():
+            if dr_name is "base_data":
+                self.log.info("Performing GridSearch for SVM on Base Data")
+            elif dr_name is "pca":
+                self.log.info("Performing GridSearch for SVM on PCA")
+            elif dr_name is "tsne_random":
+                self.log.info("Performing GridSearch for SVM on TSNE with random init")
+            elif dr_name is "tsne_pca":
+                self.log.info("Performing GridSearch for SVM on TSNE with pca init")
+            elif dr_name is "sae":
+                self.log.info("Performing GridSearch for SVM on on SAE")
+            else:
+                self.log.error("Dimensionality Reduction technique employed is not supported!!!")
+            dr_results_array[dr_name] = self.perform_grid_search(tuned_parameters=tuned_parameters,
+                                                                 input_matrix=dr_matrix,
+                                                                 labels=labels)
+        return dr_results_array
 
     def main(self, num_rows):
         start_time = time()
         self.log.info("GridSearch on SVM started")
+
+        labels_path = self.config["data"]["labels_path"]
+        base_data_path = self.config["data"]["pruned_feature_vector_path"]
+        pca_model_path = self.config["models"]["pca"]["model_path"]
+        tsne_model_path = self.config["models"]["tsne"]["model_path"]
+        sae_model_path = self.config["models"]["sae"]["model_path"]
+        svm_results_path = self.config["models"]["svm"]["results_path"]
+
         tuned_params = self.tuned_parameters()
-        input_matrix, labels = self.get_data(num_rows=num_rows)
-        x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
-        self.perform_grid_search(tuned_parameters=tuned_params,
-                                 x_train=x_train, x_test=x_test,
-                                 y_train=y_train, y_test=y_test)
+        dr_matrices, labels = self.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
+                                                   pca_model_path=pca_model_path, tsne_model_path=tsne_model_path,
+                                                   sae_model_path=sae_model_path, num_rows=num_rows)
+        dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
+                                                   labels=labels)
+        np.savetxt(fname=svm_results_path + "/" + "svm_gridsearch", X=dr_results_array)
         self.log.info("GridSearch on SVM completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 

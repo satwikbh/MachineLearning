@@ -24,7 +24,7 @@ class ClassificationPipeline:
         estimators = list()
         estimators.append(('feature_selection', SelectKBest(chi2, k=num_features)))
         estimators.append(('pca', PCA()))
-        estimators.append(('svm', OneVsRestClassifier(SVC())))
+        estimators.append(('ovr', OneVsRestClassifier(SVC())))
         return estimators
 
     @staticmethod
@@ -33,19 +33,18 @@ class ClassificationPipeline:
         return pipe
 
     @staticmethod
-    def get_gridsearch_params(pipe, num_features):
-        pca_n_components_range = range(num_features / 4, num_features / 2, 2)
-        pipe.named_steps.pca__n_components = pca_n_components_range
-        pipe.named_steps.svm__C = [0.01, 0.1, 1.0, 10, 100]
-        pipe.named_steps.svm__kernel = ['rbf']
-        pipe.named_steps.svm__gamma = [1e+2, 1e+1, 1, 1e-1, 1e-2, 1e-3, 1e-4]
-        param_grid = dict(pipe.named_steps)
+    def get_gridsearch_params(num_features):
+        param_grid = dict()
+        param_grid['pca__n_components'] = range(num_features / 4, num_features / 2, 2)
+        param_grid['ovr__estimator__c'] = [0.01, 0.1, 1.0, 10, 100]
+        param_grid['ovr__estimator__kernel'] = ['rbf']
+        param_grid['ovr__estimator__gamma'] = [1e+2, 1e+1, 1, 1e-1, 1e-2, 1e-3, 1e-4]
         return param_grid
 
     def perform_gridsearch(self, pipe, param_grid, x_train, x_test, y_train, y_test):
         for score in self.scores:
             grid = GridSearchCV(pipe, cv=3, n_jobs=-1, param_grid=param_grid, scoring='%s_macro' % score)
-            grid.fit(X=x_train, y=y_train)
+            grid.fit(X=x_train.toarray(), y=y_train)
             self.log.info("Best parameters set found on development set : \n{}".format(grid.best_params_))
             means = grid.cv_results_['mean_test_score']
             stds = grid.cv_results_['std_test_score']
@@ -54,7 +53,7 @@ class ClassificationPipeline:
             self.log.info("Detailed classification report:")
             self.log.info("The model is trained on the full development set.")
             self.log.info("The scores are computed on the full evaluation set.")
-            y_true, y_pred = y_test, grid.predict(x_test)
+            y_true, y_pred = y_test, grid.predict(x_test.toarray())
             self.log.info(classification_report(y_true, y_pred))
 
     @staticmethod
@@ -82,7 +81,7 @@ class ClassificationPipeline:
         estimators = self.set_estimators(num_features=num_features)
         x_train, x_test, y_train, y_test = self.test_split(input_matrix=input_matrix, labels=labels)
         pipe = self.prepare_pipeline(estimators=estimators)
-        param_grid = self.get_gridsearch_params(pipe=pipe, num_features=num_features)
+        param_grid = self.get_gridsearch_params(num_features=num_features)
         self.perform_gridsearch(pipe=pipe,
                                 param_grid=param_grid,
                                 x_train=x_train,
