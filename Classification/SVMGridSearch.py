@@ -93,6 +93,7 @@ class SVMGridSearch(object):
             self.log.info("The scores are computed on the full evaluation set.")
             y_true, y_pred = y_test, clf.predict(x_test)
             cr_report_dict[score] = classification_report(y_true, y_pred)
+            self.log.info(cr_report_dict[score])
         return cr_report_dict
 
     def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
