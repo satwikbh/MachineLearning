@@ -76,25 +76,22 @@ class SVMGridSearch(object):
         return dr_matrices, labels
 
     def perform_grid_search(self, tuned_parameters, input_matrix, labels):
-        cr_report_dict = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
-        for score in self.scores:
-            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30,
-                               scoring='%s_macro' % score)
-            clf.fit(x_train, y_train)
-            best_params = clf.best_params_
-            self.log.info("Best parameters set found on development set : \n{}".format(best_params))
-            means = clf.cv_results_['mean_test_score']
-            stds = clf.cv_results_['std_test_score']
-            for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-                self.log.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
-            self.log.info("Detailed classification report:")
-            self.log.info("The model is trained on the full development set.")
-            self.log.info("The scores are computed on the full evaluation set.")
-            y_true, y_pred = y_test, clf.predict(x_test)
-            cr_report_dict[score] = classification_report(y_true, y_pred)
-            self.log.info(cr_report_dict[score])
-        return cr_report_dict
+        clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
+        clf.fit(x_train, y_train)
+        best_params = clf.best_params_
+        self.log.info("Best parameters set found on development set : \n{}".format(best_params))
+        means = clf.cv_results_['mean_test_score']
+        stds = clf.cv_results_['std_test_score']
+        for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+            self.log.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+        self.log.info("Detailed classification report:")
+        self.log.info("The model is trained on the full development set.")
+        self.log.info("The scores are computed on the full evaluation set.")
+        y_true, y_pred = y_test, clf.predict(x_test)
+        cr_report = classification_report(y_true, y_pred)
+        self.log.info(cr_report)
+        return cr_report
 
     def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
         dr_results_array = dict()

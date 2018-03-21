@@ -29,7 +29,7 @@ class RandomForestGridSearch(object):
     def tuned_parameters():
         tuned_params = [
             {'estimator__n_estimators': range(10, 100, 10), 'estimator__min_samples_leaf': range(50, 100, 25),
-             'estimator__random_state': [11], 'estimator__oob_score': [True]}
+             'estimator__random_state': [11], 'estimator__oob_score': [False]}
         ]
         return tuned_params
 
