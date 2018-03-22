@@ -8,6 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.linear_model import SGDClassifier
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -24,13 +25,20 @@ class SVMGridSearch(object):
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.scores = ['precision', 'recall']
+        self.large_dataset = False
 
-    @staticmethod
-    def tuned_parameters():
-        tuned_params = [
-            {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
-            {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
-        ]
+    def tuned_parameters(self):
+        if self.large_dataset:
+            tuned_params = [
+                {'estimator__loss': ['hinge'], 'estimator__alpha': 10.0 ** -np.arange(1, 7),
+                 'estimator__n_iter': (10, 50, 80), 'estimator__penalty': ('l2', 'elasticnet')},
+                {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+            ]
+        else:
+            tuned_params = [
+                {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
+                {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+            ]
         return tuned_params
 
     @staticmethod
@@ -77,7 +85,10 @@ class SVMGridSearch(object):
 
     def perform_grid_search(self, tuned_parameters, input_matrix, labels):
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
-        clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
+        if self.large_dataset:
+            clf = GridSearchCV(OneVsRestClassifier(SGDClassifier()), tuned_parameters, cv=5, n_jobs=30)
+        else:
+            clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
         clf.fit(x_train, y_train)
         best_params = clf.best_params_
         self.log.info("Best parameters set found on development set : \n{}".format(best_params))
