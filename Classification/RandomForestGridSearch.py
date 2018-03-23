@@ -5,7 +5,7 @@ from time import time
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import RandomForestClassifier
 
@@ -76,28 +76,27 @@ class RandomForestGridSearch(object):
         return dr_matrices, labels
 
     def perform_grid_search(self, tuned_parameters, input_matrix, labels):
-        cr_report_dict = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
-        for score in self.scores:
-            clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30,
-                               scoring='%s_macro' % score)
-            if hasattr(x_train, "toarray"):
-                clf.fit(x_train.toarray(), y_train)
-            else:
-                clf.fit(x_train, y_train)
-            best_params = clf.best_params_
-            self.log.info("Best parameters set found on development set : \n{}".format(best_params))
-            means = clf.cv_results_['mean_test_score']
-            stds = clf.cv_results_['std_test_score']
-            for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-                self.log.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
-            self.log.info("Detailed classification report:")
-            self.log.info("The model is trained on the full development set.")
-            self.log.info("The scores are computed on the full evaluation set.")
-            y_true, y_pred = y_test, clf.predict(x_test)
-            cr_report_dict[score] = classification_report(y_true, y_pred)
-            self.log.info(cr_report_dict[score])
-        return cr_report_dict
+        clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30)
+        if hasattr(x_train, "toarray"):
+            clf.fit(x_train.toarray(), y_train)
+        else:
+            clf.fit(x_train, y_train)
+        best_params = clf.best_params_
+        self.log.info("Best parameters set found on development set : \n{}".format(best_params))
+        means = clf.cv_results_['mean_test_score']
+        stds = clf.cv_results_['std_test_score']
+        for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+            self.log.info("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+        self.log.info("Detailed classification report:")
+        self.log.info("The model is trained on the full development set.")
+        self.log.info("The scores are computed on the full evaluation set.")
+        y_true, y_pred = y_test, clf.predict(x_test)
+        cr_report = classification_report(y_true, y_pred)
+        auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+        self.log.info(cr_report)
+        self.log.info(auroc_score)
+        return [cr_report, auroc_score]
 
     def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
         dr_results_array = dict()

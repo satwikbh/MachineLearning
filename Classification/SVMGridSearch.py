@@ -31,8 +31,7 @@ class SVMGridSearch(object):
         if self.large_dataset:
             tuned_params = [
                 {'estimator__loss': ['hinge'], 'estimator__alpha': 10.0 ** -np.arange(1, 7),
-                 'estimator__n_iter': (10, 50, 80), 'estimator__penalty': ('l2', 'elasticnet')},
-                {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+                 'estimator__max_iter': (10, 50, 80), 'estimator__penalty': ('l2', 'elasticnet')}
             ]
         else:
             tuned_params = [
