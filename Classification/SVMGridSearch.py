@@ -5,7 +5,7 @@ from time import time
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import SGDClassifier
@@ -100,8 +100,10 @@ class SVMGridSearch(object):
         self.log.info("The scores are computed on the full evaluation set.")
         y_true, y_pred = y_test, clf.predict(x_test)
         cr_report = classification_report(y_true, y_pred)
+        auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
         self.log.info(cr_report)
-        return cr_report
+        self.log.info(auroc_score)
+        return [cr_report, auroc_score]
 
     def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
         dr_results_array = dict()
