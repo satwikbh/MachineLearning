@@ -2,8 +2,10 @@ import json
 import math
 import pickle as pi
 import urllib
+import numpy as np
 
 from collections import defaultdict
+from time import time
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
@@ -130,10 +132,52 @@ class PrepareDataset:
             return self.parser.convert2vec(feature_pool_part_path_list, feature_vector_path,
                                            num_rows=len(list_of_keys))
 
+    def generate_labels(self, avclass_collection, list_of_keys, config_param_chunk_size):
+        md5_keys = self.helper.convert_from_vs_keys(list_of_keys)
+        x = 0
+        index_pointer = 0
+        key_index_to_family_mapping = defaultdict()
+        key_index_to_family_mapping.default_factory = key_index_to_family_mapping.__len__
+
+        list_of_families = defaultdict()
+        list_of_families.default_factory = list_of_families.__len__
+
+        checker = list()
+
+        while x < len(md5_keys):
+            if x + config_param_chunk_size > len(md5_keys):
+                p_keys = md5_keys[x:]
+            else:
+                p_keys = md5_keys[x:x + config_param_chunk_size]
+            query = [
+                {"$match": {"md5": {"$in": p_keys}}},
+                {"$addFields": {"__order": {"$indexOfArray": [p_keys, "$md5"]}}},
+                {"$sort": {"__order": 1}}
+            ]
+            cursor = avclass_collection.aggregate(query)
+            for _ in cursor:
+                md5 = _["md5"]
+                family = _["avclass"]["result"]
+                key_index_to_family_mapping[index_pointer] = family
+                index_pointer += 1
+                checker.append(md5)
+            x += 10000
+            self.log.info("Iteration : #{}".format(x))
+        if not np.all([md5_keys[x] == checker[x] for x in xrange(len(md5_keys))]):
+            raise Exception("Labels are not generated properly")
+
+        for x in key_index_to_family_mapping.values():
+            list_of_families[x]
+
+        labels = [list_of_families[x] for x in key_index_to_family_mapping.values()]
+        return labels
+
     def load_data(self):
+        start_time = time()
         client, c2db_collection, avclass_collection = self.get_collection()
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
+        labels_path = self.config["data"]["labels_path"]
         list_of_keys = list()
 
         for each_element in cursor:
@@ -148,9 +192,13 @@ class PrepareDataset:
         feature_vector_path = self.config['data']['feature_vector_path']
         self.helper.create_dir_if_absent(feature_pool_path)
         self.helper.create_dir_if_absent(feature_vector_path)
-        fv_dist_path_names = self.get_data_as_matrix(client, c2db_collection, list_of_keys, config_param_chunk_size,
-                                                     feature_pool_path, feature_vector_path)
+        self.get_data_as_matrix(client, c2db_collection, list_of_keys,
+                                config_param_chunk_size, feature_pool_path,
+                                feature_vector_path)
         self.data_stats.main()
+        labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
+        pi.dump(labels, open(labels_path + "/" + "labels.pkl", "w"))
+        self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == "__main__":
