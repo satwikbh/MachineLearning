@@ -3,6 +3,10 @@ import math
 import hickle as hkl
 import numpy as np
 import os
+import pandas as pd
+import seaborn as sn
+import matplotlib.pyplot as plt
+
 from scipy.sparse import vstack, load_npz
 from sklearn.metrics import mean_squared_error
 
@@ -152,3 +156,11 @@ class HelperFunction:
             else:
                 status_dict[md5_value] = False
         return status_dict
+
+    @staticmethod
+    def plot_cnf_matrix(cnf_matrix):
+        df_cm = pd.DataFrame(cnf_matrix, index=[i for i in "ABCDEFGHIJK"],
+                             columns=[i for i in "ABCDEFGHIJK"])
+        plt.figure(figsize=(20, 10))
+        sn.heatmap(df_cm, annot=True)
+        return plt

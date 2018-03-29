@@ -5,14 +5,24 @@ from time import time
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report, roc_auc_score
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import SGDClassifier
+from sklearn.pipeline import Pipeline
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from PrepareData.LoadData import LoadData
+from HelperFunctions.HelperFunction import HelperFunction
+
+
+class OnlinePipeline(Pipeline):
+    def partial_fit(self, x, y=None):
+        for i, step in enumerate(self.steps):
+            name, est = step
+            est.partial_fit(x, y)
+        return self
 
 
 class SVMGridSearch(object):
@@ -24,14 +34,20 @@ class SVMGridSearch(object):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
+        self.helper = HelperFunction()
         self.scores = ['precision', 'recall']
         self.large_dataset = False
 
     def tuned_parameters(self):
         if self.large_dataset:
             tuned_params = [
-                {'estimator__loss': ['hinge'], 'estimator__alpha': 10.0 ** -np.arange(1, 7),
-                 'estimator__max_iter': (10, 50, 80), 'estimator__penalty': ('l2', 'elasticnet')}
+                {
+                    'ovr__estimator__warm_start': [True],
+                    'ovr__estimator__n_jobs': [30],
+                    'ovr__estimator__alpha': 10.0 ** -np.arange(1, 7),
+                    'ovr__estimator__max_iter': (10, 50, 80),
+                    'ovr__estimator__penalty': ('l2', 'elasticnet')
+                }
             ]
         else:
             tuned_params = [
@@ -82,13 +98,14 @@ class SVMGridSearch(object):
 
         return dr_matrices, labels
 
-    def perform_grid_search(self, tuned_parameters, input_matrix, labels):
+    def perform_grid_search(self, tuned_parameters, input_matrix, dr_name, labels, svm_results_path):
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         if self.large_dataset:
-            clf = GridSearchCV(OneVsRestClassifier(SGDClassifier()), tuned_parameters, cv=5, n_jobs=30)
+            pipe = OnlinePipeline([('ovr', OneVsRestClassifier(SGDClassifier()))])
+            clf = GridSearchCV(pipe, tuned_parameters, cv=5)
         else:
             clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
-        clf.fit(x_train, y_train)
+            clf.fit(x_train, y_train)
         best_params = clf.best_params_
         self.log.info("Best parameters set found on development set : \n{}".format(best_params))
         means = clf.cv_results_['mean_test_score']
@@ -99,13 +116,19 @@ class SVMGridSearch(object):
         self.log.info("The model is trained on the full development set.")
         self.log.info("The scores are computed on the full evaluation set.")
         y_true, y_pred = y_test, clf.predict(x_test)
-        cr_report = classification_report(y_true, y_pred)
-        auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
-        self.log.info(cr_report)
-        self.log.info(auroc_score)
-        return [cr_report, auroc_score]
+        try:
+            cr_report = classification_report(y_true, y_pred)
+            auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+            cnf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+            plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
+            plt.savefig(svm_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
+            self.log.info(cr_report)
+            self.log.info(auroc_score)
+            return [cr_report, auroc_score]
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
 
-    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels):
+    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels, svm_results_path):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "base_data":
@@ -122,7 +145,9 @@ class SVMGridSearch(object):
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_grid_search(tuned_parameters=tuned_parameters,
                                                                  input_matrix=dr_matrix,
-                                                                 labels=labels)
+                                                                 dr_name=dr_name,
+                                                                 labels=labels,
+                                                                 svm_results_path=svm_results_path)
         return dr_results_array
 
     def main(self, num_rows):
@@ -141,7 +166,7 @@ class SVMGridSearch(object):
                                                    pca_model_path=pca_model_path, tsne_model_path=tsne_model_path,
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
-                                                   labels=labels)
+                                                   labels=labels, svm_results_path=svm_results_path)
         np.savetxt(fname=svm_results_path + "/" + "svm_gridsearch", X=dr_results_array)
         self.log.info("GridSearch on SVM completed")
         self.log.info("Time taken : {}".format(time() - start_time))
