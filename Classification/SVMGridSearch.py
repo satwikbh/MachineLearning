@@ -30,13 +30,14 @@ class SVMGridSearch(object):
     Performs GridSearch to find the best params for SVM
     """
 
-    def __init__(self):
+    def __init__(self, multi_class):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
         self.scores = ['precision', 'recall']
         self.large_dataset = False
+        self.multi_class = multi_class
 
     def tuned_parameters(self):
         if self.large_dataset:
@@ -99,6 +100,7 @@ class SVMGridSearch(object):
         return dr_matrices, labels
 
     def perform_grid_search(self, tuned_parameters, input_matrix, dr_name, labels, svm_results_path):
+        results = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         if self.large_dataset:
             pipe = OnlinePipeline([('ovr', OneVsRestClassifier(SGDClassifier()))])
@@ -117,14 +119,18 @@ class SVMGridSearch(object):
         self.log.info("The scores are computed on the full evaluation set.")
         y_true, y_pred = y_test, clf.predict(x_test)
         try:
+            if not self.multi_class:
+                auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+                results['auroc'] = auroc_score
+                self.log.info(auroc_score)
             cr_report = classification_report(y_true, y_pred)
-            auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+            results['cr_report'] = cr_report
+            self.log.info(cr_report)
+
             cnf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
             plt.savefig(svm_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
-            self.log.info(cr_report)
-            self.log.info(auroc_score)
-            return [cr_report, auroc_score]
+            return results
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
@@ -173,5 +179,5 @@ class SVMGridSearch(object):
 
 
 if __name__ == '__main__':
-    svm_grid_search = SVMGridSearch()
+    svm_grid_search = SVMGridSearch(multi_class=True)
     svm_grid_search.main(num_rows=50000)

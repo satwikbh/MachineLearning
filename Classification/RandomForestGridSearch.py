@@ -25,6 +25,7 @@ class RandomForestGridSearch(object):
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
+        self.multi_class = True
 
     @staticmethod
     def tuned_parameters():
@@ -77,6 +78,7 @@ class RandomForestGridSearch(object):
         return dr_matrices, labels
 
     def perform_grid_search(self, tuned_parameters, dr_name, input_matrix, labels, random_forest_results_path):
+        results = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30)
         if hasattr(x_train, "toarray"):
@@ -94,14 +96,18 @@ class RandomForestGridSearch(object):
         self.log.info("The scores are computed on the full evaluation set.")
         y_true, y_pred = y_test, clf.predict(x_test)
         try:
+            if not self.multi_class:
+                auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+                results['auroc_score'] = auroc_score
+                self.log.info(auroc_score)
             cr_report = classification_report(y_true, y_pred)
-            auroc_score = roc_auc_score(y_true=y_true, y_score=y_pred)
+            results['cr_report'] = cr_report
+            self.log.info(cr_report)
+
             cnf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
             plt.savefig(random_forest_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
-            self.log.info(cr_report)
-            self.log.info(auroc_score)
-            return [cr_report, auroc_score]
+            return results
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
