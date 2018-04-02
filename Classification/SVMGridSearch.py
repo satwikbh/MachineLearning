@@ -30,13 +30,13 @@ class SVMGridSearch(object):
     Performs GridSearch to find the best params for SVM
     """
 
-    def __init__(self, multi_class):
+    def __init__(self, multi_class, large_dataset):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
         self.scores = ['precision', 'recall']
-        self.large_dataset = False
+        self.large_dataset = large_dataset
         self.multi_class = multi_class
 
     def tuned_parameters(self):
@@ -107,7 +107,7 @@ class SVMGridSearch(object):
             clf = GridSearchCV(pipe, tuned_parameters, cv=5)
         else:
             clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
-            clf.fit(x_train, y_train)
+        clf.fit(x_train, y_train)
         best_params = clf.best_params_
         self.log.info("Best parameters set found on development set : \n{}".format(best_params))
         means = clf.cv_results_['mean_test_score']
@@ -179,5 +179,5 @@ class SVMGridSearch(object):
 
 
 if __name__ == '__main__':
-    svm_grid_search = SVMGridSearch(multi_class=True)
+    svm_grid_search = SVMGridSearch(multi_class=True, large_dataset=True)
     svm_grid_search.main(num_rows=50000)

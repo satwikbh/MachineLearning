@@ -20,12 +20,12 @@ class RandomForestGridSearch(object):
     Performs GridSearch to find the best params for SVM
     """
 
-    def __init__(self):
+    def __init__(self, multi_class):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
-        self.multi_class = True
+        self.multi_class = multi_class
 
     @staticmethod
     def tuned_parameters():
@@ -156,5 +156,5 @@ class RandomForestGridSearch(object):
 
 
 if __name__ == '__main__':
-    random_forest_gs = RandomForestGridSearch()
+    random_forest_gs = RandomForestGridSearch(multi_class=True)
     random_forest_gs.main(num_rows=50000)
