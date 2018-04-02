@@ -2,7 +2,7 @@ import json
 from time import time
 
 import numpy as np
-from sklearn.decomposition.pca import PCA
+from sklearn.decomposition.pca import PCA, IncrementalPCA
 
 from Clustering.DBScanClustering import DBScanClustering
 from Clustering.HDBScanClustering import HDBScanClustering
@@ -13,13 +13,60 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class PrincipalComponentAnalysis:
-    def __init__(self):
+    def __init__(self, large_dataset):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.load_data = LoadData()
         self.dbscan = DBScanClustering()
         self.hdbscan = HDBScanClustering()
         self.helper = HelperFunction()
+        self.large_dataset = large_dataset
+
+    def partial_fit(self, ipca, input_matrix, chunk_size=1000):
+    	from_index = 0
+    	iter_count = 0
+    	while from_index < input_matrix.shape[0]:
+    		self.log.info("Performing partial_fit on iter : #{}".format(iter_count))
+    		if from_index + chunk_size > input_matrix.shape[0]:
+    			p_matrix = input_matrix[from_index : ]
+    		else:
+    			p_matrix = input_matrix[from_index : from_index + chunk_size]
+    		ipca.partial_fit(p_matrix)
+    		from_index += chunk_size
+    		iter_count += 1
+    	return ipca
+
+	def partial_transform(self, ipca, input_matrix, chunk_size=1000):
+		from_index = 0
+    	iter_count = 0
+    	l = list()
+    	while from_index < input_matrix.shape[0]:
+    		self.log.info("Performing partial_transform on iter : #{}".format(iter_count))
+    		if from_index + chunk_size > input_matrix.shape[0]:
+    			p_matrix = input_matrix[from_index : ]
+    		else:
+    			p_matrix = input_matrix[from_index : from_index + chunk_size]
+    		l.append(ipca.transform(p_matrix))
+    		from_index += chunk_size
+    		iter_count += 1
+		reduced_matrix = np.vstack(l)
+    	return reduced_matrix
+
+	def partial_inverse_transform(pca_model, input_matrix, chunk_size=1000):
+		from_index = 0
+    	iter_count = 0
+    	l = list()
+    	while from_index < input_matrix.shape[0]:
+    		self.log.info("Performing inverse_transform on iter : #{}".format(iter_count))
+    		if from_index + chunk_size > input_matrix.shape[0]:
+    			p_matrix = input_matrix[from_index : ]
+    		else:
+    			p_matrix = input_matrix[from_index : from_index + chunk_size]
+    		l.append(ipca.inverse_transform(p_matrix))
+    		from_index += chunk_size
+    		iter_count += 1
+		reconstructed_matrix = np.vstack(l)
+    	return reconstructed_matrix
 
     def perform_pca(self, input_matrix, num_rows, pca_dr_params_path, reconstruction_error, randomized=False):
         """
@@ -38,12 +85,18 @@ class PrincipalComponentAnalysis:
         best_params = dict()
         for n_components in n_components_list:
             try:
-                if randomized:
-                    pca_model = PCA(n_components=n_components, svd_solver='randomized')
-                else:
-                    pca_model = PCA(n_components=n_components)
-                reduced_matrix = pca_model.fit_transform(input_matrix)
-                reconstructed_matrix = pca_model.inverse_transform(reduced_matrix)
+            	if self.large_dataset:
+            		pca_model = IncrementalPCA(n_components)
+            		pca_model = self.partial_fit(pca_model, input_matrix, chunk_size=1000)
+            		reduced_matrix = self.partial_transform(pca_model, input_matrix, chunk_size=1000)
+            		reconstructed_matrix = self.partial_inverse_transform(pca_model, input_matrix, chunk_size=1000)
+        		else:
+	                if randomized:
+	                    pca_model = PCA(n_components=n_components, svd_solver='randomized')
+	                else:
+	                    pca_model = PCA(n_components=n_components)
+                	reduced_matrix = pca_model.fit_transform(input_matrix)
+                	reconstructed_matrix = pca_model.inverse_transform(reduced_matrix)
                 error_curr = self.helper.mean_square_error(reconstructed_matrix, input_matrix)
                 self.log.info("Model for n_components : {}\tReconstruction Error : {}".format(n_components, error_curr))
                 best_params['n_components_' + str(n_components)] = str(error_curr)
@@ -78,5 +131,5 @@ class PrincipalComponentAnalysis:
 
 
 if __name__ == '__main__':
-    pca = PrincipalComponentAnalysis()
+    pca = PrincipalComponentAnalysis(large_dataset=True)
     pca.main(num_rows=25000)
