@@ -56,7 +56,6 @@ class PrincipalComponentAnalysis:
     def partial_inverse_transform(self, ipca, reduced_matrix, chunk_size=1000):
         from_index = 0
         iter_count = 0
-        reconstructed_p_matrix_list = list()
         error_sum = 0
 
         while from_index < reduced_matrix.shape[0]:
@@ -67,7 +66,7 @@ class PrincipalComponentAnalysis:
                 p_matrix = reduced_matrix[from_index: from_index + chunk_size]
             reconstructed_p_matrix = ipca.inverse_transform(p_matrix)
             residual = self.helper.mean_square_error(reconstructed_p_matrix, p_matrix)
-            error_sum += residual * len(partial_x_reduced)
+            error_sum += residual * len(p_matrix)
             from_index += chunk_size
             iter_count += 1
 
