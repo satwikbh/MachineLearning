@@ -1,5 +1,7 @@
-import math
+import matplotlib
+matplotlib.use('Agg')
 
+import math
 import hickle as hkl
 import numpy as np
 import os

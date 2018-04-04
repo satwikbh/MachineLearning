@@ -53,23 +53,26 @@ class PrincipalComponentAnalysis:
         reduced_matrix = np.vstack(reduced_p_matrix_list)
         return reduced_matrix
 
-    def partial_inverse_transform(self, ipca, input_matrix, chunk_size=1000):
+    def partial_inverse_transform(self, ipca, reduced_matrix, chunk_size=1000):
         from_index = 0
         iter_count = 0
         reconstructed_p_matrix_list = list()
+        error_sum = 0
 
-        while from_index < input_matrix.shape[0]:
+        while from_index < reduced_matrix.shape[0]:
             self.log.info("Performing inverse_transform on iter : #{}".format(iter_count))
-            if from_index + chunk_size > input_matrix.shape[0]:
-                p_matrix = input_matrix[from_index:]
+            if from_index + chunk_size > reduced_matrix.shape[0]:
+                p_matrix = reduced_matrix[from_index:]
             else:
-                p_matrix = input_matrix[from_index: from_index + chunk_size]
-            reconstructed_p_matrix_list.append(ipca.inverse_transform(p_matrix))
+                p_matrix = reduced_matrix[from_index: from_index + chunk_size]
+            reconstructed_p_matrix = ipca.inverse_transform(p_matrix)
+            residual = self.helper.mean_square_error(reconstructed_p_matrix, p_matrix)
+            error_sum += residual * len(partial_x_reduced)
             from_index += chunk_size
             iter_count += 1
 
-        reconstructed_matrix = np.vstack(reconstructed_p_matrix_list)
-        return reconstructed_matrix
+        mse = error_sum / iter_count
+        return mse
 
     def perform_pca(self, input_matrix, num_rows, pca_dr_params_path, reconstruction_error, randomized=False):
         """
@@ -92,7 +95,7 @@ class PrincipalComponentAnalysis:
                     pca_model = IncrementalPCA(n_components)
                     pca_model = self.partial_fit(pca_model, input_matrix, chunk_size=1000)
                     reduced_matrix = self.partial_transform(pca_model, input_matrix, chunk_size=1000)
-                    reconstructed_matrix = self.partial_inverse_transform(pca_model, input_matrix, chunk_size=1000)
+                    error_curr = self.partial_inverse_transform(pca_model, reduced_matrix, chunk_size=1000)
                 else:
                     if randomized:
                         pca_model = PCA(n_components=n_components, svd_solver='randomized')
@@ -100,7 +103,7 @@ class PrincipalComponentAnalysis:
                         pca_model = PCA(n_components=n_components)
                     reduced_matrix = pca_model.fit_transform(input_matrix)
                     reconstructed_matrix = pca_model.inverse_transform(reduced_matrix)
-                error_curr = self.helper.mean_square_error(reconstructed_matrix, input_matrix)
+                    error_curr = self.helper.mean_square_error(reconstructed_matrix, input_matrix)
                 self.log.info("Model for n_components : {}\tReconstruction Error : {}".format(n_components, error_curr))
                 best_params['n_components_' + str(n_components)] = str(error_curr)
                 if error_curr * 100 < reconstruction_error:
