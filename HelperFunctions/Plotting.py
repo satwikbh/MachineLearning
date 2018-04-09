@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
-from matplotlib.ticker import NullFormatter
 from time import time
 
 from Utils.LoggerUtil import LoggerUtil
@@ -16,24 +15,26 @@ class Plotting:
         self.log = LoggerUtil(self.__class__.__name__).get()
 
     @staticmethod
-    def plot_it_2d(Y):
+    def plot_it_2d(X, Y):
         t1 = time()
+        
         fig = plt.figure(figsize=(60, 10))
         ax = fig.add_subplot(2, 5, 10)
-        plt.scatter(Y[:, 0], Y[:, 1], cmap=plt.cm.Spectral)
         plt.title("Plotting (%.2g sec)" % (time() - t1))
-        ax.xaxis.set_major_formatter(NullFormatter())
-        ax.yaxis.set_major_formatter(NullFormatter())
+        plt.scatter(X[:,0], X[:,1], c=Y, cmap=plt.cm.get_cmap("jet", 10))
+        plt.colorbar(ticks=range(10))
+        plt.clim(-0.5, 9.5)
         plt.axis('tight')
+
         return plt
 
     @staticmethod
-    def plot_it_3d(Y):
+    def plot_it_3d(X, Y):
         t1 = time()
 
         fig = plt.figure(figsize=(50, 25))
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(Y[:, 0], Y[:, 1], Y[:, 2], marker='o')
+        ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=Y, cmap=plt.cm.get_cmap("jet", 10))
         plt.title("Plotting (%.2g sec)" % (time() - t1))
 
         ax.set_xlabel('X Label')
