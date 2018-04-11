@@ -44,7 +44,8 @@ class LoadData:
         else:
             num_files = num_rows / 1000
         pruned_fv_path = self.config['data']['pruned_feature_vector_path']
-        list_of_files = self.helper.get_files_ends_with_extension(".npz", pruned_fv_path)
+        feature_selection_path = self.config['data']['feature_selection_path']
+        list_of_files = self.helper.get_files_ends_with_extension(".npz", feature_selection_path)
         matrix = self.helper.open_np_files(list_of_files[:num_files])
         input_matrix = self.helper.stack_matrix(matrix)
         input_matrix_indices = range(input_matrix.shape[0])
