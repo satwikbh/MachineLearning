@@ -105,6 +105,8 @@ class RandomForestGridSearch(object):
             self.log.info(cr_report)
 
             cnf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+            if cnf_matrix.shape[0] != cnf_matrix.shape[1]:
+                raise Exception
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
             plt.savefig(random_forest_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
             return results

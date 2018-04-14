@@ -3,7 +3,6 @@ import glob
 
 from time import time
 
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.svm import SVC
@@ -57,11 +56,6 @@ class SVMGridSearch(object):
             ]
         return tuned_params
 
-    @staticmethod
-    def validation_split(input_matrix, labels, test_size):
-        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
-        return x_train, x_test, y_train, y_test
-
     def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows):
         """
         Takes the dimensionality reduction techniques model_path's, loads the matrices.
@@ -101,7 +95,7 @@ class SVMGridSearch(object):
 
     def perform_grid_search(self, tuned_parameters, input_matrix, dr_name, labels, svm_results_path):
         results = dict()
-        x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
+        x_train, x_test, y_train, y_test = self.helper.validation_split(input_matrix, labels, test_size=0.25)
         if self.large_dataset:
             pipe = OnlinePipeline([('ovr', OneVsRestClassifier(SGDClassifier()))])
             clf = GridSearchCV(pipe, tuned_parameters, cv=5)
@@ -128,6 +122,8 @@ class SVMGridSearch(object):
             self.log.info(cr_report)
 
             cnf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+            if cnf_matrix.shape[0] != cnf_matrix.shape[1]:
+                raise Exception
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
             plt.savefig(svm_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
             return results

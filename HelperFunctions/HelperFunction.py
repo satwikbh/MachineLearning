@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 from scipy.sparse import vstack, load_npz
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 
 
 class HelperFunction:
@@ -161,8 +162,14 @@ class HelperFunction:
 
     @staticmethod
     def plot_cnf_matrix(cnf_matrix):
-        df_cm = pd.DataFrame(cnf_matrix, index=[i for i in "ABCDEFGHIJK"],
-                             columns=[i for i in "ABCDEFGHIJK"])
+        # TODO : Move to Plotting.py
+        df_cm = pd.DataFrame(cnf_matrix, index=[i for i in range(cnf_matrix.shape[0])],
+                             columns=[i for i in range(cnf_matrix.shape[0])])
         plt.figure(figsize=(20, 10))
         sn.heatmap(df_cm, annot=True)
         return plt
+
+    @staticmethod
+    def validation_split(input_matrix, labels, test_size):
+        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
+        return x_train, x_test, y_train, y_test
