@@ -182,6 +182,7 @@ class HelperFunction:
                     status_dict[doc["key"]] = True
                 else:
                     status_dict[doc["key"]] = False
+            count += chunk
         return status_dict
 
     @staticmethod
