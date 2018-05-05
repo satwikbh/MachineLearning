@@ -6,6 +6,15 @@
 2. The model's for **LLE** and **TSNE** will not be saved in the inital run. Once the accuracies are determined from the results, we will rerun with the optimal configuration and then store the model.
 3. Clustering accuracy needs to be estimated based on NMI, ARI and the ACC parameters. 
 
+### Lineage Analysis
+1. There are 2 encoding methods
+	- Old => Each of the sequence is encoded as 3 bit vector.
+	- new => No encoding is performed.
+2. Each executable is identified by the md5 value. Whether the executable is analyzed or not is determined by checking the presence of family_name.fasta. 
+	- In case the file is absent, for all members of the family which are analyzed, we generate the MSA file i.e fasta file.
+	- In case the file is present, it means the current executable is freshly encountered and analysis is done. Then a file family_name.fasta_add is generated and supplied to MAFFT software with --add argument.
+
+
 ### Tsne
 
 1. Since tsne of the entire dataset may take forever, we divide the dataset into chunks and then perform tsne on it. For this chunk of data, we run the clustering and get optimal clusters. Then the clusters are merged.
