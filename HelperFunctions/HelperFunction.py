@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use('Agg')
 
 import math
@@ -27,6 +28,11 @@ class HelperFunction:
 
     @staticmethod
     def convert_to_vs_keys(list_of_keys):
+        """
+        Convert a list of md5 keys to VirusShare_ format.
+        :param list_of_keys:
+        :return:
+        """
         new_list_of_keys = list()
         for each_key in list_of_keys:
             new_list_of_keys.append("VirusShare_" + each_key)
@@ -102,6 +108,11 @@ class HelperFunction:
 
     @staticmethod
     def flatten_list(nested_list):
+        """
+        Flatten a list of lists
+        :param nested_list:
+        :return:
+        """
         flat_list = [item for sublist in nested_list for item in sublist]
         return flat_list
 
@@ -148,16 +159,29 @@ class HelperFunction:
         sum_y = np.sum(arr[:, 1])
         return sum_x / length, sum_y / length
 
-    @staticmethod
-    def check_if_already_scanned(md5_value_list, c2db_collection):
+    def check_if_already_scanned(self, md5_value_list, c2db_collection, chunk=1000):
+        """
+        In case a malware is scanned, it's md5 value will be present in the database.
+        Will check if the malware was scanned by checking the md5 in db.
+        :param md5_value_list: list of md5 of the malware executables.
+        :param c2db_collection: the c2db collection
+        :param chunk: chunk size for the in query. If its large, then mongo will throw >16mb error.
+        :return:
+        """
         status_dict = dict()
-        for md5_value in md5_value_list:
-            key = "VirusShare_" + str(md5_value)
-            cursor = c2db_collection.find({"key": key})
-            if cursor.count() > 0:
-                status_dict[md5_value] = True
+        md5_value_list = self.convert_to_vs_keys(md5_value_list)
+        count = 0
+        while count + chunk < len(md5_value_list):
+            if count + count > len(md5_value_list):
+                temp_list = md5_value_list[count:]
             else:
-                status_dict[md5_value] = False
+                temp_list = md5_value_list[count: count + chunk]
+            cursor = c2db_collection.find({"key": {"$in": temp_list}}, {"key": 1})
+            for doc in cursor:
+                if "key" in doc:
+                    status_dict[doc["key"]] = True
+                else:
+                    status_dict[doc["key"]] = False
         return status_dict
 
     @staticmethod
