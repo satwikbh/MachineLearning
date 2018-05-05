@@ -135,7 +135,7 @@ class PyTorchAe:
         counter = 0
         it = 0
 
-        while counter + self.mb_size < train_matrix.shape[0]:
+        while counter < train_matrix.shape[0]:
             X = train_matrix[counter:counter + self.mb_size].toarray()
             X = Variable(torch.from_numpy(X).cuda(device_id=1))
 

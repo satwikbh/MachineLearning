@@ -171,7 +171,7 @@ class HelperFunction:
         status_dict = dict()
         md5_value_list = self.convert_to_vs_keys(md5_value_list)
         count = 0
-        while count + chunk < len(md5_value_list):
+        while count < len(md5_value_list):
             if count + count > len(md5_value_list):
                 temp_list = md5_value_list[count:]
             else:

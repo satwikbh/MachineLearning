@@ -122,7 +122,7 @@ def main(args):
     counter = len(list_of_md5)
     count, index = 0, 0
     batch_size = 1000
-    while count + batch_size <= counter:
+    while count <= counter:
         print("Iteration : #{}".format(index))
         if count + batch_size <= counter:
             keys = list_of_md5[count: count + batch_size]
