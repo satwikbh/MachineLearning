@@ -5,8 +5,8 @@ from time import time
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
-from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 
 from Utils.LoggerUtil import LoggerUtil
@@ -23,9 +23,9 @@ class OnlinePipeline(Pipeline):
         return self
 
 
-class SVMGridSearch(object):
+class SGDGridSearch(object):
     """
-    Performs GridSearch to find the best params for SVM
+    Performs GridSearch to find the best params for SGD
     """
 
     def __init__(self, multi_class):
@@ -38,8 +38,13 @@ class SVMGridSearch(object):
 
     def tuned_parameters(self):
         tuned_params = [
-                {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
-                {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+            {
+                'ovr__estimator__warm_start': [True],
+                'ovr__estimator__n_jobs': [30],
+                'ovr__estimator__alpha': 10.0 ** -np.arange(1, 7),
+                'ovr__estimator__max_iter': (10, 50, 80),
+                'ovr__estimator__penalty': ('l2', 'elasticnet')
+            }
         ]
         return tuned_params
 
@@ -80,10 +85,11 @@ class SVMGridSearch(object):
 
         return dr_matrices, labels
 
-    def perform_grid_search(self, tuned_parameters, input_matrix, dr_name, labels, svm_results_path):
+    def perform_grid_search(self, tuned_parameters, input_matrix, dr_name, labels, sgd_results_path):
         results = dict()
         x_train, x_test, y_train, y_test = self.helper.validation_split(input_matrix, labels, test_size=0.25)
-        clf = GridSearchCV(OneVsRestClassifier(SVC()), tuned_parameters, cv=5, n_jobs=30)
+        pipe = OnlinePipeline([('ovr', OneVsRestClassifier(SGDClassifier()))])
+        clf = GridSearchCV(pipe, tuned_parameters, cv=5)
         clf.fit(x_train, y_train)
         best_params = clf.best_params_
         self.log.info("Best parameters set found on development set : \n{}".format(best_params))
@@ -108,55 +114,55 @@ class SVMGridSearch(object):
             if cnf_matrix.shape[0] != cnf_matrix.shape[1]:
                 raise Exception
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
-            plt.savefig(svm_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
+            plt.savefig(sgd_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
             return results
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
-    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels, svm_results_path):
+    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels, sgd_results_path):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "base_data":
-                self.log.info("Performing GridSearch for SVM on Base Data")
+                self.log.info("Performing GridSearch for SGD on Base Data")
             elif dr_name is "pca":
-                self.log.info("Performing GridSearch for SVM on PCA")
+                self.log.info("Performing GridSearch for SGD on PCA")
             elif dr_name is "tsne_random":
-                self.log.info("Performing GridSearch for SVM on TSNE with random init")
+                self.log.info("Performing GridSearch for SGD on TSNE with random init")
             elif dr_name is "tsne_pca":
-                self.log.info("Performing GridSearch for SVM on TSNE with pca init")
+                self.log.info("Performing GridSearch for SGD on TSNE with pca init")
             elif dr_name is "sae":
-                self.log.info("Performing GridSearch for SVM on on SAE")
+                self.log.info("Performing GridSearch for SGD on on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
             dr_results_array[dr_name] = self.perform_grid_search(tuned_parameters=tuned_parameters,
                                                                  input_matrix=dr_matrix,
                                                                  dr_name=dr_name,
                                                                  labels=labels,
-                                                                 svm_results_path=svm_results_path)
+                                                                 sgd_results_path=sgd_results_path)
         return dr_results_array
 
     def main(self, num_rows):
         start_time = time()
-        self.log.info("GridSearch on SVM started")
+        self.log.info("GridSearch on SGD started")
 
         labels_path = self.config["data"]["labels_path"]
         base_data_path = self.config["data"]["pruned_feature_vector_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
-        svm_results_path = self.config["models"]["svm"]["results_path"]
+        sgd_results_path = self.config["models"]["sgd"]["results_path"]
 
         tuned_params = self.tuned_parameters()
         dr_matrices, labels = self.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
                                                    pca_model_path=pca_model_path, tsne_model_path=tsne_model_path,
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
-                                                   labels=labels, svm_results_path=svm_results_path)
-        np.savetxt(fname=svm_results_path + "/" + "svm_gridsearch", X=dr_results_array)
-        self.log.info("GridSearch on SVM completed")
+                                                   labels=labels, sgd_results_path=sgd_results_path)
+        np.savetxt(fname=sgd_results_path + "/" + "sgd_gridsearch", X=dr_results_array)
+        self.log.info("GridSearch on SGD completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
-    svm_grid_search = SVMGridSearch(multi_class=True)
-    svm_grid_search.main(num_rows=50000)
+    sgd_grid_search = SGDGridSearch(multi_class=True)
+    sgd_grid_search.main(num_rows=50000)
