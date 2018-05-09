@@ -3,64 +3,80 @@
     "mini_batch_size": 100
   },
   "plots": {
-    "tsne": "/home/satwik/Documents/MachineLearning/Data_50k/plots/tsne",
-    "p_tsne": "/home/satwik/Documents/MachineLearning/Data_50k/plots/p_tsne",
-    "pca": "/home/satwik/Documents/MachineLearning/Data_50k/plots/pca",
-    "lle": "/home/satwik/Documents/MachineLearning/Data_50k/plots/lle",
-    "sae": "/home/satwik/Documents/MachineLearning/Data_50k/plots/sae"
+    "tsne": "/home/satwik/Documents/MachineLearning/DataSmall/plots/tsne",
+    "p_tsne": "/home/satwik/Documents/MachineLearning/DataSmall/plots/p_tsne",
+    "pca": "/home/satwik/Documents/MachineLearning/DataSmall/plots/pca",
+    "lle": "/home/satwik/Documents/MachineLearning/DataSmall/plots/lle",
+    "sae": "/home/satwik/Documents/MachineLearning/DataSmall/plots/sae"
   },
   "data": {
     "config_param_chunk_size": 1000,
     "pruning_threshold": 0.001,
-    "feature_vector_path": "/home/satwik/Documents/MachineLearning/Data_50k/feature_vector/",
-    "feature_pool_path": "/home/satwik/Documents/MachineLearning/Data_50k/feature_pool/",
-    "reduced_matrix_path": "/home/satwik/Documents/MachineLearning/Data_50k/reduced_matrix/",
-    "projected_matrix_path": "/home/satwik/Documents/MachineLearning/Data_50k/projected_matrix_path/",
-    "pruned_feature_vector_path": "/home/satwik/Documents/MachineLearning/Data_50k/pruned_fv_path/",
-    "col_dist_path": "/home/satwik/Documents/MachineLearning/Data_50k/",
-    "list_of_keys": "/home/satwik/Documents/MachineLearning/Data_50k/",
-    "malware_families_list": "/home/satwik/Documents/MachineLearning/Data_50k/"
+    "feature_vector_path": "/home/satwik/Documents/MachineLearning/DataSmall/feature_vector/",
+    "feature_pool_path": "/home/satwik/Documents/MachineLearning/DataSmall/feature_pool/",
+    "reduced_matrix_path": "/home/satwik/Documents/MachineLearning/DataSmall/reduced_matrix/",
+    "projected_matrix_path": "/home/satwik/Documents/MachineLearning/DataSmall/projected_matrix_path/",
+    "pruned_feature_vector_path": "/home/satwik/Documents/MachineLearning/DataSmall/pruned_fv_path/",
+    "col_dist_path": "/home/satwik/Documents/MachineLearning/DataSmall/",
+    "list_of_keys": "/home/satwik/Documents/MachineLearning/DataSmall/",
+    "malware_families_list": "/home/satwik/Documents/MachineLearning/DataSmall/",
+    "labels_path": "/home/satwik/Documents/MachineLearning/DataSmall/"
   },
   "models": {
     "pca": {
-      "model_path": "/home/satwik/Documents/MachineLearning/Data_50k/Models/pca_model/",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataSmall/Models/pca_model/",
       "reconstruction_error": 1.0
     },
     "mds": {
-      "model_path": "/home/satwik/Documents/MachineLearning/Data_50k/Models/mds_model/",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataSmall/Models/mds_model/",
       "reconstruction_error": 1.0
     },
     "kpca": {
-      "model_path": "/home/satwik/Documents/MachineLearning/Data_50k/Models/kpca_model/",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataSmall/Models/kpca_model/",
       "reconstruction_error": 1.0
     },
-    "tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Models/tsne_model/",
-    "p_tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Models/p_tsne_model/",
-    "sae": "/home/satwik/Documents/MachineLearning/Data_50k/Models/sae_model/",
-    "lle": "/home/satwik/Documents/MachineLearning/Data_50k/Models/lle_model/"
+    "tsne": {
+     "model_path":"/home/satwik/Documents/MachineLearning/DataSmall/Models/tsne_model/",
+     "reconstruction_error": 1.0
+     },
+    "p_tsne": "/home/satwik/Documents/MachineLearning/DataSmall/Models/p_tsne_model/",
+    "sae": {
+     "model_path":"/home/satwik/Documents/MachineLearning/DataSmall/Models/sae_model/",
+     "reconstruction_error": 1.0
+    },
+    "lle": "/home/satwik/Documents/MachineLearning/DataSmall/Models/lle_model/",
+    "svm": {
+        "results_path": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClassificationResults/SVM"
+    },
+    "random_forest": {
+        "results_path": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClassificationResults/RandomForest"
+    },
+    "one_d_cnn": {
+        "results_path": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClassificationResults/CNN_results"
+    }
   },
   "results": {
-    "iterations": {
-      "pca": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/pca/",
-      "mds": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/mds/",
-      "kpca": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/kpca/",
-      "tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/tsne/",
-      "p_tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/p_tsne/",
-      "sae": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/sae/",
-      "lle": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Iterations/lle/"
+    "clustering_results": {
+      "pca": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/pca/",
+      "mds": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/mds/",
+      "kpca": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/kpca/",
+      "tsne": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/tsne/",
+      "p_tsne": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/p_tsne/",
+      "sae": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/sae/",
+      "lle": "/home/satwik/Documents/MachineLearning/DataSmall/Results/ClusteringResults/lle/"
     },
-    "params": {
-      "pca": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/pca/",
-      "mds": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/mds/",
-      "kpca": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/kpca/",
-      "tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/tsne/",
-      "p_tsne": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/p_tsne/",
-      "sae": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/sae/",
-      "lle": "/home/satwik/Documents/MachineLearning/Data_50k/Results/Params/lle/"
+    "dr_params": {
+      "pca": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/pca/",
+      "mds": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/mds/",
+      "kpca": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/kpca/",
+      "tsne": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/tsne/",
+      "p_tsne": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/p_tsne/",
+      "sae": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/sae/",
+      "lle": "/home/satwik/Documents/MachineLearning/DataSmall/Results/DR_Params/lle/"
     }
   },
   "environment": {
-    "phylogenetic": "/home/satwik/Documents/MachineLearning/Data_50k/phylogeny/",
+    "phylogenetic": "/home/satwik/Documents/MachineLearning/DataSmall/phylogeny/",
     "clustal": "/home/satwik/Documents/Tools/clustalw-2.1/src/clustalw2",
     "mafft": "mafft",
     "fasttree": "/home/satwik/Documents/Tools/FastTree/FastTree",
@@ -87,8 +103,8 @@
       "malheur_test_collection_name": "MalheurLabelsTest",
       "virus_total_collection_name": "VirusTotalResults",
       "virus_total_test_collection_name": "VirusTotalResultsTest",
-      "avclass_collection_name": "AVClassLabels",
-      "avclass_test_collection_name": "AVClassLabelsTest"
+      "avclass_collection_name": "AvclassResults",
+      "avclass_test_collection_name": "AvclassResultsTest"
     }
   },
   "autoencoder_params": {
@@ -102,6 +118,6 @@
     "compute_cosine": false,
     "num_retrieve_malware": 5,
     "author": "satwik",
-    "rule_path": "/home/satwik/Documents/MachineLearning/Data_50k/yara_rules/"
+    "rule_path": "/home/satwik/Documents/MachineLearning/DataSmall/yara_rules/"
   }
 }
