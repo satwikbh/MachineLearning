@@ -8,6 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import classification_report, confusion_matrix
 
+from NaiveBayesClassifier import NaiveBayesClassifier
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from PrepareData.LoadData import LoadData
@@ -20,6 +21,7 @@ class EnsembleClassifiers:
         self.config = ConfigUtil.get_config_instance()
         self.load_data = LoadData()
         self.helper = HelperFunction()
+        self.naive_bayes = NaiveBayesClassifier()
         self.classifiers_list = ['adaboost', 'random_forest', 'extra_trees', 'decision_trees']
 
     def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows):
@@ -63,11 +65,15 @@ class EnsembleClassifiers:
     def perform_classification(self, input_matrix, dr_name, labels, ensemble_results_path):
         results = dict()
         cv = 5
+        n_classes = len(np.unique(labels))
         x_train, x_test, y_train, y_test = self.helper.validation_split(input_matrix, labels, test_size=0.25)
         del input_matrix, labels
         for classifier in self.classifiers_list:
             start_time = time()
-            if classifier is 'adaboost':
+            if classifier is 'naive_bayes':
+                self.log.info("Using Bernouille Naive Bayes classifier")
+                clf = self.naive_bayes.perform_classification(x=x_train, y=y_train, n_classes=n_classes)
+            elif classifier is 'adaboost':
                 self.log.info("Using Adaboost classifier")
                 clf = AdaBoostClassifier(n_estimators=100, random_state=0)
             elif classifier is 'random_forest':
@@ -86,8 +92,11 @@ class EnsembleClassifiers:
             scores = cross_val_score(clf, x_train, y_train, cv=cv)
             self.log.info("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
-            clf.fit(X=x_train, y=y_train)
-            y_pred = clf.predict(X=x_test)
+            if classifier is 'naive_bayes':
+                y_pred = self.naive_bayes.perform_prediction(x=x_test, classifier=clf)
+            else:
+                clf.fit(X=x_train, y=y_train)
+                y_pred = clf.predict(X=x_test)
 
             cr_report = classification_report(y_pred=y_pred, y_true=y_test)
             key_name = dr_name + "_" + classifier + "_" + "cr_report"
