@@ -4,6 +4,8 @@ import pickle as pi
 from scipy.sparse import vstack, load_npz
 from keras.utils import np_utils
 
+from Utils.ConfigUtil import ConfigUtil
+
 
 class DataGeneratorKeras:
     def __init__(self, num_rows, n_classes, dim_x=32, dim_y=32, batch_size=1, shuffle=True):
@@ -27,7 +29,7 @@ class DataGeneratorKeras:
             np.random.shuffle(indexes)
         return indexes
 
-    def __data_generation(self, list_ids_temp, n_classes):
+    def __data_generation(self, list_ids_temp, n_classes, data_path, labels_path):
         """
         Generates data of batch_size samples
         :param list_ids_temp:
@@ -54,7 +56,7 @@ class DataGeneratorKeras:
         label_encoder = np_utils.to_categorical(y, n_classes)
         return label_encoder
 
-    def generate(self, list_ids):
+    def generate(self, list_ids, data_path, labels_path):
         """
         Generates batches of samples
         :param list_ids:
@@ -75,7 +77,7 @@ class DataGeneratorKeras:
                 list_ids_temp = [list_ids[k] for k in indexes[i * self.batch_size:(i + 1) * self.batch_size]]
 
                 # Generate data
-                x, y = self.__data_generation(list_ids_temp, self.n_classes)
+                x, y = self.__data_generation(list_ids_temp, self.n_classes, data_path, labels_path)
 
                 yield x.toarray(), y
 
@@ -88,8 +90,12 @@ class Script:
         self.n_classes = n_classes
         self.n_samples = n_samples
         self.n_features = n_features
+        self.config = ConfigUtil.get_config_instance()
 
     def main(self):
+        labels_path = self.config["data"]["labels_path"]
+        base_data_path = self.config["data"]["feature_selection_path"]
+
         validation = int(self.test_size * self.num_rows)
         train = self.num_rows - validation
 
@@ -105,8 +111,12 @@ class Script:
         partition = {'train': range(train), 'validation': range(train, self.num_rows)}
 
         # Generators
-        training_generator = DataGeneratorKeras(**params).generate(partition['train'])
-        validation_generator = DataGeneratorKeras(**params).generate(partition['validation'])
+        training_generator = DataGeneratorKeras(**params).generate(partition['train'],
+                                                                   labels_path=labels_path,
+                                                                   data_path=base_data_path)
+        validation_generator = DataGeneratorKeras(**params).generate(partition['validation'],
+                                                                     labels_path=labels_path,
+                                                                     data_path=base_data_path)
 
         # Model Run
         # model.fit_generator(

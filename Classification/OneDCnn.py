@@ -1,15 +1,23 @@
+import numpy as np
+import pickle as pi
+
 from keras.layers import Dense, Input, Dropout, BatchNormalization, Flatten, Concatenate
 from keras.layers import Embedding, Conv1D, MaxPooling1D
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.optimizers import adam
 from keras.models import Model
+from keras.utils import np_utils
+
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
+from scipy.sparse import vstack, load_npz, save_npz
 
 from PrepareData.DataGeneratorKeras import Script
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 
 
-class OneDCnnDataComplete:
+class OneDCnn:
     def __init__(self, **kwargs):
         self.vocab_size = kwargs['vocab_size']
         self.embedding_dims = kwargs['embedding_dims']
@@ -125,7 +133,7 @@ class OneDCnnDataComplete:
         else:
             raise Exception("One of Sequential or Parallel must be True")
 
-    def compile_and_run_model(self, model, model_path):
+    def compile_model(self, model, model_path):
         optimizer = adam(lr=self.learning_rate)
         model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
@@ -133,7 +141,9 @@ class OneDCnnDataComplete:
         checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 
         partition, training_generator, validation_generator = self.script.main()
+        return training_generator, validation_generator, partition, checkpoint
 
+    def run_model(self, model, training_generator, validation_generator, partition, checkpoint):
         model.fit_generator(
             generator=training_generator,
             steps_per_epoch=len(partition['train']),
@@ -143,10 +153,55 @@ class OneDCnnDataComplete:
             verbose=1,
             callbacks=[checkpoint])
 
-    def main(self):
-        one_d_cnn_model_path = self.config['models']['one_d_cnn']['results_path']
+    def cross_validate(self, model, x_train, y_train, nb_classes):
+        kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=7)
+        cvscores = []
+        X = x_train.toarray()
+        Y = y_train
+
+        for index, (train, test) in enumerate(kfold.split(X, Y)):
+            # create model
+            self.log.info("kfold iter : #{}".format(index))
+            model.fit(X[train], np_utils.to_categorical(Y[train], num_classes=len(nb_classes)),
+                      epochs=10, batch_size=64, verbose=1,
+                      callbacks=[TensorBoard(log_dir='/tmp/temp/tensorboard_logs/')]
+                      )
+
+            # evaluate the model
+            scores = model.evaluate(X[test], Y[test], verbose=0)
+            self.log.info("%s: %.2f%%" % (model.metrics_names[1], scores[1] * 100))
+            cvscores.append(scores[1] * 100)
+
+        self.log.info("%.2f%% (+/- %.2f%%)" % (np.mean(cvscores), np.std(cvscores)))
+        return cvscores
+
+    def get_data(self, num_rows):
+        labels_path = self.config["data"]["labels_path"]
+        base_data_path = self.config["data"]["feature_selection_path"]
+
+        labels = np.asarray(pi.load(open(labels_path + "/" + "labels.pkl")))
+        nb_classes = np.unique(labels)
+
+        fv = []
+        for x in xrange(num_rows):
+            fv.append(load_npz(base_data_path + "feature_selection_" + str(x) + ".npz"))
+        matrix = vstack(fv)
+        del fv
+
+        return matrix, labels, nb_classes
+
+    def main(self, cross_validate, num_rows):
+        model_path = self.config['models']['one_d_cnn']['results_path']
         model = self.build_model(sequential=False, parallel=True)
-        self.compile_and_run_model(model=model, model_path=one_d_cnn_model_path)
+        if cross_validate:
+            matrix, labels, nb_classes = self.get_data(num_rows=num_rows)
+            cv_scores = self.cross_validate(model=model, x_train=matrix, y_train=labels, nb_classes=nb_classes)
+            pi.dump(cv_scores, open(model_path + "/" + "cross_validated_scores.pkl", "w"))
+        else:
+            training_generator, validation_generator, partition, checkpoint = self.compile_model(model=model,
+                                                                                                 model_path=model_path)
+            self.run_model(model=model, partition=partition, training_generator=training_generator,
+                           validation_generator=validation_generator, checkpoint=checkpoint)
 
 
 def get_params():
@@ -180,5 +235,5 @@ def get_params():
 
 if __name__ == '__main__':
     params = get_params()
-    one_d_cnn = OneDCnnDataComplete(**params)
-    one_d_cnn.main()
+    one_d_cnn = OneDCnn(**params)
+    one_d_cnn.main(cross_validate=True, num_rows=25000)
