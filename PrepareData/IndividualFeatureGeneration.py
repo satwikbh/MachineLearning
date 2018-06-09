@@ -234,13 +234,13 @@ class IndividualFeatureGeneration:
     def main(self):
         start_time = time()
 
-        individual_feature_pool_path = self.config[""]
-        files_fv_path = self.config[""]
-        reg_keys_fv_path = self.config[""]
-        mutexes_fv_path = self.config[""]
-        exec_cmds_fv_path = self.config[""]
-        network_fv_path = self.config[""]
-        static_feature_fv_path = self.config[""]
+        individual_feature_pool_path = self.config["individual_feature_pool_path"]
+        files_fv_path = self.config["individual_feature_vector_path"]["files_feature"]
+        reg_keys_fv_path = self.config["individual_feature_vector_path"]["reg_keys_feature"]
+        mutexes_fv_path = self.config["individual_feature_vector_path"]["mutexes_feature"]
+        exec_cmds_fv_path = self.config["individual_feature_vector_path"]["exec_cmds_feature"]
+        network_fv_path = self.config["individual_feature_vector_path"]["network_feature"]
+        static_feature_fv_path = self.config["individual_feature_vector_path"]["static_feature"]
 
         c2db_collection = self.get_collection()
         list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
@@ -249,6 +249,7 @@ class IndividualFeatureGeneration:
                      files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,
                      mutexes_fv_path=mutexes_fv_path, exec_cmds_fv_path=exec_cmds_fv_path,
                      network_fv_path=network_fv_path, static_feature_fv_path=static_feature_fv_path)
+        
         self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
 
 
