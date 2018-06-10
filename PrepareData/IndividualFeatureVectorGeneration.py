@@ -70,7 +70,8 @@ class IndividualFeatureGeneration:
             else:
                 self.log.error("Something not in feature list accessed")
 
-    def process(self, **kwargs):
+    def process_docs(self, **kwargs):
+        chunk_size = kwargs['chunk_size']
         c2db_collection = kwargs['c2db_collection']
         list_of_keys = kwargs['list_of_keys']
         files_fv_path = kwargs['files_fv_path']
@@ -89,10 +90,9 @@ class IndividualFeatureGeneration:
 
         x = 0
         index = 0
-        chunk_size = 1000
 
         while x < len(list_of_keys):
-            self.log.info("Working on Iter : #{}".format(x / 1000))
+            self.log.info("Working on Iter : #{}".format(x / chunk_size))
             if x + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[x: x + chunk_size]
             else:
@@ -152,22 +152,21 @@ class IndividualFeatureGeneration:
         :return:
         """
         query = [
-            {"$match": {"key": {"$in": list_of_keys}}},
+            {"$match": {"key": {"$in": list_of_keys}, "feature": feature}},
             {"$addFields": {"__order": {"$indexOfArray": [list_of_keys, "$key"]}}},
-            {"$sort": {"__order": 1}},
-            {"feature": feature}
+            {"$sort": {"__order": 1}}
         ]
         return query
 
     def get_bow_for_docs(self, doc, feature):
         if feature == "behavior":
-            files_value, reg_keys_value, mutex_value, exec_cmds_value = self.get_bow_for_behavior_feature(doc=doc)
+            files_value, reg_keys_value, mutex_value, exec_cmds_value = self.get_bow_for_behavior_feature(doc=doc["behavior"])
             return files_value, reg_keys_value, mutex_value, exec_cmds_value
         if feature == "network":
-            network_value = self.get_bow_for_network_feature(doc=doc)
+            network_value = self.get_bow_for_network_feature(doc=doc["network"])
             return network_value
         if feature == "static":
-            static_feature_value = self.get_bow_for_static_feature(doc=doc)
+            static_feature_value = self.get_bow_for_static_feature(doc=doc["static"])
             return static_feature_value
 
     def get_bow_for_behavior_feature(self, doc):
@@ -180,11 +179,11 @@ class IndividualFeatureGeneration:
         return files_value, reg_keys_value, mutex_value, exec_commands_value
 
     def get_bow_for_network_feature(self, doc):
-        network_value = self.gen_vector(feature_pool=self.network_pool, doc_feature=doc["network"])
+        network_value = self.gen_vector(feature_pool=self.network_pool, doc_feature=doc)
         return network_value
 
     def get_bow_for_static_feature(self, doc):
-        static_feature_value = self.gen_vector(feature_pool=self.static_feature_pool, doc_feature=doc["static"])
+        static_feature_value = self.gen_vector(feature_pool=self.static_feature_pool, doc_feature=doc)
         return static_feature_value
 
     @staticmethod
@@ -233,6 +232,7 @@ class IndividualFeatureGeneration:
 
     def main(self):
         start_time = time()
+        chunk_size = 500
 
         individual_feature_pool_path = self.config["individual_feature_pool_path"]
         files_fv_path = self.config["individual_feature_vector_path"]["files_feature"]
@@ -245,11 +245,11 @@ class IndividualFeatureGeneration:
         c2db_collection = self.get_collection()
         list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
         self.load_feature_pools(indi_feature_path=individual_feature_pool_path)
-        self.process(c2db_collection=c2db_collection, list_of_keys=list_of_keys,
-                     files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,
-                     mutexes_fv_path=mutexes_fv_path, exec_cmds_fv_path=exec_cmds_fv_path,
-                     network_fv_path=network_fv_path, static_feature_fv_path=static_feature_fv_path)
-        
+        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=chunk_size,
+                          files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,
+                          mutexes_fv_path=mutexes_fv_path, exec_cmds_fv_path=exec_cmds_fv_path,
+                          network_fv_path=network_fv_path, static_feature_fv_path=static_feature_fv_path)
+
         self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
 
 
