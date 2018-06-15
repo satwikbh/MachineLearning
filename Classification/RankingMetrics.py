@@ -64,16 +64,16 @@ class RankingMetrics(object):
         chunk_size = 1000
 
         while count + chunk_size < len(list_of_keys):
-            print("Working on Iter : #{}".format(index))
+            self.log.info("Working on Iter : #{}".format(index))
             if count + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[count: count + chunk_size]
             else:
                 p_keys = list_of_keys[count:]
 
             query = [
-                {"$match": {"key": {"$in": p_keys}}},
+                {"$match": {"md5": {"$in": p_keys}}},
                 {"$project": {"avclass.verbose": 1, "md5": 1}},
-                {"$addFields": {"__order": {"$indexOfArray": [p_keys, "$key"]}}},
+                {"$addFields": {"__order": {"$indexOfArray": [p_keys, "$md5"]}}},
                 {"$sort": {"__order": 1}}
             ]
             cursor = collection.aggregate(query)
@@ -91,7 +91,13 @@ class RankingMetrics(object):
         start_time = time()
         keys_path = self.config["data"]["list_of_keys"]
         c2db_collection, avclass_collection = self.get_collection()
-        list_of_keys = self.get_list_of_keys(collection=c2db_collection)
+        list_of_vs_keys = self.get_list_of_keys(collection=c2db_collection)
+        list_of_keys = self.helper.convert_from_vs_keys(list_of_vs_keys=list_of_vs_keys)
         self.process(list_of_keys=list_of_keys, collection=avclass_collection)
         json.dump(self.meta_dict, open(keys_path + "/" + "avclass_distribution.json", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
+
+
+if __name__ == '__main__':
+    ranking = RankingMetrics()
+    ranking.main()
