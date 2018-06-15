@@ -130,9 +130,10 @@ class ParsingLogic:
             doc2bow = pi.load(file_object)
             matrix = list()
             for inner_index, each in enumerate(doc2bow):
-                column = [cluster_dict.get(x) for x in each]
+                column = list(set([cluster_dict.get(x) for x in each]))
                 row = len(column) * [0]
                 data = len(column) * [1.0]
+
                 value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
                 matrix.append(value)
                 self.log.info("Working on {} matrix and {} sub-matrix".format(index, inner_index))

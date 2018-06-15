@@ -101,14 +101,17 @@ class IndividualFeatureClusterGeneration:
         return bow
 
     def get_bow_for_docs(self, doc, feature):
-        if feature == "behavior":
-            self.get_bow_for_behavior_feature(doc=doc["behavior"])
-        if feature == "network":
-            network_bow = self.get_bow_for_network_feature(doc=doc["network"])
-            self.add_to_dict(curr_doc=network_bow, feature_pool=self.network_pool)
-        if feature == "static":
-            static_feature_value = self.get_bow_for_static_feature(doc=doc["static"])
-            return static_feature_value
+        try:
+            if feature == "behavior":
+                self.get_bow_for_behavior_feature(doc=doc["behavior"])
+            if feature == "network":
+                network_bow = self.get_bow_for_network_feature(doc=doc["network"])
+                self.add_to_dict(curr_doc=network_bow, feature_pool=self.network_pool)
+            if feature == "static":
+                static_feature_bow = self.get_bow_for_static_feature(doc=doc["static"])
+                self.add_to_dict(curr_doc=static_feature_bow, feature_pool=self.static_feature_pool)
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
 
     def process_docs(self, c2db_collection, list_of_keys, chunk_size):
         x = 0
