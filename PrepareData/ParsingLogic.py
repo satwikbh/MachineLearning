@@ -76,7 +76,12 @@ class ParsingLogic:
         doc2bow = defaultdict(list)
         self.log.info("************ Parsing the documents *************")
         start_time = time()
-        cursor = collection.find({"key": {"$in": list_of_docs}})
+        query = [
+            {"$match": {"key": {"$in": list_of_docs}}},
+            {"$addFields": {"__order": {"$indexOfArray": [list_of_docs, "$key"]}}},
+            {"$sort": {"__order": 1}}
+        ]
+        cursor = collection.aggregate(query)
 
         for each_document in cursor:
             feature = each_document.get("feature")

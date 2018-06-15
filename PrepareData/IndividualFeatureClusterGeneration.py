@@ -181,3 +181,8 @@ class IndividualFeatureClusterGeneration:
         self.save_feature_pools(individual_feature_pool_path)
 
         self.log.info("Total time taken : {}".format(time() - start_time))
+
+
+if __name__ == '__main__':
+    indi_fc = IndividualFeatureClusterGeneration()
+    indi_fc.main()
