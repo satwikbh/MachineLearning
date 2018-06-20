@@ -12,6 +12,7 @@ from Utils.LoggerUtil import LoggerUtil
 from Utils.DBUtils import DBUtils
 from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
+from LoadData import LoadData
 
 
 class ClassImbalanceSmote:
@@ -21,6 +22,7 @@ class ClassImbalanceSmote:
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
         self.helper = HelperFunction()
+        self.load_data = LoadData()
 
     def get_vector(self, keys, docs):
         vector = [0] * len(keys)
@@ -103,18 +105,25 @@ class ClassImbalanceSmote:
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
-    def main(self):
+    def main(self, num_rows):
         start_time = time()
         n_jobs = self.config["environment"]["n_cores"]
         smote_path = self.config["data"]["smote"]
-        avclass_dist_path = self.config["data"][""]
-        avclass_dist_meta = json.load(open("/tmp/DataMain/avclass_distribution.json"))
-        classified = json.load(open("/tmp/DataMain/classified_families.json"))
+        avclass_dist_path = self.config["data"]["av_dist_path"]
+        data_path = self.config["data"]["feature_selection_path"]
+        labels_path = self.config["data"]["labels_path"]
+
+        avclass_dist_meta = json.load(open(avclass_dist_path + "/" + "avclass_distribution.json"))
+        classified = json.load(open(avclass_dist_path + "/" + "classified_families.json"))
+
         avclass_dist = self.prepare_avclass_dist(avclass_dist_meta=avclass_dist_meta, classified=classified)
         self.save_avclass_distribution(avclass_dist=avclass_dist, avclass_dist_path=avclass_dist_path)
+        input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
+                                                                                         data_path=data_path,
+                                                                                         labels_path=labels_path)
         x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist = self.perform_smote(
-            data=[],
-            labels=[],
+            data=input_matrix,
+            labels=labels,
             avclass_dist=avclass_dist,
             n_jobs=n_jobs)
         self.save_smote_data(smote_path, x_train_smote, y_train_smote,
@@ -125,4 +134,4 @@ class ClassImbalanceSmote:
 
 if __name__ == '__main__':
     class_imb_smote = ClassImbalanceSmote()
-    class_imb_smote.main()
+    class_imb_smote.main(num_rows=50000)
