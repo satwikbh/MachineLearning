@@ -161,7 +161,7 @@ class PrepareDataset:
                 key_index_to_family_mapping[index_pointer] = family
                 index_pointer += 1
                 checker.append(md5)
-            x += 10000
+            x += config_param_chunk_size
             self.log.info("Iteration : #{}".format(x))
         if not np.all([md5_keys[x] == checker[x] for x in xrange(len(md5_keys))]):
             raise Exception("Labels are not generated properly")

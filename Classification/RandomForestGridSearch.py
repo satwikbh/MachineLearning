@@ -77,7 +77,17 @@ class RandomForestGridSearch(object):
 
         return dr_matrices, labels
 
-    def perform_grid_search(self, tuned_parameters, dr_name, input_matrix, labels, random_forest_results_path):
+    def perform_grid_search(self, tuned_parameters, dr_name, input_matrix, labels, rf_results_path, call=False):
+        """
+
+        :param tuned_parameters:
+        :param dr_name:
+        :param input_matrix:
+        :param labels:
+        :param rf_results_path:
+        :param call: This means that the function is being called from outside which needs only the classifier object.
+        :return:
+        """
         results = dict()
         x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
         clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30)
@@ -94,6 +104,8 @@ class RandomForestGridSearch(object):
         self.log.info("Detailed classification report:")
         self.log.info("The model is trained on the full development set.")
         self.log.info("The scores are computed on the full evaluation set.")
+        if call:
+            return clf
         y_true, y_pred = y_test, clf.predict(x_test)
         try:
             if not self.multi_class:
@@ -108,12 +120,12 @@ class RandomForestGridSearch(object):
             if cnf_matrix.shape[0] != cnf_matrix.shape[1]:
                 raise Exception
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
-            plt.savefig(random_forest_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
+            plt.savefig(rf_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
             return results
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
-    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels, random_forest_results_path):
+    def prepare_gridsearch(self, dr_matrices, tuned_parameters, labels, rf_results_path):
         dr_results_array = dict()
         for dr_name, dr_matrix in dr_matrices.items():
             if dr_name is "base_data":
@@ -132,7 +144,7 @@ class RandomForestGridSearch(object):
                                                                  input_matrix=dr_matrix,
                                                                  dr_name=dr_name,
                                                                  labels=labels,
-                                                                 random_forest_results_path=random_forest_results_path)
+                                                                 rf_results_path=rf_results_path)
         return dr_results_array
 
     def main(self, num_rows):
@@ -144,15 +156,15 @@ class RandomForestGridSearch(object):
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
-        random_forest_results_path = self.config["models"]["random_forest"]["results_path"]
+        rf_results_path = self.config["models"]["random_forest"]["results_path"]
 
         tuned_params = self.tuned_parameters()
         dr_matrices, labels = self.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
                                                    pca_model_path=pca_model_path, tsne_model_path=tsne_model_path,
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
-                                                   labels=labels, random_forest_results_path=random_forest_results_path)
-        np.savetxt(fname=random_forest_results_path + "/" + "random_forest_gridsearch", X=dr_results_array)
+                                                   labels=labels, rf_results_path=rf_results_path)
+        np.savetxt(fname=rf_results_path + "/" + "random_forest_gridsearch", X=dr_results_array)
         self.log.info("GridSearch on Random Forest completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 

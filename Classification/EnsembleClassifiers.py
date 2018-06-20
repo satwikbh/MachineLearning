@@ -63,6 +63,15 @@ class EnsembleClassifiers:
         return dr_matrices, labels
 
     def perform_classification(self, input_matrix, dr_name, labels, ensemble_results_path):
+        """
+        Why is the method so complicated?
+        # TODO : Split each classifier into separate classes.
+        :param input_matrix:
+        :param dr_name:
+        :param labels:
+        :param ensemble_results_path:
+        :return:
+        """
         results = dict()
         cv = 5
         n_classes = len(np.unique(labels))
