@@ -10,7 +10,7 @@ from Utils.LoggerUtil import LoggerUtil
 class LoadData:
     """
     This class is used to load the data once it is prepared.
-    Incase the data is not prepared run "PrepareDataset"
+    In case the data is not prepared run "PrepareDataset"
     """
 
     def __init__(self):
@@ -24,10 +24,11 @@ class LoadData:
         return scaler.transform(input_matrix)
 
     def get_data_with_labels(self, num_rows, data_path, labels_path):
-        if num_rows % 1000 > 0:
-            num_files = (num_rows / 1000) + 1
+        chunk_size = 1000
+        if num_rows % chunk_size > 0:
+            num_files = (num_rows / chunk_size) + 1
         else:
-            num_files = num_rows / 1000
+            num_files = num_rows / chunk_size
         list_of_files = self.helper.get_files_ends_with_extension(".npz", data_path)
         matrix = self.helper.open_np_files(list_of_files[:num_files])
         input_matrix = self.helper.stack_matrix(matrix)
@@ -39,10 +40,11 @@ class LoadData:
         return input_matrix, input_matrix_indices, labels
 
     def main(self, num_rows):
-        if num_rows % 1000 > 0:
-            num_files = (num_rows / 1000) + 1
+        chunk_size = 1000
+        if num_rows % chunk_size > 0:
+            num_files = (num_rows / chunk_size) + 1
         else:
-            num_files = num_rows / 1000
+            num_files = num_rows / chunk_size
         pruned_fv_path = self.config['data']['pruned_feature_vector_path']
         feature_selection_path = self.config['data']['feature_selection_path']
         list_of_files = self.helper.get_files_ends_with_extension(".npz", feature_selection_path)

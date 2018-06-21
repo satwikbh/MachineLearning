@@ -76,6 +76,7 @@ class ClassImbalanceSmote:
                                                                                          avclass_dist, test_size=0.33,
                                                                                          random_state=11,
                                                                                          stratify=labels)
+        del data, labels, avclass_dist
         smote = SMOTE()
         smote.n_jobs = n_jobs
         x_train_smote, y_train_smote = smote.fit_sample(x_test, y_test)
