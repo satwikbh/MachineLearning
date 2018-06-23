@@ -39,19 +39,19 @@ class NaiveBayesClassifier:
         self.log.info("Time taken : {}\n".format(time() - start_time))
         return clf
 
-    def perform_prediction(self, x, classifier):
+    def perform_prediction(self, test_data, classifier):
         start_time = time()
         test_start_index = 0
         test_iter = 0
         test_pred = list()
 
-        while test_start_index < x.shape[0]:
+        while test_start_index < test_data.shape[0]:
             if test_iter % 100 == 0:
                 self.log.info("Iteration : #{}".format(test_iter))
             if test_start_index + 1000 > x.shape[0]:
-                p_matrix = x[test_start_index:]
+                p_matrix = test_data[test_start_index:]
             else:
-                p_matrix = x[test_start_index: test_start_index + 1000]
+                p_matrix = test_data[test_start_index: test_start_index + 1000]
             test_pred += [x for x in classifier.predict(p_matrix)]
             test_start_index += 1000
             test_iter += 1

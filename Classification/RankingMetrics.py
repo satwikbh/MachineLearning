@@ -6,6 +6,7 @@ from time import time
 from sklearn.ensemble import AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.tree import DecisionTreeClassifier
 from scipy.stats import kendalltau
+from scipy.sparse import load_npz, save_npz
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import cross_val_score
 
@@ -43,9 +44,9 @@ class RankingMetrics:
         :return:
         """
         x_train_smote = np.load(smote_path + "/" + "smote_train_data.npz")
-        y_train_smote = np.load(smote_path + "/" + "smote_train_labels.npz")
+        y_train_smote = np.load(smote_path + "/" + "smote_train_labels.npz")['arr_0']
         x_test_smote = np.load(smote_path + "/" + "smote_test_data.npz")
-        y_test_smote = np.load(smote_path + "/" + "smote_test_labels.npz")
+        y_test_smote = np.load(smote_path + "/" + "smote_test_labels.npz")['arr_0']
         av_train_dist = np.load(smote_path + "/" + "smote_avclass_train_dist.npz")
         av_test_dist = np.load(smote_path + "/" + "smote_avclass_test_dist.npz")
 
@@ -81,10 +82,8 @@ class RankingMetrics:
                       ranking_results_path):
         self.log.info("******* Random Forest Classifier *******")
         start_time = time()
-        tuned_params = self.rf_gridsearch.tuned_parameters()
-        rf_clf = self.rf_gridsearch.perform_grid_search(tuned_parameters=tuned_params, dr_name="smote",
-                                                        input_matrix=x_train_smote, labels=y_train_smote,
-                                                        rf_results_path="", call=True)
+        rf_clf = RandomForestClassifier(n_estimators=100, min_samples_leaf=100, oob_score=False, n_jobs=30)
+        clf.fit(x_train, y_train)
         scores = cross_val_score(rf_clf, x_train_smote, y_train_smote, cv=5)
         self.log.info("RandomForest Classifier\nAccuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
         self.log.info("Time taken : {}".format(time() - start_time))
@@ -232,7 +231,7 @@ class RankingMetrics:
     def main(self):
         start_time = time()
         plot_path = self.config["plots"]["smote"]
-        smote_path = self.config["data"]["smote_path"]
+        smote_path = self.config["data"]["smote_data"]
         ranking_results_path = self.config["data"]["ranking_results_path"]
 
         x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist = self.get_dr_matrices(

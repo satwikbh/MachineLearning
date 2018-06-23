@@ -95,21 +95,21 @@ class ClassImbalanceSmote:
                         x_test_smote, y_test_smote,
                         av_train_dist, av_test_dist):
         try:
-            np.savez_compressed(smote_path + "/" + "smote_train_data", x_train_smote)
+            save_npz(smote_path + "/" + "smote_train_data", x_train_smote)
             np.savez_compressed(smote_path + "/" + "smote_train_labels", y_train_smote)
 
-            np.savez_compressed(smote_path + "/" + "smote_test_data", x_test_smote)
+            save_npz(smote_path + "/" + "smote_test_data", x_test_smote)
             np.savez_compressed(smote_path + "/" + "smote_test_labels", y_test_smote)
 
-            np.savez_compressed(smote_path + "/" + "smote_avclass_train_dist", av_train_dist)
-            np.savez_compressed(smote_path + "/" + "smote_avclass_test_dist", av_test_dist)
+            save_npz(smote_path + "/" + "smote_avclass_train_dist", av_train_dist)
+            save_npz(smote_path + "/" + "smote_avclass_test_dist", av_test_dist)
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
     def main(self, num_rows):
         start_time = time()
         n_jobs = self.config["environment"]["n_cores"]
-        smote_path = self.config["data"]["smote"]
+        smote_path = self.config["data"]["smote_data"]
         avclass_dist_path = self.config["data"]["av_dist_path"]
         data_path = self.config["data"]["feature_selection_path"]
         labels_path = self.config["data"]["labels_path"]

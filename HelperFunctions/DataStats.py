@@ -91,8 +91,8 @@ class DataStats:
         feature_selection = sel.fit_transform(feature_vector)
         count = 0
         index = 0
-        while count < len(feature_selection):
-            if count + chunk_size < len(feature_selection):
+        while count < feature_selection.shape[0]:
+            if count + chunk_size < feature_selection.shape[0]:
                 p_matrix = feature_selection[count: count + chunk_size]
             else:
                 p_matrix = feature_selection[count:]
