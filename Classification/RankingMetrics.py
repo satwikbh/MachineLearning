@@ -3,10 +3,10 @@ import numpy as np
 
 from time import time
 
-from sklearn.ensemble import AdaBoostClassifier, ExtraTreesClassifier
+from sklearn.ensemble import AdaBoostClassifier, ExtraTreesClassifier, RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from scipy.stats import kendalltau
-from scipy.sparse import load_npz, save_npz
+from scipy.sparse import load_npz
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import cross_val_score
 
@@ -43,12 +43,12 @@ class RankingMetrics:
         :param smote_path:
         :return:
         """
-        x_train_smote = np.load(smote_path + "/" + "smote_train_data.npz")
+        x_train_smote = load_npz(smote_path + "/" + "smote_train_data.npz")
         y_train_smote = np.load(smote_path + "/" + "smote_train_labels.npz")['arr_0']
-        x_test_smote = np.load(smote_path + "/" + "smote_test_data.npz")
+        x_test_smote = load_npz(smote_path + "/" + "smote_test_data.npz")
         y_test_smote = np.load(smote_path + "/" + "smote_test_labels.npz")['arr_0']
-        av_train_dist = np.load(smote_path + "/" + "smote_avclass_train_dist.npz")
-        av_test_dist = np.load(smote_path + "/" + "smote_avclass_test_dist.npz")
+        av_train_dist = load_npz(smote_path + "/" + "smote_avclass_train_dist.npz")
+        av_test_dist = load_npz(smote_path + "/" + "smote_avclass_test_dist.npz")
 
         return x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist
 
@@ -56,9 +56,9 @@ class RankingMetrics:
                      n_classes, plot_path, ranking_results_path):
         self.log.info("******* Bernouille Naive Bayes Classifier *******")
         bnb_clf = NaiveBayesClassifier()
-        classifier = bnb_clf.perform_classification(x=x_train_smote, y=y_train_smote, n_classes=n_classes)
-        self.log.info("")
-        test_preds = bnb_clf.perform_prediction(x=x_test_smote, classifier=classifier)
+        classifier = bnb_clf.perform_classification(train_data=x_train_smote, train_labels=y_train_smote,
+                                                    n_classes=n_classes)
+        test_preds = bnb_clf.perform_prediction(test_data=x_test_smote, classifier=classifier)
         acc_score = accuracy_score(y_pred=test_preds, y_true=y_test_smote)
         self.log.info("Accuracy Score : {}".format(acc_score))
         cr_report = classification_report(y_pred=test_preds, y_true=y_test_smote)
@@ -83,7 +83,7 @@ class RankingMetrics:
         self.log.info("******* Random Forest Classifier *******")
         start_time = time()
         rf_clf = RandomForestClassifier(n_estimators=100, min_samples_leaf=100, oob_score=False, n_jobs=30)
-        clf.fit(x_train, y_train)
+        rf_clf.fit(x_train_smote, y_train_smote)
         scores = cross_val_score(rf_clf, x_train_smote, y_train_smote, cv=5)
         self.log.info("RandomForest Classifier\nAccuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
         self.log.info("Time taken : {}".format(time() - start_time))
