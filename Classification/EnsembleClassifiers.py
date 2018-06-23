@@ -81,7 +81,8 @@ class EnsembleClassifiers:
             start_time = time()
             if classifier is 'naive_bayes':
                 self.log.info("Using Bernouille Naive Bayes classifier")
-                clf = self.naive_bayes.perform_classification(x=x_train, y=y_train, n_classes=n_classes)
+                clf = self.naive_bayes.perform_classification(train_data=x_train, train_labels=y_train,
+                                                              n_classes=n_classes)
             elif classifier is 'adaboost':
                 self.log.info("Using Adaboost classifier")
                 clf = AdaBoostClassifier(n_estimators=100, random_state=0)
@@ -102,7 +103,7 @@ class EnsembleClassifiers:
             self.log.info("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
 
             if classifier is 'naive_bayes':
-                y_pred = self.naive_bayes.perform_prediction(x=x_test, classifier=clf)
+                y_pred = self.naive_bayes.perform_prediction(test_data=x_test, classifier=clf)
             else:
                 clf.fit(X=x_train, y=y_train)
                 y_pred = clf.predict(X=x_test)

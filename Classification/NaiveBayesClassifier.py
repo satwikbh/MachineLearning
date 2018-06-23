@@ -22,12 +22,12 @@ class NaiveBayesClassifier:
         while train_start_index < train_data.shape[0]:
             if train_iter % chunk_size == 0:
                 self.log.info("Iteration : #{}".format(train_iter))
-            if train_start_index + chunk_size > train_data.shape[0]:
-                p_matrix = train_data[train_start_index:]
-                p_labels = train_labels[train_start_index:]
-            else:
+            if train_start_index + chunk_size < train_data.shape[0]:
                 p_matrix = train_data[train_start_index: train_start_index + chunk_size]
                 p_labels = train_labels[train_start_index: train_start_index + chunk_size]
+            else:
+                p_matrix = train_data[train_start_index:]
+                p_labels = train_labels[train_start_index:]
             if train_start_index == 0:
                 clf.partial_fit(p_matrix, p_labels, n_classes)
             else:
@@ -49,10 +49,10 @@ class NaiveBayesClassifier:
         while test_start_index < test_data.shape[0]:
             if test_iter % chunk_size == 0:
                 self.log.info("Iteration : #{}".format(test_iter))
-            if test_start_index + chunk_size > x.shape[0]:
-                p_matrix = test_data[test_start_index:]
-            else:
+            if test_start_index + chunk_size < test_data.shape[0]:
                 p_matrix = test_data[test_start_index: test_start_index + chunk_size]
+            else:
+                p_matrix = test_data[test_start_index:]
             test_pred += [x for x in classifier.predict(p_matrix)]
             test_start_index += chunk_size
             test_iter += 1
@@ -73,10 +73,10 @@ class NaiveBayesClassifier:
         while test_start_index < x_test.shape[0]:
             if test_iter % chunk_size == 0:
                 self.log.info("Iteration : #{}".format(test_iter))
-            if test_start_index + chunk_size > x_test.shape[0]:
-                p_matrix = x_test[test_start_index:]
-            else:
+            if test_start_index + chunk_size < x_test.shape[0]:
                 p_matrix = x_test[test_start_index: test_start_index + chunk_size]
+            else:
+                p_matrix = x_test[test_start_index:]
             for index, pred_prob in enumerate(clf.predict_proba(p_matrix)):
                 x, y = y_test[index], pred_prob.argsort()[-k:].tolist()
                 if x in y:
@@ -103,10 +103,10 @@ class NaiveBayesClassifier:
         while test_start_index < x_test.shape[0]:
             if test_iter % chunk_size == 0:
                 self.log.info("Iteration : #{}".format(test_iter))
-            if test_start_index + chunk_size > x_test.shape[0]:
-                p_matrix = x_test[test_start_index:]
-            else:
+            if test_start_index + chunk_size < x_test.shape[0]:
                 p_matrix = x_test[test_start_index: test_start_index + chunk_size]
+            else:
+                p_matrix = x_test[test_start_index:]
             for index, pred_prob in enumerate(clf.predict_proba(p_matrix)):
                 x, y = av_test_dist[index].toarray(), pred_prob
                 kt = kendalltau(x, y)

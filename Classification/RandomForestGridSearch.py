@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import glob
 
 from time import time
@@ -164,7 +165,8 @@ class RandomForestGridSearch(object):
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
                                                    labels=labels, rf_results_path=rf_results_path)
-        np.savetxt(fname=rf_results_path + "/" + "random_forest_gridsearch", X=dr_results_array)
+        dr_results_df = pd.DataFrame(dr_results_array)
+        dr_results_df.to_msgpack(rf_results_path + "/" + "random_forest_gridsearch")
         self.log.info("GridSearch on Random Forest completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 

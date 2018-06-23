@@ -45,7 +45,6 @@ class LoadData:
             num_files = (num_rows / chunk_size) + 1
         else:
             num_files = num_rows / chunk_size
-        pruned_fv_path = self.config['data']['pruned_feature_vector_path']
         feature_selection_path = self.config['data']['feature_selection_path']
         list_of_files = self.helper.get_files_ends_with_extension(".npz", feature_selection_path)
         matrix = self.helper.open_np_files(list_of_files[:num_files])
