@@ -18,29 +18,17 @@ class RandomForest:
         self.helper = HelperFunction()
         self.classifier_name = "random_forest"
 
-    def perform_classification(self, input_matrix, dr_name, labels, rf_results_path):
+    def compute_metrics(self, clf, y_test, y_pred, dr_name, rf_results_path):
         """
 
-        :param input_matrix:
+        :param clf:
+        :param y_test:
+        :param y_pred:
         :param dr_name:
-        :param labels:
         :param rf_results_path:
         :return:
         """
         results = dict()
-        cv = 5
-        x_train, x_test, y_train, y_test = self.helper.validation_split(input_matrix, labels, test_size=0.25)
-        del input_matrix, labels
-        start_time = time()
-        self.log.info("Using Random Forest classifier")
-        clf = RandomForestClassifier(n_estimators=100, max_depth=10, min_samples_split=2, random_state=0, n_jobs=3)
-        self.log.info("Performing cross validation with cv : {}".format(cv))
-        scores = cross_val_score(clf, x_train, y_train, cv=cv)
-        self.log.info("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-
-        clf.fit(X=x_train, y=y_train)
-        y_pred = clf.predict(X=x_test)
-
         cr_report = classification_report(y_pred=y_pred, y_true=y_test)
         key_name = dr_name + "_" + str(self.classifier_name) + "_" + "cr_report"
         results[key_name] = cr_report
@@ -52,8 +40,34 @@ class RandomForest:
             self.classifier_name) + "_" + "cnf_matrix" + ".png"
         self.log.info("Saving Confusion Matrix at path : {}".format(plt_path))
         plt.savefig(plt_path)
-        self.log.info("Time taken : {}".format(time() - start_time))
-        return results
+        return results, clf
+
+    def prediction(self, clf, test_data):
+        """
+
+        :param clf:
+        :param test_data:
+        :return:
+        """
+        self.log.info("Predicting on test data")
+        y_pred = clf.predict(test_data)
+        return y_pred
+
+    def classification(self, train_data, train_labels):
+        """
+
+        :param train_data:
+        :param train_labels:
+        :return:
+        """
+        cv = 5
+        self.log.info("Using Random Forest classifier")
+        clf = RandomForestClassifier(n_estimators=100, max_depth=10, min_samples_split=2, random_state=0, n_jobs=3)
+        clf.fit(train_data, train_labels)
+        self.log.info("Performing cross validation with cv : {}".format(cv))
+        scores = cross_val_score(clf, train_data, train_labels, cv=cv)
+        self.log.info("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+        return clf
 
     def prepare_classifier(self, dr_matrices, labels, rf_results_path):
         """
@@ -77,10 +91,15 @@ class RandomForest:
                 self.log.info("Using Random Forest classifier on on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
-            dr_results_array[dr_name] = self.perform_classification(input_matrix=dr_matrix,
-                                                                    dr_name=dr_name,
-                                                                    labels=labels,
-                                                                    rf_results_path=rf_results_path)
+            x_train, x_test, y_train, y_test = self.helper.validation_split(dr_matrix, labels, test_size=0.25)
+            del dr_matrix, labels
+            clf = self.classification(train_data=x_train,
+                                      train_labels=y_train)
+            y_pred = self.prediction(clf=clf, test_data=x_test)
+            results = self.compute_metrics(clf=clf, y_test=y_test, y_pred=y_pred, dr_name=dr_name,
+                                           rf_results_path=rf_results_path)
+
+            dr_results_array[dr_name] = results
         return dr_results_array
 
     def main(self, num_rows):
