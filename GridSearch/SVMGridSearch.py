@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import glob
 
 from time import time
@@ -36,10 +37,11 @@ class SVMGridSearch(object):
         self.scores = ['precision', 'recall']
         self.multi_class = multi_class
 
-    def tuned_parameters(self):
+    @staticmethod
+    def tuned_parameters():
         tuned_params = [
-                {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
-                {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
+            {'estimator__kernel': ['rbf'], 'estimator__gamma': [1e-3, 1e-4], 'estimator__C': [1, 10, 100, 1000]},
+            {'estimator__kernel': ['linear'], 'estimator__C': [1, 10, 100, 1000]}
         ]
         return tuned_params
 
@@ -152,7 +154,8 @@ class SVMGridSearch(object):
                                                    sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
                                                    labels=labels, svm_results_path=svm_results_path)
-        np.savetxt(fname=svm_results_path + "/" + "svm_gridsearch", X=dr_results_array)
+        dr_results_df = pd.DataFrame(dr_results_array)
+        dr_results_df.to_msgpack(fname=svm_results_path + "/" + "svm_gridsearch")
         self.log.info("GridSearch on SVM completed")
         self.log.info("Time taken : {}".format(time() - start_time))
 
