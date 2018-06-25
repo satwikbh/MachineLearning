@@ -18,10 +18,9 @@ class RandomForest:
         self.helper = HelperFunction()
         self.classifier_name = "random_forest"
 
-    def compute_metrics(self, clf, y_test, y_pred, dr_name, rf_results_path):
+    def compute_metrics(self, y_test, y_pred, dr_name, rf_results_path):
         """
 
-        :param clf:
         :param y_test:
         :param y_pred:
         :param dr_name:
@@ -40,7 +39,7 @@ class RandomForest:
             self.classifier_name) + "_" + "cnf_matrix" + ".png"
         self.log.info("Saving Confusion Matrix at path : {}".format(plt_path))
         plt.savefig(plt_path)
-        return results, clf
+        return results
 
     def prediction(self, clf, test_data):
         """
@@ -96,7 +95,7 @@ class RandomForest:
             clf = self.classification(train_data=x_train,
                                       train_labels=y_train)
             y_pred = self.prediction(clf=clf, test_data=x_test)
-            results = self.compute_metrics(clf=clf, y_test=y_test, y_pred=y_pred, dr_name=dr_name,
+            results = self.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                            rf_results_path=rf_results_path)
 
             dr_results_array[dr_name] = results

@@ -1,15 +1,15 @@
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
 from sklearn.decomposition import PCA
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
 from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 from PrepareData.LoadData import LoadData
-from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class ClassificationPipeline:
