@@ -236,11 +236,11 @@ class RankingMetrics:
         start_time = time()
         smote_path = self.config["data"]["smote_data"]
         ranking_results_path = self.config["data"]["ranking_results_path"]
-        bnb_model_path = self.config["models"]["naive_bayes"]
-        rf_model_path = self.config["models"]["random_forest"]
-        et_model_path = self.config["models"]["extra_trees"]
-        dt_model_path = self.config["models"]["decision_trees"]
-        adaboost_model_path = self.config["models"]["adaboost"]
+        bnb_model_path = self.config["models"]["naive_bayes"]["model_path"]
+        rf_model_path = self.config["models"]["random_forest"]["model_path"]
+        et_model_path = self.config["models"]["extra_trees"]["model_path"]
+        dt_model_path = self.config["models"]["decision_trees"]["model_path"]
+        adaboost_model_path = self.config["models"]["adaboost"]["model_path"]
 
         x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist = self.get_dr_matrices(
             smote_path=smote_path)
