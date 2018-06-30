@@ -29,18 +29,18 @@ class RankingMetrics:
         self.adaboost_clf = Adaboost()
 
     @staticmethod
-    def classifier_ranking(clf, test_data, av_test_dist):
+    def classifier_ranking(clf, test_data, av_train_dist):
         """
         Computes Kendall's Tau and Pearson Correlation Coeff for the test data.
         :param clf:
         :param test_data:
-        :param av_test_dist:
+        :param av_train_dist:
         :return:
         """
         kt_list = list()
         pearson_coeff_list = list()
         for index, pred_prob in enumerate(clf.predict_proba(test_data)):
-            x, y = av_test_dist[index].toarray(), pred_prob
+            x, y = av_train_dist[index].toarray(), pred_prob
             kt = kendalltau(x, y)
             kt_list.append(kt)
             pcc = np.corrcoef(x, y)[:, 1]
@@ -63,7 +63,7 @@ class RankingMetrics:
 
         return x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist
 
-    def bernoulli_nb(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist,
+    def bernoulli_nb(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist,
                      ranking_results_path, bnb_model_path):
         """
 
@@ -71,7 +71,7 @@ class RankingMetrics:
         :param y_train_smote:
         :param x_test_smote:
         :param y_test_smote:
-        :param av_test_dist:
+        :param av_train_dist:
         :param ranking_results_path:
         :param bnb_model_path:
         :return:
@@ -83,7 +83,7 @@ class RankingMetrics:
                                      bnb_results_path=ranking_results_path)
         joblib.dump(clf, bnb_model_path + "/" + "naive_bayes.pkl")
         kt_list, pearson_coeff_list = self.bnb_ccl.bernoulli_nb_classifier_ranking(clf=clf, x_test=x_test_smote,
-                                                                                   av_test_dist=av_test_dist)
+                                                                                   av_train_dist=av_train_dist)
         kt_df = pd.DataFrame(kt_list)
         self.log.info(kt_df.describe())
         kt_df.to_msgpack(ranking_results_path + "/" + "kt_bnb_smote")
@@ -92,7 +92,7 @@ class RankingMetrics:
         self.log.info(pcc_df.describe())
         pcc_df.to_msgpack(ranking_results_path + "/" + "pcc_bnb_smote")
 
-    def random_forest(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist,
+    def random_forest(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist,
                       ranking_results_path, rf_model_path):
         """
 
@@ -100,7 +100,7 @@ class RankingMetrics:
         :param y_train_smote:
         :param x_test_smote:
         :param y_test_smote:
-        :param av_test_dist:
+        :param av_train_dist:
         :param ranking_results_path:
         :param rf_model_path:
         :return:
@@ -112,7 +112,7 @@ class RankingMetrics:
                                     rf_results_path=ranking_results_path, dr_name="smote")
         joblib.dump(clf, rf_model_path + "/" + "random_forest.pkl")
         kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test_smote,
-                                                              av_test_dist=av_test_dist)
+                                                              av_train_dist=av_train_dist)
         kt_df = pd.DataFrame(kt_list)
         self.log.info(kt_df.describe())
         kt_df.to_msgpack(ranking_results_path + "/" + "kt_rf_smote")
@@ -121,7 +121,7 @@ class RankingMetrics:
         self.log.info(pcc_df.describe())
         pcc_df.to_msgpack(ranking_results_path + "/" + "pcc_rf_smote")
 
-    def extra_trees(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+    def extra_trees(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                     et_model_path):
         """
 
@@ -129,7 +129,7 @@ class RankingMetrics:
         :param y_train_smote:
         :param x_test_smote:
         :param y_test_smote:
-        :param av_test_dist:
+        :param av_train_dist:
         :param ranking_results_path:
         :param et_model_path:
         :return:
@@ -141,7 +141,7 @@ class RankingMetrics:
                                     et_results_path=ranking_results_path, dr_name="smote")
         joblib.dump(clf, et_model_path + "/" + "extra_trees.pkl")
         kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test_smote,
-                                                              av_test_dist=av_test_dist)
+                                                              av_train_dist=av_train_dist)
         kt_df = pd.DataFrame(kt_list)
         self.log.info(kt_df.describe())
         kt_df.to_msgpack(ranking_results_path + "/" + "kt_et_smote")
@@ -150,7 +150,7 @@ class RankingMetrics:
         self.log.info(pcc_df.describe())
         pcc_df.to_msgpack(ranking_results_path + "/" + "pcc_et_smote")
 
-    def decision_tree(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist,
+    def decision_tree(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist,
                       ranking_results_path, dt_model_path):
         """
 
@@ -158,7 +158,7 @@ class RankingMetrics:
         :param y_train_smote:
         :param x_test_smote:
         :param y_test_smote:
-        :param av_test_dist:
+        :param av_train_dist:
         :param ranking_results_path:
         :param dt_model_path:
         :return:
@@ -170,7 +170,7 @@ class RankingMetrics:
                                     dt_results_path=ranking_results_path, dr_name="smote")
         joblib.dump(clf, dt_model_path + "/" + "decision_tree.pkl")
         kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test_smote,
-                                                              av_test_dist=av_test_dist)
+                                                              av_train_dist=av_train_dist)
         kt_df = pd.DataFrame(kt_list)
         self.log.info(kt_df.describe())
         kt_df.to_msgpack(ranking_results_path + "/" + "kt_dt_smote")
@@ -179,7 +179,7 @@ class RankingMetrics:
         self.log.info(pcc_df.describe())
         pcc_df.to_msgpack(ranking_results_path + "/" + "pcc_dt_smote")
 
-    def adaboost(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+    def adaboost(self, x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                  adaboost_model_path):
         """
 
@@ -187,7 +187,7 @@ class RankingMetrics:
         :param y_train_smote:
         :param x_test_smote:
         :param y_test_smote:
-        :param av_test_dist:
+        :param av_train_dist:
         :param ranking_results_path:
         :param adaboost_model_path:
         :return:
@@ -199,7 +199,7 @@ class RankingMetrics:
                                           adaboost_results_path=ranking_results_path)
         joblib.dump(clf, adaboost_model_path + "/" + "adaboost.pkl")
         kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test_smote,
-                                                              av_test_dist=av_test_dist)
+                                                              av_train_dist=av_train_dist)
         kt_df = pd.DataFrame(kt_list)
         self.log.info(kt_df.describe())
         kt_df.to_msgpack(ranking_results_path + "/" + "kt_adaboost_smote")
@@ -213,7 +213,7 @@ class RankingMetrics:
         y_train_smote = kwargs["y_train_smote"]
         x_test_smote = kwargs["x_test_smote"]
         y_test_smote = kwargs["y_test_smote"]
-        av_test_dist = kwargs["av_test_dist"]
+        av_train_dist = kwargs["av_train_dist"]
         bnb_model_path = kwargs["bnb_model_path"]
         rf_model_path = kwargs["rf_model_path"]
         et_model_path = kwargs["et_model_path"]
@@ -221,15 +221,15 @@ class RankingMetrics:
         adaboost_model_path = kwargs["adaboost_model_path"]
         ranking_results_path = kwargs["ranking_results_path"]
 
-        self.bernoulli_nb(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+        self.bernoulli_nb(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                           bnb_model_path)
-        self.random_forest(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+        self.random_forest(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                            rf_model_path)
-        self.extra_trees(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+        self.extra_trees(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                          et_model_path)
-        self.decision_tree(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+        self.decision_tree(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                            dt_model_path)
-        self.adaboost(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_test_dist, ranking_results_path,
+        self.adaboost(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                       adaboost_model_path)
 
     def main(self):
@@ -245,7 +245,7 @@ class RankingMetrics:
         x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, av_test_dist = self.get_dr_matrices(
             smote_path=smote_path)
         self.train_classifiers(x_train_smote=x_train_smote, y_train_smote=y_train_smote, x_test_smote=x_test_smote,
-                               y_test_smote=y_test_smote, av_test_dist=av_test_dist, bnb_model_path=bnb_model_path,
+                               y_test_smote=y_test_smote, av_train_dist=av_train_dist, bnb_model_path=bnb_model_path,
                                rf_model_path=rf_model_path, et_model_path=et_model_path, dt_model_path=dt_model_path,
                                adaboost_model_path=adaboost_model_path, ranking_results_path=ranking_results_path)
         self.log.info("Total time taken : {}".format(time() - start_time))

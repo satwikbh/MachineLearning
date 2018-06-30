@@ -94,7 +94,7 @@ class CoreClassificationLogic:
         self.log.info("Completed predictions\nTime taken : {}".format(time() - start_time))
         return top_k_acc_list
 
-    def bernoulli_nb_classifier_ranking(self, clf, x_test, av_test_dist):
+    def bernoulli_nb_classifier_ranking(self, clf, x_test, av_train_dist):
         self.log.info("Predicting test data")
 
         start_time = time()
@@ -112,7 +112,7 @@ class CoreClassificationLogic:
             else:
                 p_matrix = x_test[test_start_index:]
             for index, pred_prob in enumerate(clf.predict_proba(p_matrix)):
-                x, y = av_test_dist[index].toarray(), pred_prob
+                x, y = av_train_dist[index].toarray(), pred_prob
                 kt = kendalltau(x, y)
                 kt_list.append(kt)
                 pcc = np.corrcoef(x, y)[:, 1]
