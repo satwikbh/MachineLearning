@@ -24,7 +24,7 @@ class AdaboostGridSearch:
     @staticmethod
     def tuned_parameters():
         tuned_params = [
-            {'estimator__n_estimators': range(10, 100, 10)}
+            {'n_estimators': range(10, 100, 10)}
         ]
         return tuned_params
 
@@ -146,7 +146,7 @@ class AdaboostGridSearch:
         self.log.info("GridSearch on Adaboost started")
 
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["pruned_feature_vector_path"]
+        base_data_path = self.config["data"]["feature_selection_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
@@ -166,4 +166,4 @@ class AdaboostGridSearch:
 
 if __name__ == '__main__':
     adaboost_gs = AdaboostGridSearch(multi_class=True)
-    adaboost_gs.main(num_rows=50000)
+    adaboost_gs.main(num_rows=346679)

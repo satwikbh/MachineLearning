@@ -1,19 +1,18 @@
-import numpy as np
-import pandas as pd
 import glob
-
 from time import time
 
-from sklearn.model_selection import GridSearchCV
+import numpy as np
+import pandas as pd
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
-from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
-from PrepareData.LoadData import LoadData
 from HelperFunctions.HelperFunction import HelperFunction
+from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class OnlinePipeline(Pipeline):
@@ -142,7 +141,7 @@ class SVMGridSearch(object):
         self.log.info("GridSearch on SVM started")
 
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["pruned_feature_vector_path"]
+        base_data_path = self.config["data"]["feature_selection_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
