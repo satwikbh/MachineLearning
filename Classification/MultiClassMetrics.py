@@ -1,4 +1,5 @@
 from time import time
+
 from sklearn import metrics
 
 from Utils.LoggerUtil import LoggerUtil
@@ -12,6 +13,33 @@ class MultiClassMetrics:
     def confusion_matrix(labels_pred, labels_actual):
         cnf_matrix = metrics.confusion_matrix(y_true=labels_actual, y_pred=labels_pred)
         return cnf_matrix
+
+    def get_top_k(self, clf, x_test, y_test, k):
+        test_start_index = 0
+        test_iter = 0
+        chunk_size = 1000
+        top_k_acc_list = list()
+
+        while test_start_index < x_test.shape[0]:
+            if test_iter % chunk_size == 0:
+                self.log.info("Iteration : #{}".format(test_iter))
+            if test_start_index + chunk_size < x_test.shape[0]:
+                p_matrix = x_test[test_start_index: test_start_index + chunk_size]
+                p_labels = y_test[test_start_index: test_start_index + chunk_size]
+            else:
+                p_matrix = x_test[test_start_index:]
+                p_labels = y_test[test_start_index:]
+            for index, pred_prob in enumerate(clf.predict_proba(p_matrix)):
+                x, y = p_labels[index], pred_prob.argsort()[-k:].tolist()
+                if x in y:
+                    top_k_acc = 1
+                else:
+                    top_k_acc = 0
+                top_k_acc_list.append(top_k_acc)
+            test_start_index += chunk_size
+            test_iter += 1
+
+        return top_k_acc_list
 
     def metrics(self, labels_pred, labels_actual):
         average_list = ['micro', 'macro', 'weighted', 'samples']
