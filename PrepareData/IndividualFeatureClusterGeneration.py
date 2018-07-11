@@ -51,7 +51,7 @@ class IndividualFeatureClusterGeneration:
     @staticmethod
     def get_cluster_dict():
         cluster_dict = defaultdict()
-        cluster_dict.default_factory = cluster_dict.__len__()
+        cluster_dict.default_factory = cluster_dict.__len__
         return cluster_dict
 
     @staticmethod
@@ -75,10 +75,13 @@ class IndividualFeatureClusterGeneration:
         return query
 
     def get_bow_for_behavior_feature(self, doc):
-        self.add_to_dict(curr_doc=doc["files"], feature_pool=self.files_dict)
-        self.add_to_dict(curr_doc=doc["keys"], feature_pool=self.reg_keys_pool)
-        self.add_to_dict(curr_doc=doc["mutexes"], feature_pool=self.mutex_pool)
-        self.add_to_dict(curr_doc=doc["executed_commands"], feature_pool=self.exec_commands_pool)
+        try:
+            self.add_to_dict(curr_doc=doc["files"], feature_pool=self.files_dict)
+            self.add_to_dict(curr_doc=doc["keys"], feature_pool=self.reg_keys_pool)
+            self.add_to_dict(curr_doc=doc["mutexes"], feature_pool=self.mutex_pool)
+            self.add_to_dict(curr_doc=doc["executed_commands"], feature_pool=self.exec_commands_pool)
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
 
     def get_bow_for_network_feature(self, doc):
         bow = list()
@@ -157,22 +160,25 @@ class IndividualFeatureClusterGeneration:
     def save_feature_pools(self, individual_feature_pool_path):
         try:
             self.log.info("Saving files feature cluster")
-            json.dump(self.files_dict, open(individual_feature_pool_path + "/" + "files.dump"))
+            json.dump(self.files_dict, open(individual_feature_pool_path + "/" + "files.dump", "w"))
 
             self.log.info("Saving registry keys feature cluster")
-            json.dump(self.reg_keys_pool, open(individual_feature_pool_path + "/" + "reg_keys.dump"))
+            json.dump(self.reg_keys_pool, open(individual_feature_pool_path + "/" + "reg_keys.dump", "w"))
 
             self.log.info("Saving mutexes feature cluster")
-            json.dump(self.mutex_pool, open(individual_feature_pool_path + "/" + "mutexes.dump"))
+            json.dump(self.mutex_pool, open(individual_feature_pool_path + "/" + "mutexes.dump", "w"))
 
             self.log.info("Saving executed commands feature cluster")
-            json.dump(self.exec_commands_pool, open(individual_feature_pool_path + "/" + "executed_commands.dump"))
+            json.dump(self.exec_commands_pool, open(individual_feature_pool_path + "/" + "executed_commands.dump", "w"))
 
             self.log.info("Saving network feature cluster")
-            json.dump(self.network_pool, open(individual_feature_pool_path + "/" + "network.dump"))
+            json.dump(self.network_pool, open(individual_feature_pool_path + "/" + "network.dump", "w"))
 
             self.log.info("Saving static feature cluster")
-            json.dump(self.static_feature_pool, open(individual_feature_pool_path + "/" + "static_features.dump"))
+            json.dump(self.static_feature_pool, open(individual_feature_pool_path + "/" + "static_features.dump", "w"))
+
+            self.log.info("Saving stat signature feature cluster")
+            json.dump(self.stat_sign_pool, open(individual_feature_pool_path + "/" + "stat_sign_features.dump", "w"))
         except Exception as e:
             self.log.error("Error : {}".format(e))
 

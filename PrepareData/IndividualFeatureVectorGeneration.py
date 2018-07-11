@@ -1,16 +1,16 @@
-import pickle as pi
-import numpy as np
 import glob
+import pickle as pi
 import urllib
-
-from scipy.sparse import coo_matrix, vstack
 from time import time
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.DBUtils import DBUtils
-from Utils.ConfigUtil import ConfigUtil
-from HelperFunctions.HelperFunction import HelperFunction
+import numpy as np
+from scipy.sparse import coo_matrix, vstack
+
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
+from HelperFunctions.HelperFunction import HelperFunction
+from Utils.ConfigUtil import ConfigUtil
+from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
 
 
 class IndividualFeatureGeneration:
@@ -26,6 +26,7 @@ class IndividualFeatureGeneration:
         self.exec_commands_pool = None
         self.network_pool = None
         self.static_feature_pool = None
+        self.stat_sign_feature_pool = None
 
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
@@ -67,6 +68,8 @@ class IndividualFeatureGeneration:
                 self.network_pool = pi.load(open(file_path))
             elif "static_features" in file_path:
                 self.static_feature_pool = pi.load(open(file_path))
+            elif "stat_sign_features" in file_path:
+                self.stat_sign_feature_pool = pi.load(open(file_path))
             else:
                 self.log.error("Something not in feature list accessed")
 
@@ -160,7 +163,8 @@ class IndividualFeatureGeneration:
 
     def get_bow_for_docs(self, doc, feature):
         if feature == "behavior":
-            files_value, reg_keys_value, mutex_value, exec_cmds_value = self.get_bow_for_behavior_feature(doc=doc["behavior"])
+            files_value, reg_keys_value, mutex_value, exec_cmds_value = self.get_bow_for_behavior_feature(
+                doc=doc["behavior"])
             return files_value, reg_keys_value, mutex_value, exec_cmds_value
         if feature == "network":
             network_value = self.get_bow_for_network_feature(doc=doc["network"])
