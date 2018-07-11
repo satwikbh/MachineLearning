@@ -139,6 +139,8 @@ class IndividualFeatureClusterGeneration:
             behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"))
             network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"))
             static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"))
+            stat_sign_feature_cursor = c2db_collection.aggregate(
+                self.get_query(list_of_keys=p_keys, feature="statSignature"))
 
             for doc in behavior_cursor:
                 key = doc["key"]
@@ -154,6 +156,11 @@ class IndividualFeatureClusterGeneration:
                 key = doc["key"]
                 doc = doc["value"][key]
                 self.get_bow_for_docs(doc, feature="static")
+
+            for doc in stat_sign_feature_cursor:
+                key = doc["key"]
+                doc = doc["value"][key]
+                self.get_bow_for_docs(doc, feature="statSignature")
 
             x += chunk_size
 
