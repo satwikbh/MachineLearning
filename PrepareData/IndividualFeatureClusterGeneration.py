@@ -1,13 +1,12 @@
-import urllib
 import json
-
+import urllib
 from collections import defaultdict
 from time import time
 
-from Utils.LoggerUtil import LoggerUtil
+from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
-from HelperFunctions.HelperFunction import HelperFunction
+from Utils.LoggerUtil import LoggerUtil
 
 
 class IndividualFeatureClusterGeneration:
@@ -22,6 +21,7 @@ class IndividualFeatureClusterGeneration:
         self.exec_commands_pool = None
         self.network_pool = None
         self.static_feature_pool = None
+        self.stat_sign_pool = None
 
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
@@ -100,6 +100,13 @@ class IndividualFeatureClusterGeneration:
                 self.log.info("Something strange at this Key :{} \nValue : {}".format(key, value))
         return bow
 
+    def get_bow_for_stat_sign_feature(self, doc):
+        try:
+            bow = [_ for _ in doc]
+            return bow
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
+
     def get_bow_for_docs(self, doc, feature):
         try:
             if feature == "behavior":
@@ -110,6 +117,9 @@ class IndividualFeatureClusterGeneration:
             if feature == "static":
                 static_feature_bow = self.get_bow_for_static_feature(doc=doc["static"])
                 self.add_to_dict(curr_doc=static_feature_bow, feature_pool=self.static_feature_pool)
+            if feature == "statSignatures":
+                stat_signatures = self.get_bow_for_stat_sign_feature(doc=doc["statSignatures"])
+                self.add_to_dict(curr_doc=stat_signatures, feature_pool=self.stat_sign_pool)
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
