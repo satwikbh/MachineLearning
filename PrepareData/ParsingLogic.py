@@ -1,20 +1,29 @@
-from time import time
+import glob
 import pickle as pi
-import numpy as np
-
 from collections import defaultdict
+from time import time
+
+import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
-from Utils.LoggerUtil import LoggerUtil
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
+from Utils.LoggerUtil import LoggerUtil
 
 
 class ParsingLogic:
-    def __init__(self):
+    def __init__(self, use_trie_pruning):
         self.log = LoggerUtil(self.__class__).get()
         self.dis_pool = DistributePoolingSet()
         self.helper = HelperFunction()
+        self.use_trie_pruning = use_trie_pruning
+        self.files_pool = None
+        self.reg_keys_pool = None
+        self.mutex_pool = None
+        self.exec_commands_pool = None
+        self.network_pool = None
+        self.static_feature_pool = None
+        self.stat_sign_feature_pool = None
 
     def get_bow_for_behavior_feature(self, feature, doc):
         bow = list()
@@ -96,16 +105,67 @@ class ParsingLogic:
         self.log.info("Time taken for Parsing the documents : {}".format(time() - start_time))
         return doc2bow
 
-    def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows):
+    def load_feature_pools(self, indi_feature_path):
+        list_of_files = glob.glob(indi_feature_path + "/" + "*.dump")
+        for file_path in list_of_files:
+            if "files" in file_path:
+                self.files_pool = pi.load(open(file_path))
+            elif "reg_keys" in file_path:
+                self.reg_keys_pool = pi.load(open(file_path))
+            elif "mutexes" in file_path:
+                self.mutex_pool = pi.load(open(file_path))
+            elif "executed_commands" in file_path:
+                self.exec_commands_pool = pi.load(open(file_path))
+            elif "network" in file_path:
+                self.network_pool = pi.load(open(file_path))
+            elif "static_features" in file_path:
+                self.static_feature_pool = pi.load(open(file_path))
+            elif "stat_sign_features" in file_path:
+                self.stat_sign_feature_pool = pi.load(open(file_path))
+            else:
+                self.log.error("Something not in feature list accessed")
+
+    def pruning_feature_cluster(self, indi_feature_path):
         """
-        Generate & return the feature vector path names
-        The feature matrix is in Scipy CSR format.
-        :return: 
+        From the list of features, a trie is constructed and the values are pruned.
+        The values from each feature are segregated into their respective feature pools.
+        The cluster dict is constructed from these pools.
+        :param indi_feature_path:
+        :return:
         """
         self.log.info("************ Convert 2 Vector *************")
         start_time = time()
-        feature_vector_list = list()
-        fv_dist_fnames = list()
+        cluster_dict = defaultdict(list)
+        cluster_dict.default_factory = cluster_dict.__len__
+
+        self.load_feature_pools(indi_feature_path=indi_feature_path)
+        self.log.info("Final pool preparation")
+        for feature in self.files_pool:
+            cluster_dict[feature]
+        for feature in self.reg_keys_pool:
+            cluster_dict[feature]
+        for feature in self.mutex_pool:
+            cluster_dict[feature]
+        for feature in self.exec_commands_pool:
+            cluster_dict[feature]
+        for feature in self.network_pool:
+            cluster_dict[feature]
+        for feature in self.static_feature_pool:
+            cluster_dict[feature]
+        for feature in self.stat_sign_feature_pool:
+            cluster_dict[feature]
+
+        self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
+        return cluster_dict
+
+    def non_pruning_feature_cluster(self, feature_pool_part_path_list):
+        """
+        This uses the non-pruning method to construct the cluster dict.
+        :param feature_pool_part_path_list:
+        :return:
+        """
+        self.log.info("************ Convert 2 Vector *************")
+        start_time = time()
         cluster_dict = defaultdict(list)
         cluster_dict.default_factory = cluster_dict.__len__
 
@@ -120,11 +180,29 @@ class ParsingLogic:
             file_object.close()
 
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
-        start_time = time()
+        return cluster_dict
 
+    def convert2vec(self, indi_feature_path, feature_pool_part_path_list, feature_vector_path, num_rows):
+        """
+        Generate & return the feature vector path names
+        The feature matrix is in Scipy CSR format.
+        :param indi_feature_path:
+        :param feature_pool_part_path_list:
+        :param feature_vector_path:
+        :param num_rows:
+        :return:
+        """
+        feature_vector_list = list()
+        fv_dist_fnames = list()
+
+        if self.use_trie_pruning:
+            cluster_dict = self.pruning_feature_cluster(indi_feature_path=indi_feature_path)
+        else:
+            cluster_dict = self.non_pruning_feature_cluster(feature_pool_part_path_list=feature_pool_part_path_list)
         num_cols = len(cluster_dict.keys())
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
 
+        start_time = time()
         for index, each_file in enumerate(feature_pool_part_path_list):
             file_object = open(each_file)
             doc2bow = pi.load(file_object)

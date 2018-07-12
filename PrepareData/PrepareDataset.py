@@ -2,10 +2,10 @@ import json
 import math
 import pickle as pi
 import urllib
-import numpy as np
-
 from collections import defaultdict
 from time import time
+
+import numpy as np
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
@@ -18,10 +18,10 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class PrepareDataset:
-    def __init__(self):
+    def __init__(self, use_trie_pruning):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.db_utils = DBUtils()
-        self.parser = ParsingLogic()
+        self.parser = ParsingLogic(use_trie_pruning=use_trie_pruning)
         self.dis_pool = DistributePoolingSet()
         self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
@@ -202,5 +202,5 @@ class PrepareDataset:
 
 
 if __name__ == "__main__":
-    prepare_dataset = PrepareDataset()
+    prepare_dataset = PrepareDataset(use_trie_pruning=True)
     prepare_dataset.load_data()
