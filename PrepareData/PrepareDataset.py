@@ -12,6 +12,7 @@ from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.ParsingLogic import ParsingLogic
+from TrieBasedPruning import TrieBasedPruning
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
@@ -21,12 +22,14 @@ class PrepareDataset:
     def __init__(self, use_trie_pruning):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.db_utils = DBUtils()
-        self.parser = ParsingLogic(use_trie_pruning=use_trie_pruning)
+        self.use_trie_pruning = use_trie_pruning
+        self.parser = ParsingLogic(use_trie_pruning=self.use_trie_pruning)
         self.dis_pool = DistributePoolingSet()
         self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
         self.data_stats = DataStats()
+        self.trie_based_pruning = TrieBasedPruning()
 
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
@@ -110,27 +113,38 @@ class PrepareDataset:
 
     def get_data_as_matrix(self, client, collection,
                            list_of_keys, config_param_chunk_size,
-                           feature_pool_path, feature_vector_path):
-
-        feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
-                                                                                path=feature_pool_path)
-        feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
-                                                                                  path=feature_vector_path)
-
-        if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
-            self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
+                           feature_pool_path, feature_vector_path,
+                           indi_feature_pool_path, indi_feature_vector_path):
+        if self.use_trie_pruning:
+            feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
+                                                                                    path=indi_feature_pool_path)
+            feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
+                                                                                      path=indi_feature_vector_path)
+            if len(feature_pool_part_path_list) == 7:
+                self.log.info("Feature pool already generated at : {}".format(indi_feature_pool_path))
+            else:
+                feature_pool_part_path_list = list(self.trie_based_pruning.main())
         else:
-            feature_pool_part_path_list = self.generate_feature_pool(collection, list_of_keys, config_param_chunk_size,
-                                                                     feature_pool_path)
+            feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
+                                                                                    path=feature_pool_path)
+            feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
+                                                                                      path=feature_vector_path)
 
-        client.close()
+            if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
+                self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
+            else:
+                feature_pool_part_path_list = self.generate_feature_pool(collection, list_of_keys,
+                                                                         config_param_chunk_size,
+                                                                         feature_pool_path)
+            client.close()
 
         if len(feature_vector_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
             self.log.info("Feature vector already generated at : {}".format(feature_vector_path))
             return feature_vector_path
         else:
-            return self.parser.convert2vec(feature_pool_part_path_list, feature_vector_path,
-                                           num_rows=len(list_of_keys))
+            return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
+                                           feature_vector_path=feature_vector_path, num_rows=len(list_of_keys),
+                                           indi_feature_pool_path=indi_feature_pool_path)
 
     def generate_labels(self, avclass_collection, list_of_keys, config_param_chunk_size):
         md5_keys = self.helper.convert_from_vs_keys(list_of_keys)
@@ -174,10 +188,14 @@ class PrepareDataset:
 
     def load_data(self):
         start_time = time()
-        client, c2db_collection, avclass_collection = self.get_collection()
-        cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         labels_path = self.config["data"]["labels_path"]
+        indi_feature_pool_path = self.config[""][""]
+        indi_feature_vector_path = self.config[""][""]
+
+        client, c2db_collection, avclass_collection = self.get_collection()
+        cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
+
         list_of_keys = list()
 
         for each_element in cursor:
@@ -192,9 +210,10 @@ class PrepareDataset:
         feature_vector_path = self.config['data']['feature_vector_path']
         self.helper.create_dir_if_absent(feature_pool_path)
         self.helper.create_dir_if_absent(feature_vector_path)
-        self.get_data_as_matrix(client, c2db_collection, list_of_keys,
-                                config_param_chunk_size, feature_pool_path,
-                                feature_vector_path)
+        self.get_data_as_matrix(client=client, collection=c2db_collection, list_of_keys=list_of_keys,
+                                config_param_chunk_size=config_param_chunk_size, feature_pool_path=feature_pool_path,
+                                feature_vector_path=feature_vector_path, indi_feature_pool_path=indi_feature_pool_path,
+                                indi_feature_vector_path=indi_feature_vector_path)
         self.data_stats.main()
         labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
         pi.dump(labels, open(labels_path + "/" + "labels.pkl", "w"))

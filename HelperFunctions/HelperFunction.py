@@ -198,3 +198,12 @@ class HelperFunction:
     def validation_split(input_matrix, labels, test_size):
         x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
         return x_train, x_test, y_train, y_test
+
+    @staticmethod
+    def make_unicode(input_str):
+        input_str = str(input_str)
+        if type(input_str) != unicode:
+            input_str = input_str.decode('utf-8')
+            return input_str
+        else:
+            return input_str

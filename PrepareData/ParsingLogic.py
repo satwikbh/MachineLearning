@@ -105,8 +105,8 @@ class ParsingLogic:
         self.log.info("Time taken for Parsing the documents : {}".format(time() - start_time))
         return doc2bow
 
-    def load_feature_pools(self, indi_feature_path):
-        list_of_files = glob.glob(indi_feature_path + "/" + "*.dump")
+    def load_feature_pools(self, indi_feature_pool_path):
+        list_of_files = glob.glob(indi_feature_pool_path + "/" + "*.dump")
         for file_path in list_of_files:
             if "files" in file_path:
                 self.files_pool = pi.load(open(file_path))
@@ -125,12 +125,12 @@ class ParsingLogic:
             else:
                 self.log.error("Something not in feature list accessed")
 
-    def pruning_feature_cluster(self, indi_feature_path):
+    def pruning_feature_cluster(self, indi_feature_pool_path):
         """
         From the list of features, a trie is constructed and the values are pruned.
         The values from each feature are segregated into their respective feature pools.
         The cluster dict is constructed from these pools.
-        :param indi_feature_path:
+        :param indi_feature_pool_path:
         :return:
         """
         self.log.info("************ Convert 2 Vector *************")
@@ -138,7 +138,7 @@ class ParsingLogic:
         cluster_dict = defaultdict(list)
         cluster_dict.default_factory = cluster_dict.__len__
 
-        self.load_feature_pools(indi_feature_path=indi_feature_path)
+        self.load_feature_pools(indi_feature_pool_path=indi_feature_pool_path)
         self.log.info("Final pool preparation")
         for feature in self.files_pool:
             cluster_dict[feature]
@@ -182,11 +182,11 @@ class ParsingLogic:
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
         return cluster_dict
 
-    def convert2vec(self, indi_feature_path, feature_pool_part_path_list, feature_vector_path, num_rows):
+    def convert2vec(self, indi_feature_pool_path, feature_pool_part_path_list, feature_vector_path, num_rows):
         """
         Generate & return the feature vector path names
         The feature matrix is in Scipy CSR format.
-        :param indi_feature_path:
+        :param indi_feature_pool_path:
         :param feature_pool_part_path_list:
         :param feature_vector_path:
         :param num_rows:
@@ -196,7 +196,7 @@ class ParsingLogic:
         fv_dist_fnames = list()
 
         if self.use_trie_pruning:
-            cluster_dict = self.pruning_feature_cluster(indi_feature_path=indi_feature_path)
+            cluster_dict = self.pruning_feature_cluster(indi_feature_pool_path=indi_feature_pool_path)
         else:
             cluster_dict = self.non_pruning_feature_cluster(feature_pool_part_path_list=feature_pool_part_path_list)
         num_cols = len(cluster_dict.keys())

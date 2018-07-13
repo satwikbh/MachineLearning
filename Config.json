@@ -9,8 +9,8 @@
     "lle": "/home/satwik/Documents/MachineLearning/DataMain/plots/lle",
     "sae": "/home/satwik/Documents/MachineLearning/DataMain/plots/sae"
   },
-  "individual_feature_pool_path":"/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/",
-  "individual_feature_vector_path":{
+  "individual_feature_pool_path": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/",
+  "individual_feature_vector_path": {
     "files_feature": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/files_fv",
     "reg_keys_feature": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/reg_keys_fv",
     "mutexes_feature": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/mutexes_fv",
@@ -47,26 +47,26 @@
       "reconstruction_error": 1.0
     },
     "tsne": {
-     "model_path":"/home/satwik/Documents/MachineLearning/DataMain/Models/tsne_model/",
-     "reconstruction_error": 1.0
-     },
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/tsne_model/",
+      "reconstruction_error": 1.0
+    },
     "p_tsne": "/home/satwik/Documents/MachineLearning/DataMain/Models/p_tsne_model/",
     "sae": {
-     "model_path":"/home/satwik/Documents/MachineLearning/DataMain/Models/sae_model/",
-     "reconstruction_error": 1.0
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/sae_model/",
+      "reconstruction_error": 1.0
     },
     "lle": "/home/satwik/Documents/MachineLearning/DataMain/Models/lle_model/",
     "svm": {
-        "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/SVM"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/SVM"
     },
     "random_forest": {
-        "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/RandomForest"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/RandomForest"
     },
     "one_d_cnn": {
-        "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/CNN_results"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/CNN_results"
     },
     "ensemble": {
-        "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/Ensemble_results"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/Ensemble_results"
     }
   },
   "results": {

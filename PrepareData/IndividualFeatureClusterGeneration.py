@@ -15,7 +15,7 @@ class IndividualFeatureClusterGeneration:
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
         self.helper = HelperFunction()
-        self.files_dict = None
+        self.files_pool = None
         self.reg_keys_pool = None
         self.mutex_pool = None
         self.exec_commands_pool = None
@@ -76,7 +76,7 @@ class IndividualFeatureClusterGeneration:
 
     def get_bow_for_behavior_feature(self, doc):
         try:
-            self.add_to_dict(curr_doc=doc["files"], feature_pool=self.files_dict)
+            self.add_to_dict(curr_doc=doc["files"], feature_pool=self.files_pool)
             self.add_to_dict(curr_doc=doc["keys"], feature_pool=self.reg_keys_pool)
             self.add_to_dict(curr_doc=doc["mutexes"], feature_pool=self.mutex_pool)
             self.add_to_dict(curr_doc=doc["executed_commands"], feature_pool=self.exec_commands_pool)
@@ -167,7 +167,7 @@ class IndividualFeatureClusterGeneration:
     def save_feature_pools(self, individual_feature_pool_path):
         try:
             self.log.info("Saving files feature cluster")
-            json.dump(self.files_dict, open(individual_feature_pool_path + "/" + "files.dump", "w"))
+            json.dump(self.files_pool, open(individual_feature_pool_path + "/" + "files.dump", "w"))
 
             self.log.info("Saving registry keys feature cluster")
             json.dump(self.reg_keys_pool, open(individual_feature_pool_path + "/" + "reg_keys.dump", "w"))
@@ -194,7 +194,7 @@ class IndividualFeatureClusterGeneration:
         individual_feature_pool_path = self.config["individual_feature_pool_path"]
         self.log.info("Preparing Individual Feature Pools at : {}".format(individual_feature_pool_path))
 
-        self.files_dict = self.get_cluster_dict()
+        self.files_pool = self.get_cluster_dict()
         self.reg_keys_pool = self.get_cluster_dict()
         self.mutex_pool = self.get_cluster_dict()
         self.exec_commands_pool = self.get_cluster_dict()
