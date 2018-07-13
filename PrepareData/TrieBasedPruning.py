@@ -136,9 +136,9 @@ class TrieBasedPruning:
         :return:
         """
         start_time = time()
-        individual_feature_pool_path = self.config["individual_feature_pool_path"]
-        pruned_feature_pool_path = self.config[""]
-        trie_path = self.config[""]
+        individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
+        pruned_feature_pool_path = self.config["data"]["pruned_feature_pool_path"]
+        trie_path = self.config["data"]["trie_path"]
 
         self.load_indi_feature_pools(individual_feature_pool_path)
         if len(glob.glob(trie_path + "/" + "*.dump")) == 4:

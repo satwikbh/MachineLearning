@@ -191,7 +191,7 @@ class IndividualFeatureClusterGeneration:
 
     def main(self):
         start_time = time()
-        individual_feature_pool_path = self.config["individual_feature_pool_path"]
+        individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
         self.log.info("Preparing Individual Feature Pools at : {}".format(individual_feature_pool_path))
 
         self.files_pool = self.get_cluster_dict()

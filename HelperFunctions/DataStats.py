@@ -1,12 +1,12 @@
-from Utils.LoggerUtil import LoggerUtil
-from Utils.ConfigUtil import ConfigUtil
-from HelperFunctions.HelperFunction import HelperFunction
-
 from time import time
+
+import numpy as np
 from scipy.sparse import load_npz, save_npz
 from sklearn.feature_selection import VarianceThreshold
 
-import numpy as np
+from HelperFunctions.HelperFunction import HelperFunction
+from Utils.ConfigUtil import ConfigUtil
+from Utils.LoggerUtil import LoggerUtil
 
 
 class DataStats:
@@ -106,21 +106,21 @@ class DataStats:
         start_time = time()
         self.log.info("Generating column wise count of non zero elements")
         feature_vector_path = self.config['data']['feature_vector_path']
-        pruned_matrix_path = self.config['data']['pruned_feature_vector_path']
+        pruned_variance_matrix_path = self.config['data']['pruned_variance_matrix_path']
         feature_selection_path = self.config['data']['feature_selection_path']
         col_dist_path = self.config['data']['col_dist_path']
         chunk_size = self.config['data']['config_param_chunk_size']
         variance_threshold = self.config['data']['variance_threshold']
 
         self.helper.create_dir_if_absent(feature_vector_path)
-        self.helper.create_dir_if_absent(pruned_matrix_path)
+        self.helper.create_dir_if_absent(pruned_variance_matrix_path)
         self.helper.create_dir_if_absent(feature_selection_path)
 
         feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".npz")
         self.log.info("Total number of files : {}".format(len(feature_vector)))
         col_wise_dist, num_rows = self.get_stats(feature_vector)
         np.savez(col_dist_path + "/" + "col_wise_dist.dump", np.asarray(col_wise_dist))
-        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_matrix_path, num_rows)
+        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_variance_matrix_path, num_rows)
         self.feature_selection(feature_vector=feature_vector, variance_threshold=variance_threshold,
                                feature_selection_path=feature_selection_path, chunk_size=chunk_size)
         self.log.info("Total time for execution : {}".format(time() - start_time))

@@ -7,7 +7,8 @@
     "p_tsne": "/home/satwik/Documents/MachineLearning/DataMain/plots/p_tsne",
     "pca": "/home/satwik/Documents/MachineLearning/DataMain/plots/pca",
     "lle": "/home/satwik/Documents/MachineLearning/DataMain/plots/lle",
-    "sae": "/home/satwik/Documents/MachineLearning/DataMain/plots/sae"
+    "sae": "/home/satwik/Documents/MachineLearning/DataMain/plots/sae",
+    "smote": "/home/satwik/Documents/MachineLearning/DataMain/plots/smote"
   },
   "individual_feature_pool_path": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/",
   "individual_feature_vector_path": {
@@ -19,19 +20,26 @@
     "static_feature": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool/static_fv"
   },
   "data": {
-    "config_param_chunk_size": 1000,
+    "config_param_chunk_size": 100,
     "pruning_threshold": 0.001,
+    "variance_threshold": 0.01,
     "feature_vector_path": "/home/satwik/Documents/MachineLearning/DataMain/feature_vector/",
     "feature_pool_path": "/home/satwik/Documents/MachineLearning/DataMain/feature_pool/",
     "reduced_matrix_path": "/home/satwik/Documents/MachineLearning/DataMain/reduced_matrix/",
     "projected_matrix_path": "/home/satwik/Documents/MachineLearning/DataMain/projected_matrix_path/",
-    "pruned_feature_vector_path": "/home/satwik/Documents/MachineLearning/DataMain/pruned_fv_path/",
+    "pruned_variance_matrix_path": "/home/satwik/Documents/MachineLearning/DataMain/pruned_variance_matrix_path/",
     "feature_selection_path": "/home/satwik/Documents/MachineLearning/DataMain/feature_selection/",
     "col_dist_path": "/home/satwik/Documents/MachineLearning/DataMain/",
+    "av_dist_path": "/home/satwik/Documents/MachineLearning/DataMain/",
     "list_of_keys": "/home/satwik/Documents/MachineLearning/DataMain/",
     "malware_families_list": "/home/satwik/Documents/MachineLearning/DataMain/",
     "labels_path": "/home/satwik/Documents/MachineLearning/DataMain/",
-    "classified_families_path": "/home/satwik/Documents/MachineLearning/DataMain/"
+    "classified_families_path": "/home/satwik/Documents/MachineLearning/DataMain/",
+    "ranking_results_path": "/home/satwik/Documents/MachineLearning/DataMain/RankingResults",
+    "smote_data": "/home/satwik/Documents/MachineLearning/DataMain/smote_data",
+    "individual_feature_pool_path": "/home/satwik/Documents/MachineLearning/DataMain/individual_feature_pool",
+    "pruned_feature_pool_path": "/home/satwik/Documents/MachineLearning/DataMain/pruned_feature_pool",
+    "trie_path": "/home/satwik/Documents/MachineLearning/DataMain/trie_dumps"
   },
   "models": {
     "pca": {
@@ -60,13 +68,28 @@
       "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/SVM"
     },
     "random_forest": {
-      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/RandomForest"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/RandomForest",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/RandomForest"
     },
     "one_d_cnn": {
-      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/CNN_results"
+      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/CNN_results",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/OneDCNN"
     },
-    "ensemble": {
-      "results_path": "/home/satwik/Documents/MachineLearning/DataMain/Results/ClassificationResults/Ensemble_results"
+    "naive_bayes": {
+      "results_path": "",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/NaiveBayes"
+    },
+    "extra_trees": {
+      "results_path": "",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/ExtraTrees"
+    },
+    "decision_trees": {
+      "results_path": "",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/DecisionTrees"
+    },
+    "adaboost": {
+      "results_path": "",
+      "model_path": "/home/satwik/Documents/MachineLearning/DataMain/Models/Adaboost"
     }
   },
   "results": {
@@ -94,6 +117,7 @@
     "clustal": "/home/satwik/Documents/Tools/clustalw-2.1/src/clustalw2",
     "mafft": "mafft",
     "fasttree": "/home/satwik/Documents/Tools/FastTree/FastTree",
+    "n_cores": 30,
     "gpu_id": [
       "0"
     ],
