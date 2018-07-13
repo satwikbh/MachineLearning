@@ -126,9 +126,6 @@ class TrieBasedPruning:
 
         stat_sign_features_path = pruned_feature_pool_path + "/" + "stat_sign_features.dump"
         pi.dump(self.stat_sign_pool.keys(), open(stat_sign_features_path, "w"))
-        features_path_list = [files_path, reg_keys_path, executed_commands_path, mutexes_path, network_path,
-                              static_features_path, stat_sign_features_path]
-        return features_path_list
 
     def main(self):
         """
@@ -152,13 +149,12 @@ class TrieBasedPruning:
 
         meta_files_pool, meta_reg_keys_pool, meta_executed_cmds_pool, meta_mutex_pool = self.prune_feature_pools(
             files_trie_dict, reg_keys_trie_dict, executed_cmds_trie_dict, mutex_trie_dict)
-        features_path_list = self.save_feature_pools(pruned_feature_pool_path=pruned_feature_pool_path,
-                                                     meta_files_pool=meta_files_pool,
-                                                     meta_reg_keys_pool=meta_reg_keys_pool,
-                                                     meta_executed_cmds_pool=meta_executed_cmds_pool,
-                                                     meta_mutex_pool=meta_mutex_pool)
+        self.save_feature_pools(pruned_feature_pool_path=pruned_feature_pool_path,
+                                meta_files_pool=meta_files_pool,
+                                meta_reg_keys_pool=meta_reg_keys_pool,
+                                meta_executed_cmds_pool=meta_executed_cmds_pool,
+                                meta_mutex_pool=meta_mutex_pool)
         self.log.info("Total time taken : {}".format(time() - start_time))
-        return features_path_list
 
 
 if __name__ == '__main__':

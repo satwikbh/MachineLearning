@@ -116,14 +116,16 @@ class PrepareDataset:
                            feature_pool_path, feature_vector_path,
                            indi_feature_pool_path, indi_feature_vector_path):
         if self.use_trie_pruning:
-            feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
+            indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="dump",
                                                                                     path=indi_feature_pool_path)
             feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                       path=indi_feature_vector_path)
-            if len(feature_pool_part_path_list) == 7:
+            if len(indi_feature_pool_part_list) == 7:
                 self.log.info("Feature pool already generated at : {}".format(indi_feature_pool_path))
             else:
-                feature_pool_part_path_list = list(self.trie_based_pruning.main())
+                self.trie_based_pruning.main()
+            feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
+                                                                                    path=feature_pool_path)
         else:
             feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
                                                                                     path=feature_pool_path)
@@ -190,8 +192,8 @@ class PrepareDataset:
         start_time = time()
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         labels_path = self.config["data"]["labels_path"]
-        indi_feature_pool_path = self.config[""][""]
-        indi_feature_vector_path = self.config[""][""]
+        indi_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
+        indi_feature_vector_path = self.config["data"]["individual_feature_vector_path"]
 
         client, c2db_collection, avclass_collection = self.get_collection()
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
