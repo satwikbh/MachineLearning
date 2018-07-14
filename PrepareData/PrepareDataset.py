@@ -114,14 +114,14 @@ class PrepareDataset:
     def get_data_as_matrix(self, client, collection,
                            list_of_keys, config_param_chunk_size,
                            feature_pool_path, feature_vector_path,
-                           indi_feature_pool_path, indi_feature_vector_path):
+                           indi_feature_vector_path, pruned_feature_pool_path):
         if self.use_trie_pruning:
             indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="dump",
-                                                                                    path=indi_feature_pool_path)
+                                                                                    path=pruned_feature_pool_path)
             feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                       path=indi_feature_vector_path)
             if len(indi_feature_pool_part_list) == 7:
-                self.log.info("Feature pool already generated at : {}".format(indi_feature_pool_path))
+                self.log.info("Feature pool already generated at : {}".format(pruned_feature_pool_path))
             else:
                 self.trie_based_pruning.main()
             feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
@@ -146,7 +146,7 @@ class PrepareDataset:
         else:
             return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
                                            feature_vector_path=feature_vector_path, num_rows=len(list_of_keys),
-                                           indi_feature_pool_path=indi_feature_pool_path)
+                                           pruned_feature_pool_path=pruned_feature_pool_path)
 
     def generate_labels(self, avclass_collection, list_of_keys, config_param_chunk_size):
         md5_keys = self.helper.convert_from_vs_keys(list_of_keys)
@@ -192,8 +192,8 @@ class PrepareDataset:
         start_time = time()
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         labels_path = self.config["data"]["labels_path"]
-        indi_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
         indi_feature_vector_path = self.config["data"]["individual_feature_vector_path"]
+        pruned_feature_pool_path = self.config["data"]["pruned_feature_pool_path"]
 
         client, c2db_collection, avclass_collection = self.get_collection()
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
@@ -214,8 +214,9 @@ class PrepareDataset:
         self.helper.create_dir_if_absent(feature_vector_path)
         self.get_data_as_matrix(client=client, collection=c2db_collection, list_of_keys=list_of_keys,
                                 config_param_chunk_size=config_param_chunk_size, feature_pool_path=feature_pool_path,
-                                feature_vector_path=feature_vector_path, indi_feature_pool_path=indi_feature_pool_path,
-                                indi_feature_vector_path=indi_feature_vector_path)
+                                feature_vector_path=feature_vector_path,
+                                indi_feature_vector_path=indi_feature_vector_path,
+                                pruned_feature_pool_path=pruned_feature_pool_path)
         self.data_stats.main()
         labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
         pi.dump(labels, open(labels_path + "/" + "labels.pkl", "w"))
