@@ -116,7 +116,7 @@ class PrepareDataset:
                            feature_pool_path, feature_vector_path,
                            indi_feature_vector_path, pruned_feature_pool_path):
         if self.use_trie_pruning:
-            indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="dump",
+            indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="json",
                                                                                     path=pruned_feature_pool_path)
             feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                       path=indi_feature_vector_path)

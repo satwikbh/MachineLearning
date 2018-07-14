@@ -1,6 +1,5 @@
 import glob
 import json
-import pickle as pi
 from collections import defaultdict
 from time import time
 
@@ -106,26 +105,26 @@ class TrieBasedPruning:
         meta_executed_cmds_pool = kwargs['meta_executed_cmds_pool']
         meta_mutex_pool = kwargs['meta_mutex_pool']
 
-        files_path = pruned_feature_pool_path + "/" + "files.dump"
-        pi.dump(meta_files_pool, open(files_path, "w"))
+        files_path = pruned_feature_pool_path + "/" + "files.json"
+        json.dump(meta_files_pool, open(files_path, "w"))
 
-        reg_keys_path = pruned_feature_pool_path + "/" + "reg_keys.dump"
-        pi.dump(meta_reg_keys_pool, open(reg_keys_path, "w"))
+        reg_keys_path = pruned_feature_pool_path + "/" + "reg_keys.json"
+        json.dump(meta_reg_keys_pool, open(reg_keys_path, "w"))
 
-        executed_commands_path = pruned_feature_pool_path + "/" + "executed_commands.dump"
-        pi.dump(meta_executed_cmds_pool, open(executed_commands_path, "w"))
+        executed_commands_path = pruned_feature_pool_path + "/" + "executed_commands.json"
+        json.dump(meta_executed_cmds_pool, open(executed_commands_path, "w"))
 
-        mutexes_path = pruned_feature_pool_path + "/" + "mutexes.dump"
-        pi.dump(meta_mutex_pool, open(mutexes_path, "w"))
+        mutexes_path = pruned_feature_pool_path + "/" + "mutexes.json"
+        json.dump(meta_mutex_pool, open(mutexes_path, "w"))
 
-        network_path = pruned_feature_pool_path + "/" + "network.dump"
-        pi.dump(self.network_pool.keys(), open(network_path, "w"))
+        network_path = pruned_feature_pool_path + "/" + "network.json"
+        json.dump(self.network_pool.keys(), open(network_path, "w"))
 
-        static_features_path = pruned_feature_pool_path + "/" + "static_features.dump"
-        pi.dump(self.static_feature_pool.keys(), open(static_features_path, "w"))
+        static_features_path = pruned_feature_pool_path + "/" + "static_features.json"
+        json.dump(self.static_feature_pool.keys(), open(static_features_path, "w"))
 
-        stat_sign_features_path = pruned_feature_pool_path + "/" + "stat_sign_features.dump"
-        pi.dump(self.stat_sign_pool.keys(), open(stat_sign_features_path, "w"))
+        stat_sign_features_path = pruned_feature_pool_path + "/" + "stat_sign_features.json"
+        json.dump(self.stat_sign_pool.keys(), open(stat_sign_features_path, "w"))
 
     def main(self):
         """

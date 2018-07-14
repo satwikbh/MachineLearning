@@ -167,25 +167,25 @@ class IndividualFeatureClusterGeneration:
     def save_feature_pools(self, individual_feature_pool_path):
         try:
             self.log.info("Saving files feature cluster")
-            json.dump(self.files_pool, open(individual_feature_pool_path + "/" + "files.dump", "w"))
+            json.dump(self.files_pool, open(individual_feature_pool_path + "/" + "files.json", "w"))
 
             self.log.info("Saving registry keys feature cluster")
-            json.dump(self.reg_keys_pool, open(individual_feature_pool_path + "/" + "reg_keys.dump", "w"))
+            json.dump(self.reg_keys_pool, open(individual_feature_pool_path + "/" + "reg_keys.json", "w"))
 
             self.log.info("Saving mutexes feature cluster")
-            json.dump(self.mutex_pool, open(individual_feature_pool_path + "/" + "mutexes.dump", "w"))
+            json.dump(self.mutex_pool, open(individual_feature_pool_path + "/" + "mutexes.json", "w"))
 
             self.log.info("Saving executed commands feature cluster")
-            json.dump(self.exec_commands_pool, open(individual_feature_pool_path + "/" + "executed_commands.dump", "w"))
+            json.dump(self.exec_commands_pool, open(individual_feature_pool_path + "/" + "executed_commands.json", "w"))
 
             self.log.info("Saving network feature cluster")
-            json.dump(self.network_pool, open(individual_feature_pool_path + "/" + "network.dump", "w"))
+            json.dump(self.network_pool, open(individual_feature_pool_path + "/" + "network.json", "w"))
 
             self.log.info("Saving static feature cluster")
-            json.dump(self.static_feature_pool, open(individual_feature_pool_path + "/" + "static_features.dump", "w"))
+            json.dump(self.static_feature_pool, open(individual_feature_pool_path + "/" + "static_features.json", "w"))
 
             self.log.info("Saving stat signature feature cluster")
-            json.dump(self.stat_sign_pool, open(individual_feature_pool_path + "/" + "stat_sign_features.dump", "w"))
+            json.dump(self.stat_sign_pool, open(individual_feature_pool_path + "/" + "stat_sign_features.json", "w"))
         except Exception as e:
             self.log.error("Error : {}".format(e))
 

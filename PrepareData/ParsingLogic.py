@@ -107,7 +107,7 @@ class ParsingLogic:
         return doc2bow
 
     def load_feature_pools(self, indi_feature_pool_path):
-        list_of_files = glob.glob(indi_feature_pool_path + "/" + "*.dump")
+        list_of_files = glob.glob(indi_feature_pool_path + "/" + "*.json")
         for file_path in list_of_files:
             if "files" in file_path:
                 self.files_pool = json.load(open(file_path))
