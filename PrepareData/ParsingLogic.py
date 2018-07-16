@@ -183,11 +183,11 @@ class ParsingLogic:
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
         return cluster_dict
 
-    def convert2vec(self, pruned_feature_pool_path, feature_pool_part_path_list, feature_vector_path, num_rows):
+    def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows, pruned_feature_pool_path=None):
         """
         Generate & return the feature vector path names
         The feature matrix is in Scipy CSR format.
-        :param pruned_feature_pool_path:
+        :param pruned_feature_pool_path: This is valid only if the trie based pruning is applied.
         :param feature_pool_part_path_list:
         :param feature_vector_path:
         :param num_rows:

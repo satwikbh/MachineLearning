@@ -1,7 +1,7 @@
 from time import time
 
 import numpy as np
-from scipy.sparse import load_npz, save_npz
+from scipy.sparse import load_npz, save_npz, vstack
 from sklearn.feature_selection import VarianceThreshold
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -10,10 +10,11 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class DataStats:
-    def __init__(self):
+    def __init__(self, use_trie_pruning):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil().get_config_instance()
         self.helper = HelperFunction()
+        self.use_trie_pruning = use_trie_pruning
 
     @staticmethod
     def stats(fv):
@@ -84,7 +85,8 @@ class DataStats:
             file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index)
             save_npz(file_name, new_mat, compressed=True)
 
-    def perform_feature_selection(self, feature_vector_file_list, variance_threshold, feature_selection_path, chunk_size):
+    def perform_feature_selection(self, feature_vector_file_list, variance_threshold, feature_selection_path,
+                                  chunk_size):
         self.log.info("Performing Feature Selection on the feature vector")
         threshold_meta = variance_threshold * (1 - variance_threshold)
         sel = VarianceThreshold(threshold=threshold_meta)
@@ -109,22 +111,48 @@ class DataStats:
     def main(self):
         start_time = time()
         self.log.info("Generating column wise count of non zero elements")
-        feature_vector_path = self.config['data']['feature_vector_path']
-        pruned_variance_matrix_path = self.config['data']['pruned_variance_matrix_path']
-        feature_selection_path = self.config['data']['feature_selection_path']
+
+        unpruned_feature_vector_path = self.config["data"]["unpruned_feature_vector_path"]
+        pruned_feature_vector_path = self.config["data"]["pruned_feature_vector_path"]
+
+        pruned_variance_matrix_path = self.config["data"]["pruned_variance_matrix_path"]
+        unpruned_variance_matrix_path = self.config["data"]["unpruned_variance_matrix_path"]
+
+        pruned_feature_selection_path = self.config["data"]["pruned_feature_selection_path"]
+        unpruned_feature_selection_path = self.config["data"]["unpruned_feature_selection_path"]
+
         col_dist_path = self.config['data']['col_dist_path']
         chunk_size = self.config['data']['config_param_chunk_size']
         variance_threshold = self.config['data']['variance_threshold']
 
-        self.helper.create_dir_if_absent(feature_vector_path)
-        self.helper.create_dir_if_absent(pruned_variance_matrix_path)
-        self.helper.create_dir_if_absent(feature_selection_path)
+        if self.use_trie_pruning:
+            self.helper.create_dir_if_absent(pruned_feature_vector_path)
+            self.helper.create_dir_if_absent(pruned_variance_matrix_path)
+            self.helper.create_dir_if_absent(pruned_feature_selection_path)
+            pruned_feature_vector_file_list = self.helper.get_files_ends_with_extension(path=pruned_feature_vector_path,
+                                                                                        extension=".npz")
+            self.log.info("Total number of files : {}".format(len(pruned_feature_vector_file_list)))
+            col_wise_dist, num_rows = self.get_stats(pruned_feature_vector_file_list)
+            np.savez(col_dist_path + "/" + "col_wise_dist.dump", np.asarray(col_wise_dist))
+            self.store_pruned_matrix(feature_vector=pruned_feature_vector_file_list, col_wise_dist=col_wise_dist,
+                                     pruned_matrix_path=pruned_variance_matrix_path, num_rows=num_rows)
+            self.perform_feature_selection(feature_vector_file_list=pruned_feature_vector_file_list,
+                                           variance_threshold=variance_threshold, chunk_size=chunk_size,
+                                           feature_selection_path=pruned_feature_selection_path)
+        else:
+            self.helper.create_dir_if_absent(unpruned_feature_vector_path)
+            self.helper.create_dir_if_absent(unpruned_variance_matrix_path)
+            self.helper.create_dir_if_absent(unpruned_feature_selection_path)
+            unpruned_feature_vector_file_list = self.helper.get_files_ends_with_extension(
+                path=unpruned_feature_vector_path,
+                extension=".npz")
+            self.log.info("Total number of files : {}".format(len(unpruned_feature_vector_file_list)))
+            col_wise_dist, num_rows = self.get_stats(unpruned_feature_vector_file_list)
+            np.savez(col_dist_path + "/" + "unpruned_col_wise_dist.dump", np.asarray(col_wise_dist))
+            self.store_pruned_matrix(feature_vector=unpruned_feature_vector_file_list, col_wise_dist=col_wise_dist,
+                                     pruned_matrix_path=unpruned_variance_matrix_path, num_rows=num_rows)
+            self.perform_feature_selection(feature_vector_file_list=unpruned_feature_vector_file_list,
+                                           variance_threshold=variance_threshold, chunk_size=chunk_size,
+                                           feature_selection_path=unpruned_feature_selection_path)
 
-        feature_vector = self.helper.get_files_ends_with_extension(path=feature_vector_path, extension=".npz")
-        self.log.info("Total number of files : {}".format(len(feature_vector)))
-        col_wise_dist, num_rows = self.get_stats(feature_vector)
-        np.savez(col_dist_path + "/" + "col_wise_dist.dump", np.asarray(col_wise_dist))
-        self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_variance_matrix_path, num_rows)
-        self.perform_feature_selection(feature_vector_file_list=feature_vector_file_list, variance_threshold=variance_threshold,
-                               feature_selection_path=feature_selection_path, chunk_size=chunk_size)
         self.log.info("Total time for execution : {}".format(time() - start_time))
