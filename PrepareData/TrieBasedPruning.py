@@ -99,31 +99,31 @@ class TrieBasedPruning:
         return meta_files_pool, meta_reg_keys_pool, meta_executed_cmds_pool, meta_mutex_pool
 
     def save_feature_pools(self, **kwargs):
-        pruned_feature_pool_path = kwargs['pruned_feature_pool_path']
+        pruned_indi_feature_pool_path = kwargs['pruned_indi_feature_pool_path']
         meta_files_pool = kwargs['meta_files_pool']
         meta_reg_keys_pool = kwargs['meta_reg_keys_pool']
         meta_executed_cmds_pool = kwargs['meta_executed_cmds_pool']
         meta_mutex_pool = kwargs['meta_mutex_pool']
 
-        files_path = pruned_feature_pool_path + "/" + "files.json"
+        files_path = pruned_indi_feature_pool_path + "/" + "files.json"
         json.dump(meta_files_pool, open(files_path, "w"))
 
-        reg_keys_path = pruned_feature_pool_path + "/" + "reg_keys.json"
+        reg_keys_path = pruned_indi_feature_pool_path + "/" + "reg_keys.json"
         json.dump(meta_reg_keys_pool, open(reg_keys_path, "w"))
 
-        executed_commands_path = pruned_feature_pool_path + "/" + "executed_commands.json"
+        executed_commands_path = pruned_indi_feature_pool_path + "/" + "executed_commands.json"
         json.dump(meta_executed_cmds_pool, open(executed_commands_path, "w"))
 
-        mutexes_path = pruned_feature_pool_path + "/" + "mutexes.json"
+        mutexes_path = pruned_indi_feature_pool_path + "/" + "mutexes.json"
         json.dump(meta_mutex_pool, open(mutexes_path, "w"))
 
-        network_path = pruned_feature_pool_path + "/" + "network.json"
+        network_path = pruned_indi_feature_pool_path + "/" + "network.json"
         json.dump(self.network_pool.keys(), open(network_path, "w"))
 
-        static_features_path = pruned_feature_pool_path + "/" + "static_features.json"
+        static_features_path = pruned_indi_feature_pool_path + "/" + "static_features.json"
         json.dump(self.static_feature_pool.keys(), open(static_features_path, "w"))
 
-        stat_sign_features_path = pruned_feature_pool_path + "/" + "stat_sign_features.json"
+        stat_sign_features_path = pruned_indi_feature_pool_path + "/" + "stat_sign_features.json"
         json.dump(self.stat_sign_pool.keys(), open(stat_sign_features_path, "w"))
 
     def main(self):
@@ -133,7 +133,7 @@ class TrieBasedPruning:
         """
         start_time = time()
         individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
-        pruned_feature_pool_path = self.config["data"]["pruned_feature_pool_path"]
+        pruned_indi_feature_pool_path = self.config["data"]["pruned_indi_feature_pool_path"]
         trie_path = self.config["data"]["trie_path"]
 
         self.load_indi_feature_pools(individual_feature_pool_path)
@@ -148,7 +148,7 @@ class TrieBasedPruning:
 
         meta_files_pool, meta_reg_keys_pool, meta_executed_cmds_pool, meta_mutex_pool = self.prune_feature_pools(
             files_trie_dict, reg_keys_trie_dict, executed_cmds_trie_dict, mutex_trie_dict)
-        self.save_feature_pools(pruned_feature_pool_path=pruned_feature_pool_path,
+        self.save_feature_pools(pruned_indi_feature_pool_path=pruned_indi_feature_pool_path,
                                 meta_files_pool=meta_files_pool,
                                 meta_reg_keys_pool=meta_reg_keys_pool,
                                 meta_executed_cmds_pool=meta_executed_cmds_pool,
