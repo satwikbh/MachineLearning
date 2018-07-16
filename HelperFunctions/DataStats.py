@@ -84,10 +84,14 @@ class DataStats:
             file_name = pruned_matrix_path + "/" + "pruned_mat_part_" + str(index)
             save_npz(file_name, new_mat, compressed=True)
 
-    def feature_selection(self, feature_vector, variance_threshold, feature_selection_path, chunk_size):
+    def perform_feature_selection(self, feature_vector_file_list, variance_threshold, feature_selection_path, chunk_size):
         self.log.info("Performing Feature Selection on the feature vector")
         threshold_meta = variance_threshold * (1 - variance_threshold)
         sel = VarianceThreshold(threshold=threshold_meta)
+        fv_list = list()
+        for each_file in feature_vector_file_list:
+            fv_list.append(load_npz(each_file))
+        feature_vector = vstack(fv_list)
         feature_selection = sel.fit_transform(feature_vector)
         count = 0
         index = 0
@@ -121,6 +125,6 @@ class DataStats:
         col_wise_dist, num_rows = self.get_stats(feature_vector)
         np.savez(col_dist_path + "/" + "col_wise_dist.dump", np.asarray(col_wise_dist))
         self.store_pruned_matrix(feature_vector, col_wise_dist, pruned_variance_matrix_path, num_rows)
-        self.feature_selection(feature_vector=feature_vector, variance_threshold=variance_threshold,
+        self.perform_feature_selection(feature_vector_file_list=feature_vector_file_list, variance_threshold=variance_threshold,
                                feature_selection_path=feature_selection_path, chunk_size=chunk_size)
         self.log.info("Total time for execution : {}".format(time() - start_time))

@@ -209,7 +209,7 @@ class ParsingLogic:
             doc2bow = pi.load(file_object)
             matrix = list()
             for inner_index, each in enumerate(doc2bow):
-                column = list(set([cluster_dict.get(x) for x in each]))
+                column = list(set([cluster_dict.get(x) for x in each if x in cluster_dict]))
                 row = len(column) * [0]
                 data = len(column) * [1.0]
 
