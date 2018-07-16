@@ -111,14 +111,14 @@ class PrepareDataset:
             del doc2bow
         return feature_pool_part_path_list
 
-    def pruning_method(self, list_of_keys, config_param_chunk_size, feature_pool_path, indi_feature_pool_path,
+    def pruning_method(self, list_of_keys, config_param_chunk_size, feature_pool_path, pruned_indi_feature_pool_path,
                        pruned_feature_vector_path):
-        indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="json",
-                                                                                path=indi_feature_pool_path)
+        pruned_indi_feature_pool_part_list = self.helper.get_files_ends_with_extension(extension="json",
+                                                                                       path=pruned_indi_feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                   path=pruned_feature_vector_path)
-        if len(indi_feature_pool_part_list) == 7:
-            self.log.info("Feature pool already generated at : {}".format(indi_feature_pool_path))
+        if len(pruned_indi_feature_pool_part_list) == 7:
+            self.log.info("Feature pool already generated at : {}".format(pruned_indi_feature_pool_path))
         else:
             self.trie_based_pruning.main()
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
@@ -129,7 +129,7 @@ class PrepareDataset:
         else:
             return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
                                            feature_vector_path=pruned_feature_vector_path, num_rows=len(list_of_keys),
-                                           pruned_feature_pool_path=indi_feature_pool_path)
+                                           pruned_feature_pool_path=pruned_indi_feature_pool_path)
 
     def non_pruning_method(self, client, collection, list_of_keys, config_param_chunk_size, feature_pool_path,
                            unpruned_feature_vector_path):
@@ -159,13 +159,13 @@ class PrepareDataset:
         list_of_keys = kwargs["list_of_keys"]
         config_param_chunk_size = kwargs["config_param_chunk_size"]
         feature_pool_path = kwargs["feature_pool_path"]
-        indi_feature_pool_path = kwargs["indi_feature_pool_path"]
+        pruned_indi_feature_pool_path = kwargs["pruned_indi_feature_pool_path"]
         pruned_feature_vector_path = kwargs["pruned_feature_vector_path"]
         unpruned_feature_vector_path = kwargs["unpruned_feature_vector_path"]
 
         if self.use_trie_pruning:
             self.pruning_method(list_of_keys=list_of_keys, config_param_chunk_size=config_param_chunk_size,
-                                indi_feature_pool_path=indi_feature_pool_path,
+                                pruned_indi_feature_pool_path=pruned_indi_feature_pool_path,
                                 pruned_feature_vector_path=pruned_feature_vector_path,
                                 feature_pool_path=feature_pool_path)
         else:
@@ -218,7 +218,7 @@ class PrepareDataset:
         start_time = time()
         config_param_chunk_size = self.config["data"]["config_param_chunk_size"]
         labels_path = self.config["data"]["labels_path"]
-        indi_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
+        pruned_indi_feature_pool_path = self.config["data"]["pruned_indi_feature_pool_path"]
         unpruned_feature_vector_path = self.config["data"]["unpruned_feature_vector_path"]
 
         feature_pool_path = self.config["data"]["feature_pool_path"]
@@ -238,7 +238,7 @@ class PrepareDataset:
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
 
         if self.trie_based_pruning:
-            self.helper.create_dir_if_absent(indi_feature_pool_path)
+            self.helper.create_dir_if_absent(pruned_indi_feature_pool_path)
             self.helper.create_dir_if_absent(unpruned_feature_vector_path)
         else:
             self.helper.create_dir_if_absent(feature_pool_path)
@@ -246,7 +246,7 @@ class PrepareDataset:
         self.get_data_as_matrix(client=client, collection=c2db_collection, list_of_keys=list_of_keys,
                                 config_param_chunk_size=config_param_chunk_size,
                                 feature_pool_path=feature_pool_path,
-                                indi_feature_pool_path=indi_feature_pool_path,
+                                pruned_indi_feature_pool_path=pruned_indi_feature_pool_path,
                                 pruned_feature_vector_path=pruned_feature_vector_path,
                                 unpruned_feature_vector_path=unpruned_feature_vector_path)
         self.data_stats.main()
