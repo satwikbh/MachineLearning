@@ -53,25 +53,25 @@ class TrieBasedPruning:
     def load_indi_feature_pools(self, individual_feature_pool_path):
         try:
             self.log.info("Loading files feature cluster")
-            self.files_pool = json.load(open(individual_feature_pool_path + "/" + "files.dump"))
+            self.files_pool = json.load(open(individual_feature_pool_path + "/" + "files.json"))
 
             self.log.info("Loading registry keys feature cluster")
-            self.reg_keys_pool = json.load(open(individual_feature_pool_path + "/" + "reg_keys.dump"))
+            self.reg_keys_pool = json.load(open(individual_feature_pool_path + "/" + "reg_keys.json"))
 
             self.log.info("Loading mutexes feature cluster")
-            self.mutex_pool = json.load(open(individual_feature_pool_path + "/" + "mutexes.dump"))
+            self.mutex_pool = json.load(open(individual_feature_pool_path + "/" + "mutexes.json"))
 
             self.log.info("Loading executed commands feature cluster")
-            self.exec_commands_pool = json.load(open(individual_feature_pool_path + "/" + "executed_commands.dump"))
+            self.exec_commands_pool = json.load(open(individual_feature_pool_path + "/" + "executed_commands.json"))
 
             self.log.info("Loading network feature cluster")
-            self.network_pool = json.load(open(individual_feature_pool_path + "/" + "network.dump"))
+            self.network_pool = json.load(open(individual_feature_pool_path + "/" + "network.json"))
 
             self.log.info("Loading static feature cluster")
-            self.static_feature_pool = json.load(open(individual_feature_pool_path + "/" + "static_features.dump"))
+            self.static_feature_pool = json.load(open(individual_feature_pool_path + "/" + "static_features.json"))
 
             self.log.info("Loading stat signature feature cluster")
-            self.stat_sign_pool = json.load(open(individual_feature_pool_path + "/" + "stat_sign_features.dump"))
+            self.stat_sign_pool = json.load(open(individual_feature_pool_path + "/" + "stat_sign_features.json"))
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
