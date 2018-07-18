@@ -36,8 +36,12 @@ class Adaboost:
 
         self.log.info("Classification Report : \n{}".format(cr_report))
         plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
-        plt_path = adaboost_results_path + "/" + str(dr_name) + "_" + str(
-            self.classifier_name) + "_" + "cnf_matrix" + ".png"
+        if self.use_pruned_data:
+            plt_path = adaboost_results_path + "/" + str(dr_name) + "_" + str(
+                self.classifier_name) + "_" + "cnf_matrix_" + "pruned_data" + ".png"
+        else:
+            plt_path = adaboost_results_path + "/" + str(dr_name) + "_" + str(
+                self.classifier_name) + "_" + "cnf_matrix_" + "unpruned_data" + ".png"
         self.log.info("Saving Confusion Matrix at path : {}".format(plt_path))
         plt.savefig(plt_path)
         return results
