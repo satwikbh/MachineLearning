@@ -125,11 +125,12 @@ class CoreClassificationLogic:
 
 
 class NaiveBayesClassifier:
-    def __init__(self):
+    def __init__(self, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
-        self.load_dr_mat = LoadDRMatrices()
+        self.load_dr_mat = LoadDRMatrices(use_pruned_data)
+        self.use_pruned_data = use_pruned_data
         self.core_logic = CoreClassificationLogic()
         self.classifier_name = "naive_bayes"
 
@@ -214,11 +215,16 @@ class NaiveBayesClassifier:
     def main(self, num_rows):
         start_time = time()
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["feature_selection_path"]
-        pca_model_path = self.config["models"]["pca"]["model_path"]
+
+        if self.use_pruned_data:
+            base_data_path = self.config["data"]["pruned_feature_selection_path"]
+        else:
+            base_data_path = self.config["data"]["unpruned_feature_selection_path"]
+
+        bnb_results_path = self.config["models"]["naive_bayes"]["results_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
-        bnb_results_path = self.config["models"]["naive_bayes"]["results_path"]
+        pca_model_path = self.config["models"]["pca"]["model_path"]
 
         dr_matrices, labels = self.load_dr_mat.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
                                                                pca_model_path=pca_model_path,
@@ -229,5 +235,5 @@ class NaiveBayesClassifier:
 
 
 if __name__ == '__main__':
-    bnb_clf = NaiveBayesClassifier()
+    bnb_clf = NaiveBayesClassifier(use_pruned_data=True)
     bnb_clf.main(num_rows=50000)

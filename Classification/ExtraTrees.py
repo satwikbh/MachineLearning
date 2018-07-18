@@ -11,11 +11,12 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class ExtraTrees:
-    def __init__(self):
+    def __init__(self, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
-        self.load_dr_mat = LoadDRMatrices()
+        self.load_dr_mat = LoadDRMatrices(use_pruned_data)
+        self.use_pruned_data = use_pruned_data
         self.classifier_name = "extra_trees"
 
     def compute_metrics(self, y_test, y_pred, dr_name, et_results_path):
@@ -98,7 +99,12 @@ class ExtraTrees:
     def main(self, num_rows):
         start_time = time()
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["feature_selection_path"]
+
+        if self.use_pruned_data:
+            base_data_path = self.config["data"]["pruned_feature_selection_path"]
+        else:
+            base_data_path = self.config["data"]["unpruned_feature_selection_path"]
+
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
@@ -113,5 +119,5 @@ class ExtraTrees:
 
 
 if __name__ == '__main__':
-    et = ExtraTrees()
+    et = ExtraTrees(use_pruned_data=True)
     et.main(num_rows=50000)

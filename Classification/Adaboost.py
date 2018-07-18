@@ -11,10 +11,11 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class Adaboost:
-    def __init__(self):
+    def __init__(self, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
-        self.load_dr_mat = LoadDRMatrices()
+        self.load_dr_mat = LoadDRMatrices(use_pruned_data)
+        self.use_pruned_data = use_pruned_data
         self.helper = HelperFunction()
         self.classifier_name = "adaboost"
 
@@ -103,7 +104,12 @@ class Adaboost:
         """
         start_time = time()
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["feature_selection_path"]
+
+        if self.use_pruned_data:
+            base_data_path = self.config["data"]["pruned_feature_selection_path"]
+        else:
+            base_data_path = self.config["data"]["unpruned_feature_selection_path"]
+
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
@@ -118,5 +124,5 @@ class Adaboost:
 
 
 if __name__ == '__main__':
-    adaboost_clf = Adaboost()
+    adaboost_clf = Adaboost(use_pruned_data=True)
     adaboost_clf.main(num_rows=50000)
