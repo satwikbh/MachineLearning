@@ -17,16 +17,16 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class RankingMetrics:
-    def __init__(self):
+    def __init__(self, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
-        self.bnb_clf = NaiveBayesClassifier()
+        self.bnb_clf = NaiveBayesClassifier(use_pruned_data)
         self.bnb_ccl = CoreClassificationLogic()
-        self.rf_clf = RandomForest()
-        self.et_clf = ExtraTrees()
-        self.dt_clf = DecisionTrees()
-        self.adaboost_clf = Adaboost()
+        self.rf_clf = RandomForest(use_pruned_data)
+        self.et_clf = ExtraTrees(use_pruned_data)
+        self.dt_clf = DecisionTrees(use_pruned_data)
+        self.adaboost_clf = Adaboost(use_pruned_data)
 
     @staticmethod
     def classifier_ranking(clf, test_data, av_train_dist):
@@ -223,11 +223,13 @@ class RankingMetrics:
 
         self.bernoulli_nb(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                           bnb_model_path)
-        self.random_forest(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
+        self.random_forest(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist,
+                           ranking_results_path,
                            rf_model_path)
         self.extra_trees(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                          et_model_path)
-        self.decision_tree(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
+        self.decision_tree(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist,
+                           ranking_results_path,
                            dt_model_path)
         self.adaboost(x_train_smote, y_train_smote, x_test_smote, y_test_smote, av_train_dist, ranking_results_path,
                       adaboost_model_path)
@@ -252,5 +254,5 @@ class RankingMetrics:
 
 
 if __name__ == '__main__':
-    rm = RankingMetrics()
+    rm = RankingMetrics(use_pruned_data=True)
     rm.main()

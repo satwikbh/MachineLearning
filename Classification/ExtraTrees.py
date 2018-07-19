@@ -89,7 +89,7 @@ class ExtraTrees:
                 self.log.info("Using ExtraTrees classifier on on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
-            x_train, x_test, y_train, y_test = self.helper.validation_split(dr_matrix, labels, test_size=0.25)
+            x_train, x_test, y_train, y_test = self.helper.validation_split(dr_matrix, labels, test_size=0.33)
             del dr_matrix, labels
             clf = self.classification(train_data=x_train,
                                       train_labels=y_train)
