@@ -58,7 +58,7 @@ class ClassificationPipeline:
 
     @staticmethod
     def test_split(input_matrix, labels):
-        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=0.25, random_state=13)
+        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=0.25, random_state=13, stratify=labels)
         return x_train, x_test, y_train, y_test
 
     def get_pruning_threshold(self, threshold, input_matrix):

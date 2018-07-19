@@ -1,16 +1,13 @@
-import glob
 from time import time
 
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 
 from HelperFunctions.HelperFunction import HelperFunction
-from PrepareData.LoadData import LoadData
+from HelperFunctions.LoadDRMatrices import LoadDRMatrices
 from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
 
@@ -19,12 +16,14 @@ class RandomForestGridSearch:
     """
     Performs GridSearch to find best params for Random Forest.
     """
-    def __init__(self, multi_class):
+
+    def __init__(self, multi_class, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
-        self.load_data = LoadData()
         self.config = ConfigUtil.get_config_instance()
         self.helper = HelperFunction()
+        self.load_data = LoadDRMatrices(use_pruned_data=use_pruned_data)
         self.multi_class = multi_class
+        self.use_pruned_data = use_pruned_data
 
     @staticmethod
     def tuned_parameters():
@@ -33,48 +32,6 @@ class RandomForestGridSearch:
              'estimator__random_state': [11], 'estimator__oob_score': [False]}
         ]
         return tuned_params
-
-    @staticmethod
-    def validation_split(input_matrix, labels, test_size):
-        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
-        return x_train, x_test, y_train, y_test
-
-    def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows):
-        """
-        Takes the dimensionality reduction techniques model_path's, loads the matrices.
-        Returns the matrices as a dict.
-        :param labels_path:
-        :param base_data_path:
-        :param pca_model_path:
-        :param tsne_model_path:
-        :param sae_model_path:
-        :param num_rows:
-        :return:
-        """
-        dr_matrices = dict()
-
-        input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
-                                                                                         data_path=base_data_path,
-                                                                                         labels_path=labels_path)
-        dr_matrices['base_data'] = input_matrix
-
-        pca_file_name = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows) + ".npy"
-        pca_reduced_matrix = np.load(pca_file_name)
-        dr_matrices["pca"] = pca_reduced_matrix
-
-        tsne_random_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_random_*")[0]
-        tsne_random_reduced_matrix = np.load(tsne_random_file_name)['arr']
-        dr_matrices["tsne_random"] = tsne_random_reduced_matrix
-
-        tsne_pca_file_name = glob.glob(tsne_model_path + "/" + "tsne_reduced_matrix_init_pca_*")[0]
-        tsne_pca_reduced_matrix = np.load(tsne_pca_file_name)['arr']
-        dr_matrices["tsne_pca"] = tsne_pca_reduced_matrix
-
-        sae_file_name = sae_model_path + "/" + "sae_reduced_matrix_" + str(num_rows) + ".npz"
-        sae_reduced_matrix = np.load(sae_file_name)['arr_0']
-        dr_matrices['sae'] = sae_reduced_matrix
-
-        return dr_matrices, labels
 
     def perform_grid_search(self, tuned_parameters, dr_name, input_matrix, labels, rf_results_path, call=False):
         """
@@ -88,7 +45,7 @@ class RandomForestGridSearch:
         :return:
         """
         results = dict()
-        x_train, x_test, y_train, y_test = self.validation_split(input_matrix, labels, test_size=0.25)
+        x_train, x_test, y_train, y_test = self.helper.validation_split(input_matrix, labels, test_size=0.25)
         clf = GridSearchCV(OneVsRestClassifier(RandomForestClassifier()), tuned_parameters, cv=5, n_jobs=30)
         if hasattr(x_train, "toarray"):
             clf.fit(x_train.toarray(), y_train)
@@ -119,7 +76,7 @@ class RandomForestGridSearch:
             if cnf_matrix.shape[0] != cnf_matrix.shape[1]:
                 raise Exception
             plt = self.helper.plot_cnf_matrix(cnf_matrix=cnf_matrix)
-            plt.savefig(rf_results_path + "/" + "cnf_matrix_" + str(dr_name) + ".png")
+            plt.savefig(rf_results_path + "/" + "cnf_matrix_gs_" + str(dr_name) + ".png")
             return results
         except Exception as e:
             self.log.error("Error : {}".format(e))
@@ -158,9 +115,10 @@ class RandomForestGridSearch:
         rf_results_path = self.config["models"]["random_forest"]["results_path"]
 
         tuned_params = self.tuned_parameters()
-        dr_matrices, labels = self.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
-                                                   pca_model_path=pca_model_path, tsne_model_path=tsne_model_path,
-                                                   sae_model_path=sae_model_path, num_rows=num_rows)
+        dr_matrices, labels = self.load_data.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
+                                                             pca_model_path=pca_model_path,
+                                                             tsne_model_path=tsne_model_path,
+                                                             sae_model_path=sae_model_path, num_rows=num_rows)
         dr_results_array = self.prepare_gridsearch(dr_matrices=dr_matrices, tuned_parameters=tuned_params,
                                                    labels=labels, rf_results_path=rf_results_path)
         dr_results_df = pd.DataFrame(dr_results_array)
@@ -169,7 +127,6 @@ class RandomForestGridSearch:
         self.log.info("Time taken : {}".format(time() - start_time))
 
 
-
 if __name__ == '__main__':
-    random_forest_gs = RandomForestGridSearch(multi_class=True)
-    random_forest_gs.main(num_rows=50000)
+    random_forest_gs = RandomForestGridSearch(multi_class=True, use_pruned_data=True)
+    random_forest_gs.main(num_rows=346679)

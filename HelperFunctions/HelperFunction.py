@@ -196,7 +196,8 @@ class HelperFunction:
 
     @staticmethod
     def validation_split(input_matrix, labels, test_size):
-        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0)
+        x_train, x_test, y_train, y_test = train_test_split(input_matrix, labels, test_size=test_size, random_state=0,
+                                                            stratify=labels)
         return x_train, x_test, y_train, y_test
 
     @staticmethod
