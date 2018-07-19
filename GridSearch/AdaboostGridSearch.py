@@ -103,7 +103,10 @@ class AdaboostGridSearch:
         self.log.info("GridSearch on Adaboost started")
 
         labels_path = self.config["data"]["labels_path"]
-        base_data_path = self.config["data"]["feature_selection_path"]
+        if self.use_pruned_data:
+            base_data_path = self.config["data"]["pruned_feature_selection_path"]
+        else:
+            base_data_path = self.config["data"]["unpruned_feature_selection_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         tsne_model_path = self.config["models"]["tsne"]["model_path"]
         sae_model_path = self.config["models"]["sae"]["model_path"]
