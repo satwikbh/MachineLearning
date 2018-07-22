@@ -1,4 +1,3 @@
-
 import json
 from time import time
 
@@ -14,7 +13,7 @@ from Utils.LoggerUtil import LoggerUtil
 
 
 class PrincipalComponentAnalysis:
-    def __init__(self, large_dataset):
+    def __init__(self, large_dataset, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.load_data = LoadData()
@@ -22,6 +21,7 @@ class PrincipalComponentAnalysis:
         self.hdbscan = HDBScanClustering()
         self.helper = HelperFunction()
         self.large_dataset = large_dataset
+        self.use_pruned_data = use_pruned_data
 
     def partial_fit(self, ipca, input_matrix, chunk_size=1000):
         from_index = 0
@@ -97,7 +97,8 @@ class PrincipalComponentAnalysis:
                     pca_model = IncrementalPCA(n_components)
                     pca_model = self.partial_fit(pca_model, input_matrix, chunk_size=1000)
                     reduced_matrix = self.partial_transform(pca_model, input_matrix, chunk_size=1000)
-                    error_curr = self.partial_inverse_transform(pca_model, input_matrix, reduced_matrix, chunk_size=1000)
+                    error_curr = self.partial_inverse_transform(pca_model, input_matrix, reduced_matrix,
+                                                                chunk_size=1000)
                 else:
                     if randomized:
                         pca_model = PCA(n_components=n_components, svd_solver='randomized')
@@ -112,10 +113,10 @@ class PrincipalComponentAnalysis:
                     json.dump(best_params,
                               open(pca_dr_params_path + "/" + "best_params_pca_" + str(num_rows) + ".json", "w"))
                     break
+                return reduced_matrix, n_components
             except Exception as e:
                 self.log.error("Error : {}".format(e))
         self.log.info("Exiting the {} class".format(self.perform_pca.__name__))
-        return reduced_matrix, n_components
 
     def main(self, num_rows):
         """
@@ -123,21 +124,33 @@ class PrincipalComponentAnalysis:
         :return:
         """
         start_time = time()
+
+        if self.use_pruned_data:
+            base_data_path = self.config["data"]["pruned_feature_selection_path"]
+        else:
+            base_data_path = self.config["data"]["unpruned_feature_selection_path"]
+
+        labels_path = self.config["data"]["labels_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
         pca_dr_params_path = self.config["results"]["dr_params"]["pca"]
         reconstruction_error = self.config['models']['pca']['reconstruction_error']
 
-        input_matrix, input_matrix_indices = self.load_data.main(num_rows=num_rows)
+        input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
+                                                                                         data_path=base_data_path,
+                                                                                         labels_path=labels_path)
         reduced_matrix, n_components = self.perform_pca(input_matrix=input_matrix.toarray(), num_rows=num_rows,
                                                         randomized=True, pca_dr_params_path=pca_dr_params_path,
                                                         reconstruction_error=reconstruction_error)
-        self.log.info("Saving the PCA Reduced Matrix at : {}".format(pca_model_path))
-        fname = pca_model_path + "/" + "pca_reduced_matrix_" + str(num_rows)
+        if self.use_pruned_data:
+            fname = pca_model_path + "/" + "pruned_pca_reduced_matrix_" + str(num_rows)
+        else:
+            fname = pca_model_path + "/" + "unpruned_pca_reduced_matrix_" + str(num_rows)
+        self.log.info("Saving the PCA Reduced Matrix at : {}".format(fname))
         np.save(file=fname, arr=reduced_matrix)
         self.log.info("Total time taken : {}".format(time() - start_time))
         return n_components
 
 
 if __name__ == '__main__':
-    pca = PrincipalComponentAnalysis(large_dataset=True)
-    pca.main(num_rows=25000)
+    pca = PrincipalComponentAnalysis(large_dataset=True, use_pruned_data=True)
+    pca.main(num_rows=346679)
