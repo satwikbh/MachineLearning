@@ -238,7 +238,7 @@ class IndividualFeatureGeneration:
         start_time = time()
         chunk_size = 500
 
-        individual_feature_pool_path = self.config["individual_feature_pool_path"]
+        individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
         files_fv_path = self.config["individual_feature_vector_path"]["files_feature"]
         reg_keys_fv_path = self.config["individual_feature_vector_path"]["reg_keys_feature"]
         mutexes_fv_path = self.config["individual_feature_vector_path"]["mutexes_feature"]
