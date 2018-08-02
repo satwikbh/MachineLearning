@@ -194,7 +194,7 @@ class FreqBasedIndiFeatVectorGen:
 
     @staticmethod
     def gen_vector(feature_pool, doc_feature):
-        column = [feature_pool.index(x) for x in doc_feature]
+        column = [feature_pool.index(x) for x in doc_feature if x in feature_pool]
         row = len(column) * [0]
         data = len(column) * [1.0]
         value = coo_matrix((data, (row, column)), shape=(1, len(feature_pool)), dtype=np.int8)
