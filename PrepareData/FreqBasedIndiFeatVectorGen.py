@@ -1,9 +1,10 @@
 import glob
 import pickle as pi
 import urllib
-from time import time
-
 import numpy as np
+import json
+
+from time import time
 from scipy.sparse import coo_matrix, vstack
 
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
@@ -54,22 +55,22 @@ class FreqBasedIndiFeatVectorGen:
         return list_of_keys
 
     def load_feature_pools(self, indi_feature_path):
-        list_of_files = glob.glob(indi_feature_path + "/" + "*.dump")
+        list_of_files = glob.glob(indi_feature_path + "/" + "*.json")
         for file_path in list_of_files:
             if "files" in file_path:
-                self.files_pool = pi.load(open(file_path))
+                self.files_pool = json.load(open(file_path))
             elif "reg_keys" in file_path:
-                self.reg_keys_pool = pi.load(open(file_path))
+                self.reg_keys_pool = json.load(open(file_path))
             elif "mutexes" in file_path:
-                self.mutex_pool = pi.load(open(file_path))
+                self.mutex_pool = json.load(open(file_path))
             elif "executed_commands" in file_path:
-                self.exec_commands_pool = pi.load(open(file_path))
+                self.exec_commands_pool = json.load(open(file_path))
             elif "network" in file_path:
-                self.network_pool = pi.load(open(file_path))
+                self.network_pool = json.load(open(file_path))
             elif "static_features" in file_path:
-                self.static_feature_pool = pi.load(open(file_path))
+                self.static_feature_pool = json.load(open(file_path))
             elif "stat_sign_features" in file_path:
-                self.stat_sign_feature_pool = pi.load(open(file_path))
+                self.stat_sign_feature_pool = json.load(open(file_path))
             else:
                 self.log.error("Something not in feature list accessed")
 
@@ -84,17 +85,18 @@ class FreqBasedIndiFeatVectorGen:
         network_fv_path = kwargs['network_fv_path']
         static_feature_fv_path = kwargs['static_feature_fv_path']
 
-        list_of_files_feature = list()
-        list_of_reg_keys_feature = list()
-        list_of_mutex_features = list()
-        list_of_exec_commands_features = list()
-        list_of_network_features = list()
-        list_of_static_features = list()
-
         counter = 0
         index = 0
 
         while counter < len(list_of_keys):
+
+            list_of_files_feature = list()
+            list_of_reg_keys_feature = list()
+            list_of_mutex_features = list()
+            list_of_exec_commands_features = list()
+            list_of_network_features = list()
+            list_of_static_features = list()
+
             self.log.info("Working on Iter : #{}".format(counter / chunk_size))
             if counter + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[counter: counter + chunk_size]
@@ -192,11 +194,10 @@ class FreqBasedIndiFeatVectorGen:
 
     @staticmethod
     def gen_vector(feature_pool, doc_feature):
-        keys = feature_pool.keys()
-        column = [keys.index(x) for x in doc_feature]
+        column = [feature_pool.index(x) for x in doc_feature]
         row = len(column) * [0]
         data = len(column) * [1.0]
-        value = coo_matrix((data, (row, column)), shape=(1, len(feature_pool.keys())), dtype=np.int8)
+        value = coo_matrix((data, (row, column)), shape=(1, len(feature_pool)), dtype=np.int8)
         return value
 
     def save_individual_feature_vector(self, **kwargs):
