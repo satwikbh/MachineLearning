@@ -235,7 +235,7 @@ class FreqBasedIndiFeatClusterGen:
     def main(self):
         start_time = time()
         freq_individual_feature_pool_path = self.config["data"]["freq_individual_feature_pool_path"]
-        feature_pruning_threshold = self.config["data"]["feature_pruning_threshold"]
+        top_k_features = self.config["data"]["top_k_features"]
 
         self.log.info(
             "Preparing Frequency based individual Feature Pools at : {}".format(freq_individual_feature_pool_path))
@@ -251,7 +251,7 @@ class FreqBasedIndiFeatClusterGen:
         c2db_collection = self.get_collection()
         list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=500)
-        feature_list = self.prune_features(top_k_features=feature_pruning_threshold)
+        feature_list = self.prune_features(top_k_features=top_k_features)
         self.save_feature_pools(freq_individual_feature_pool_path, feature_list)
 
         self.log.info("Total time taken : {}".format(time() - start_time))

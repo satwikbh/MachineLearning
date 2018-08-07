@@ -208,3 +208,10 @@ class HelperFunction:
             return input_str
         else:
             return input_str
+
+    @staticmethod
+    def load_sparse_matrix(file_path, num_rows, identifier):
+        fv = []
+        for x in xrange(num_rows):
+            fv.append(load_npz(file_path + "/" + identifier + str(x) + ".npz"))
+        matrix = vstack(fv)

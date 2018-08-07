@@ -135,9 +135,13 @@ class PrincipalComponentAnalysis:
         pca_dr_params_path = self.config["results"]["dr_params"]["pca"]
         reconstruction_error = self.config['models']['pca']['reconstruction_error']
 
-        input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
-                                                                                         data_path=base_data_path,
-                                                                                         labels_path=labels_path)
+        use_freq_top_k_features = True
+        if use_freq_top_k_features:
+            input_matrix, labels = self.load_data.load_freq_top_k_data(num_rows=num_rows, labels_path=labels_path)
+        else:
+            input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
+                                                                                             data_path=base_data_path,
+                                                                                             labels_path=labels_path)
         reduced_matrix, n_components = self.perform_pca(input_matrix=input_matrix.toarray(), num_rows=num_rows,
                                                         randomized=True, pca_dr_params_path=pca_dr_params_path,
                                                         reconstruction_error=reconstruction_error)

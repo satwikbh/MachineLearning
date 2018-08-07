@@ -1,5 +1,6 @@
 import pickle as pi
 
+from scipy.sparse import hstack
 from sklearn.preprocessing import StandardScaler
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -38,6 +39,33 @@ class LoadData:
         self.log.info("Input matrix dimension : {}\tNearest power of 2 : {}".format(input_matrix.shape, nearest_repr))
         labels = pi.load(open(labels_path + "/" + "labels.pkl"))
         return input_matrix, input_matrix_indices, labels
+
+    def load_freq_top_k_data(self, num_rows, labels_path):
+        files_fv_path = self.config["freq_individual_feature_vector_path"]["files_feature"]
+        reg_keys_fv_path = self.config["freq_individual_feature_vector_path"]["reg_keys_feature"]
+        mutexes_fv_path = self.config["freq_individual_feature_vector_path"]["mutexes_feature"]
+        exec_cmds_fv_path = self.config["freq_individual_feature_vector_path"]["exec_cmds_feature"]
+        network_fv_path = self.config["freq_individual_feature_vector_path"]["network_feature"]
+        static_fv_path = self.config["freq_individual_feature_vector_path"]["static_feature"]
+
+        files_matrix = self.helper.load_sparse_matrix(file_path=files_fv_path, num_rows=num_rows,
+                                                      identifier="feature_vector_part_")
+        reg_keys_matrix = self.helper.load_sparse_matrix(file_path=reg_keys_fv_path, num_rows=num_rows,
+                                                         identifier="feature_vector_part_")
+        mutexes_matrix = self.helper.load_sparse_matrix(file_path=mutexes_fv_path, num_rows=num_rows,
+                                                        identifier="feature_vector_part_")
+        exec_cmds_matrix = self.helper.load_sparse_matrix(file_path=exec_cmds_fv_path, num_rows=num_rows,
+                                                          identifier="feature_vector_part_")
+        network_matrix = self.helper.load_sparse_matrix(file_path=network_fv_path, num_rows=num_rows,
+                                                        identifier="feature_vector_part_")
+        static_matrix = self.helper.load_sparse_matrix(file_path=static_fv_path, num_rows=num_rows,
+                                                       identifier="feature_vector_part_")
+        matrix = hstack(
+            [files_matrix, reg_keys_matrix, mutexes_matrix, exec_cmds_matrix, network_matrix, static_matrix])
+        self.log.info("Feature vector shape (n_samples, n_features) : {}".format(matrix.shape))
+        labels = pi.load(open(labels_path + "/" + "labels.pkl"))
+        self.log.info("Total number of labels are : {}".format(len(labels)))
+        return matrix, labels
 
     def main(self, num_rows):
         chunk_size = 1000
