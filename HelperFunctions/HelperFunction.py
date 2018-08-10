@@ -215,3 +215,4 @@ class HelperFunction:
         for x in xrange(num_rows):
             fv.append(load_npz(file_path + "/" + identifier + str(x) + ".npz"))
         matrix = vstack(fv)
+        return matrix
