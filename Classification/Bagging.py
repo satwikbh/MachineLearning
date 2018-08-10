@@ -1,11 +1,13 @@
 from time import time
 
+import numpy as np
 from sklearn.ensemble import BaggingClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import cross_val_score
 
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.LoadDRMatrices import LoadDRMatrices
+from MultiClassMetrics import MultiClassMetrics
 from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
 
@@ -17,6 +19,7 @@ class Bagging:
         self.load_dr_mat = LoadDRMatrices(use_pruned_data)
         self.use_pruned_data = use_pruned_data
         self.helper = HelperFunction()
+        self.metrics = MultiClassMetrics()
         self.classifier_name = "bagging"
 
     def compute_metrics(self, y_test, y_pred, dr_name, bagging_results_path):
@@ -94,6 +97,13 @@ class Bagging:
             clf = self.classification(train_data=x_train,
                                       train_labels=y_train)
             y_pred = self.prediction(clf=clf, test_data=x_test)
+            top_k = dict()
+            k_range = 6
+            for k in xrange(1, k_range):
+                top_k_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=k)
+                val = np.mean(top_k_list)
+                top_k[k] = val
+            self.log.info("Top K : {} accuracies : {}".format((k_range - 1), top_k))
             results = self.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                            bagging_results_path=bagging_results_path)
 
