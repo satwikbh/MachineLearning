@@ -12,7 +12,7 @@ from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
 
 
-class BaggingClassifier:
+class XGBoostClassifier:
     def __init__(self, use_pruned_data):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
@@ -138,5 +138,5 @@ class BaggingClassifier:
 
 
 if __name__ == '__main__':
-    bagging_clf = BaggingClassifier(use_pruned_data=True)
-    bagging_clf.main(num_rows=50000)
+    xgboost_clf = XGBoostClassifier(use_pruned_data=True)
+    xgboost_clf.main(num_rows=50000)
