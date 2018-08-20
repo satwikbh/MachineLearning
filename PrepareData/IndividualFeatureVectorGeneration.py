@@ -182,11 +182,11 @@ class IndividualFeatureGeneration:
 
         return files_value, reg_keys_value, mutex_value, exec_commands_value
 
-    def get_bow_for_network_feature(self, feature, doc):
+    def parse_network_feature(self, feature, doc):
         bow = list()
         for key, value in doc.items():
             if isinstance(value, dict):
-                bow += self.get_bow_for_network_feature(feature, value)
+                bow += self.parse_network_feature(feature, value)
             elif isinstance(value, list):
                 bow += [str(s) for s in value if isinstance(s, int)]
             else:
@@ -195,11 +195,22 @@ class IndividualFeatureGeneration:
         return bow
 
     def get_bow_for_network_feature(self, doc):
-        doc = self.get_bow_for_network_feature(feature="network", doc=doc)
+        doc = self.parse_network_feature(feature="network", doc=doc)
         network_value = self.gen_vector(feature_pool=self.network_pool, doc_feature=doc)
         return network_value
 
+    def parse_static_feature(self, feature, doc):
+        bow = list()
+        for key, value in doc.items():
+            if isinstance(value, list):
+                bow += value
+            if isinstance(value, dict):
+                self.log.error(
+                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+        return bow
+
     def get_bow_for_static_feature(self, doc):
+        doc = self.parse_static_feature(feature="static", doc=doc)
         static_feature_value = self.gen_vector(feature_pool=self.static_feature_pool, doc_feature=doc)
         return static_feature_value
 
