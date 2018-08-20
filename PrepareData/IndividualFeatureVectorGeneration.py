@@ -1,5 +1,5 @@
 import glob
-import pickle as pi
+import json
 import urllib
 from time import time
 
@@ -54,22 +54,22 @@ class IndividualFeatureGeneration:
         return list_of_keys
 
     def load_feature_pools(self, indi_feature_path):
-        list_of_files = glob.glob(indi_feature_path + "/" + "*.dump")
+        list_of_files = glob.glob(indi_feature_path + "/" + "*.json")
         for file_path in list_of_files:
             if "files" in file_path:
-                self.files_pool = pi.load(open(file_path))
+                self.files_pool = json.load(open(file_path))
             elif "reg_keys" in file_path:
-                self.reg_keys_pool = pi.load(open(file_path))
+                self.reg_keys_pool = json.load(open(file_path))
             elif "mutexes" in file_path:
-                self.mutex_pool = pi.load(open(file_path))
+                self.mutex_pool = json.load(open(file_path))
             elif "executed_commands" in file_path:
-                self.exec_commands_pool = pi.load(open(file_path))
+                self.exec_commands_pool = json.load(open(file_path))
             elif "network" in file_path:
-                self.network_pool = pi.load(open(file_path))
+                self.network_pool = json.load(open(file_path))
             elif "static_features" in file_path:
-                self.static_feature_pool = pi.load(open(file_path))
+                self.static_feature_pool = json.load(open(file_path))
             elif "stat_sign_features" in file_path:
-                self.stat_sign_feature_pool = pi.load(open(file_path))
+                self.stat_sign_feature_pool = json.load(open(file_path))
             else:
                 self.log.error("Something not in feature list accessed")
 
@@ -182,7 +182,20 @@ class IndividualFeatureGeneration:
 
         return files_value, reg_keys_value, mutex_value, exec_commands_value
 
+    def get_bow_for_network_feature(self, feature, doc):
+        bow = list()
+        for key, value in doc.items():
+            if isinstance(value, dict):
+                bow += self.get_bow_for_network_feature(feature, value)
+            elif isinstance(value, list):
+                bow += [str(s) for s in value if isinstance(s, int)]
+            else:
+                self.log.error(
+                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+        return bow
+
     def get_bow_for_network_feature(self, doc):
+        doc = self.get_bow_for_network_feature(feature="network", doc=doc)
         network_value = self.gen_vector(feature_pool=self.network_pool, doc_feature=doc)
         return network_value
 

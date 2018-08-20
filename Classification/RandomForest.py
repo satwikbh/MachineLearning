@@ -66,7 +66,8 @@ class RandomForest:
         """
         cv = 5
         self.log.info("Using Random Forest classifier")
-        clf = RandomForestClassifier(n_estimators=100, max_depth=10, min_samples_split=2, random_state=0, n_jobs=3)
+        clf = RandomForestClassifier(n_estimators=80, min_samples_leaf=50, max_depth=10, min_samples_split=2,
+                                     oob_score=False, random_state=0, n_jobs=30)
         clf.fit(train_data, train_labels)
         self.log.info("Performing cross validation with cv : {}".format(cv))
         scores = cross_val_score(clf, train_data, train_labels, cv=cv)
