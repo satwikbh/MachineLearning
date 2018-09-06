@@ -60,7 +60,7 @@ class DecisionTrees:
     def classification(self, train_data, train_labels):
         cv = 5
         self.log.info("Using Decision Trees classifier")
-        clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2, random_state=0)
+        clf = DecisionTreeClassifier(max_depth=None, min_samples_split=5, min_samples_leaf=5, random_state=0)
         clf.fit(train_data, train_labels)
         self.log.info("Performing cross validation with cv : {}".format(cv))
         scores = cross_val_score(clf, train_data, train_labels, cv=cv)
