@@ -68,9 +68,9 @@ class Sarvam:
             if index % 1000 == 0:
                 self.log.info("Working on iter : #{}".format(index / 1000))
             g = self.get_image(binary)
-            imsave(images_path + "/" + str(binary) + ".png", g)
-            image = load_img("/tmp/temp/7da61d59c52b3350f3b96926cf5fb94a215b1caa55cb69b2578aaa6e39afdfa3.png",
-                             target_size=(64, 64, 3))
+            image_name = images_path + "/" + str(binary) + ".png"
+            imsave(image_name, g)
+            image = load_img(image_name, target_size=(64, 64, 3))
             arr = img_to_array(image).astype('uint8')
 
             gist_features = gist.extract(arr)
