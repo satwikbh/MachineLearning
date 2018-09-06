@@ -8,6 +8,8 @@ import urllib
 from time import time
 from scipy.misc import imsave
 from keras.preprocessing.image import img_to_array, load_img
+from sklearn.neighbors import BallTree
+from sklearn.externals import joblib
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -80,14 +82,27 @@ class Sarvam:
             bulk.execute()
         except Exception as e:
             self.log.error("Error : {}".format(e))
+        return documents
+
+    def create_model(self, documents):
+        self.log.info("Creating Ball Tree for Corpus")
+        ball_tree = BallTree(documents.values())
+        return ball_tree
 
     def main(self):
         start_time = time()
         binaries_path = self.config["sarvam"]["binaries_path"]
         images_path = self.config["sarvam"]["images_path"]
+        ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
         sarvam_collection = self.get_collection()
         list_of_binaries = self.get_list_of_binaries(binaries_path)
-        self.perform_sarvam(sarvam_collection, list_of_binaries, images_path)
+        documents = self.perform_sarvam(sarvam_collection, list_of_binaries, images_path)
+        model = glob.glob(ball_tree_model_path + "/" + "*.pkl")
+        if len(model) > 0:
+            self.log.info("Ball Tree already created")
+            ball_tree = joblib.load(model)
+        else:
+            ball_tree = self.create_model(documents)
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
