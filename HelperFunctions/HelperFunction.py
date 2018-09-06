@@ -14,10 +14,12 @@ from scipy.sparse import vstack, load_npz
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
+from Utils.LoggerUtil import LoggerUtil
+
 
 class HelperFunction:
     def __init__(self):
-        pass
+        self.log = LoggerUtil(self.__class__.__name__).get()
 
     @staticmethod
     def cursor_to_list(cursor, identifier):
@@ -26,23 +28,27 @@ class HelperFunction:
             list_of_keys.append(each[identifier])
         return list_of_keys
 
-    @staticmethod
-    def convert_to_vs_keys(list_of_keys):
+    def convert_to_vs_keys(self, list_of_keys):
         """
         Convert a list of md5 keys to VirusShare_ format.
         :param list_of_keys:
         :return:
         """
         new_list_of_keys = list()
-        for each_key in list_of_keys:
-            new_list_of_keys.append("VirusShare_" + each_key)
+        try:
+            for each_key in list_of_keys:
+                new_list_of_keys.append("VirusShare_" + each_key)
+        except Exception as e:
+            self.log.error("Error : {}".format(e))
         return new_list_of_keys
 
-    @staticmethod
-    def convert_from_vs_keys(list_of_vs_keys):
+    def convert_from_vs_keys(self, list_of_vs_keys):
         new_list_of_keys = list()
-        for each_key in list_of_vs_keys:
-            new_list_of_keys.append(each_key.split("_")[1])
+        try:
+            for each_key in list_of_vs_keys:
+                new_list_of_keys.append(each_key.split("_")[1])
+        except Exception as e:
+            self.log.error("Error :  {}".format(e))
         return new_list_of_keys
 
     @staticmethod
