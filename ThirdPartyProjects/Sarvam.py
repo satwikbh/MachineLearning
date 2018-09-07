@@ -61,11 +61,12 @@ class Sarvam:
         return g
 
     def perform_sarvam(self, sarvam_collection, list_of_binaries, images_path):
+        final_corpus = list()
         bulk = sarvam_collection.initialize_unordered_bulk_op()
-        documents = dict()
         self.log.info("Total number of binaries : {}".format(len(list_of_binaries)))
         for index, binary in enumerate(list_of_binaries):
             try:
+                documents = dict()
                 bin_name = binary.split("/")[-1]
                 if index % 1000 == 0:
                     self.log.info("Working on iter : #{}".format(index / 1000))
@@ -76,7 +77,9 @@ class Sarvam:
                 arr = img_to_array(image).astype('uint8')
                 gist_features = gist.extract(arr)
                 feature = gist_features[0:320]
-                documents[bin_name] = feature.tolist()
+                documents["binary"] = bin_name
+                documents["feature"] = feature.tolist()
+                final_corpus.append(documents)
                 bulk.insert(documents)
             except Exception as e:
                 self.log.error("Error at binary : {}\nError is : {}".format(binary, e))
@@ -84,11 +87,14 @@ class Sarvam:
             bulk.execute()
         except Exception as e:
             self.log.error("Error : {}".format(e))
-        return documents
+        return final_corpus
 
-    def create_model(self, documents):
+    def create_model(self, final_corpus, ball_tree_model_path):
         self.log.info("Creating Ball Tree for Corpus")
-        ball_tree = BallTree(documents.values())
+        corpus = np.asarray([np.asarray(document["feature"]) for document in final_corpus])
+        ball_tree = BallTree(corpus)
+        self.log.info("Saving Ball Tree model at the following path : {}".format(ball_tree_model_path))
+        joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
         return ball_tree
 
     def main(self):
@@ -98,13 +104,13 @@ class Sarvam:
         ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
         sarvam_collection = self.get_collection()
         list_of_binaries = self.get_list_of_binaries(binaries_path)
-        documents = self.perform_sarvam(sarvam_collection, list_of_binaries, images_path)
+        final_corpus = self.perform_sarvam(sarvam_collection, list_of_binaries, images_path)
         model = glob.glob(ball_tree_model_path + "/" + "*.pkl")
         if len(model) > 0:
             self.log.info("Ball Tree already created")
             ball_tree = joblib.load(model)
         else:
-            ball_tree = self.create_model(documents)
+            ball_tree = self.create_model(final_corpus, ball_tree_model_path)
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
