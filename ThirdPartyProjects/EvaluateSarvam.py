@@ -8,6 +8,7 @@ from sklearn.externals import joblib
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class EvaluateSarvam:
@@ -15,6 +16,7 @@ class EvaluateSarvam:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
+        self.helper = HelperFunction()
         self.meta_dict = defaultdict()
         self.sarvam = defaultdict()
 
@@ -58,13 +60,7 @@ class EvaluateSarvam:
                 tmp.append({"family_name": family_name, "score": (score * 1.0) / total_score})
             self.meta_dict[md5] = tmp
 
-    def get_query(self, list_of_keys, avclass_collection):
-        """
-        This method ensures the order of keys for the in query.
-        :param list_of_keys:
-        :param avclass_collection:
-        :return:
-        """
+    def get_avclass_dist(self, list_of_keys, avclass_collection):
         count = 0
         index = 0
         chunk_size = 1000
@@ -158,6 +154,8 @@ class EvaluateSarvam:
         ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
         sarvam_collection, avclass_collection = self.get_collection()
         list_of_binaries = self.get_list_of_binaries(sarvam_collection)
+        list_of_keys = self.helper.convert_from_vs_keys(list_of_vs_keys=list_of_binaries)
+        self.get_avclass_dist(list_of_keys=list_of_keys, avclass_collection=avclass_collection)
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
         self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
         self.log.info("Total time taken : {}".format(time() - start_time))
