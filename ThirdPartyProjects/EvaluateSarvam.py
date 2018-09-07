@@ -139,13 +139,16 @@ class EvaluateSarvam:
             binary_index[index] = value
 
         for binary, feature in binary_predictions.items():
-            dist, ind = ball_tree_model.query([feature], k=top_k)
-            binary_family = self.meta_dict[binary]
-            binary_values = list()
-            for _ in ind:
-                binary_values.append(self.meta_dict[binary_index[_]])
-            num = self.compute_acc(binary_family, binary_values)
-            meta_acc.append(num)
+            try:
+                dist, ind = ball_tree_model.query([feature], k=top_k)
+                binary_family = self.meta_dict[binary.split("VirusShare_")[1]]
+                binary_values = list()
+                for _ in ind:
+                    binary_values.append(self.meta_dict[binary_index[_].split("VirusShare_")[1]])
+                num = self.compute_acc(binary_family, binary_values)
+                meta_acc.append(num)
+            except Exception as e:
+                self.log.error("Error : {}\nBinary : {} not found in AVClass Collection".format(e, binary))
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
         return meta_acc
 
