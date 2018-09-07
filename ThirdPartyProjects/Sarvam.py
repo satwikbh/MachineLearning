@@ -65,19 +65,21 @@ class Sarvam:
         documents = dict()
         self.log.info("Total number of binaries : {}".format(len(list_of_binaries)))
         for index, binary in enumerate(list_of_binaries):
-            if index % 1000 == 0:
-                self.log.info("Working on iter : #{}".format(index / 1000))
-            g = self.get_image(binary)
-            image_name = images_path + "/" + str(binary) + ".png"
-            imsave(image_name, g)
-            image = load_img(image_name, target_size=(64, 64, 3))
-            arr = img_to_array(image).astype('uint8')
-
-            gist_features = gist.extract(arr)
-            feature = gist_features[0:320]
-            documents["binary_name"] = binary
-            documents["feature"] = feature.tolist()
-            bulk.insert(documents)
+            try:
+                bin_name = binary.split("/")[-1]
+                if index % 1000 == 0:
+                    self.log.info("Working on iter : #{}".format(index / 1000))
+                g = self.get_image(binary)
+                image_name = images_path + "/" + str(bin_name) + ".png"
+                imsave(image_name, g)
+                image = load_img(image_name, target_size=(64, 64, 3))
+                arr = img_to_array(image).astype('uint8')
+                gist_features = gist.extract(arr)
+                feature = gist_features[0:320]
+                documents[bin_name] = feature.tolist()
+                bulk.insert(documents)
+            except Exception as e:
+                self.log.error("Error at binary : {}\nError is : {}".format(binary, e))
         try:
             bulk.execute()
         except Exception as e:
