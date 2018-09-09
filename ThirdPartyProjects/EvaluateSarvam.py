@@ -1,4 +1,5 @@
 import numpy as np
+import pickle as pi
 import urllib
 
 from time import time
@@ -124,14 +125,15 @@ class EvaluateSarvam:
     def compute_acc(binary_family, binary_values):
         tp = defaultdict()
         for x in binary_family:
-            tp[x] = 0
+            tp[x["family_name"]] = 0
             for y in binary_values:
-                if x in y:
-                    tp[x] = 1
+                if x["family_name"] in [_["family_name"] for _ in y]:
+                    tp[x["family_name"]] = 1
         return max(tp.values())
 
     def evaluate_sarvam(self, ball_tree_model_path, binary_predictions, top_k):
         meta_acc = list()
+        failed = list()
         ball_tree_model = joblib.load(ball_tree_model_path + "/" + "bt_model.pkl")
         binary_index = defaultdict()
         binary_index.default_factory = binary_index.__len__()
@@ -139,18 +141,18 @@ class EvaluateSarvam:
             binary_index[index] = value
 
         for binary, feature in binary_predictions.items():
-            try:
+            if binary in self.meta_dict:
                 dist, ind = ball_tree_model.query([feature], k=top_k)
                 binary_family = self.meta_dict[binary.split("VirusShare_")[1]]
                 binary_values = list()
-                for _ in ind:
+                for _ in ind[0]:
                     binary_values.append(self.meta_dict[binary_index[_].split("VirusShare_")[1]])
                 num = self.compute_acc(binary_family, binary_values)
                 meta_acc.append(num)
-            except Exception as e:
-                self.log.error("Error : {}\nBinary : {} not found in AVClass Collection".format(e, binary))
+            else:
+                failed.append(binary)
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
-        return meta_acc
+        return meta_acc, failed
 
     def main(self):
         start_time = time()
@@ -160,7 +162,8 @@ class EvaluateSarvam:
         list_of_keys = self.helper.convert_from_vs_keys(list_of_vs_keys=list_of_binaries)
         self.get_avclass_dist(list_of_keys=list_of_keys, avclass_collection=avclass_collection)
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
-        self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
+        meta_acc, failed = self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
+        pi.dump(failed, open("failed.pkl", "w"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 

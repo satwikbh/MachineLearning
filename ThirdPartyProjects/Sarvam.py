@@ -108,7 +108,7 @@ class Sarvam:
         model = glob.glob(ball_tree_model_path + "/" + "*.pkl")
         if len(model) > 0:
             self.log.info("Ball Tree already created")
-            ball_tree = joblib.load(model)
+            ball_tree = joblib.load(model[0])
         else:
             ball_tree = self.create_model(final_corpus, ball_tree_model_path)
         self.log.info("Total time taken : {}".format(time() - start_time))
