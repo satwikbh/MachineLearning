@@ -5,6 +5,7 @@ import urllib
 from time import time
 from collections import defaultdict
 from sklearn.externals import joblib
+from sklearn.neighbors import BallTree
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -154,6 +155,14 @@ class EvaluateSarvam:
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
         return meta_acc, failed
 
+    def create_model(self, final_corpus, ball_tree_model_path):
+        self.log.info("Creating Ball Tree for Corpus")
+        corpus = np.asarray([np.asarray(document["feature"]) for document in final_corpus])
+        ball_tree = BallTree(corpus)
+        self.log.info("Saving Ball Tree model at the following path : {}".format(ball_tree_model_path))
+        joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
+        return ball_tree
+
     def main(self):
         start_time = time()
         ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
@@ -164,6 +173,7 @@ class EvaluateSarvam:
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
         meta_acc, failed = self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
         pi.dump(failed, open("failed.pkl", "w"))
+        self.create_model(ball_tree_model_path=ball_tree_model_path, final_corpus=binary_predictions.values())
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
