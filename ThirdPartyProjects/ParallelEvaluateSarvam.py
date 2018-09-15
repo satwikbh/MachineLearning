@@ -157,14 +157,6 @@ class ParallelEvaluateSarvam:
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
         return meta_acc, failed
 
-    def create_model(self, final_corpus, ball_tree_model_path):
-        self.log.info("Creating Ball Tree for Corpus")
-        corpus = np.asarray([np.asarray(document["feature"]) for document in final_corpus])
-        ball_tree = BallTree(corpus)
-        self.log.info("Saving Ball Tree model at the following path : {}".format(ball_tree_model_path))
-        joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
-        return ball_tree
-
     def main(self):
         start_time = time()
         ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
@@ -173,15 +165,8 @@ class ParallelEvaluateSarvam:
         list_of_keys = self.helper.convert_from_vs_keys(list_of_vs_keys=list_of_binaries)
         self.get_avclass_dist(list_of_keys=list_of_keys, avclass_collection=avclass_collection)
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
-        go_parallel(num_proc=30, ball_tree_model_path=ball_tree_model_path, binary_predictions=binary_predictions,
-                    top_k=5)
-        self.create_model(ball_tree_model_path=ball_tree_model_path, final_corpus=binary_predictions.values())
         self.log.info("Total time taken : {}".format(time() - start_time))
-
-
-if __name__ == '__main__':
-    evaluate = ParallelEvaluateSarvam()
-    evaluate.main()
+        return binary_predictions, ball_tree_model_path
 
 
 def go_parallel(**kwargs):
@@ -197,3 +182,17 @@ def go_parallel(**kwargs):
     pool.close()
     pool.join()
     return result
+
+
+def create_model(final_corpus, ball_tree_model_path):
+    corpus = np.asarray([np.asarray(document["feature"]) for document in final_corpus])
+    ball_tree = BallTree(corpus)
+    joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
+    return ball_tree
+
+
+evaluate = ParallelEvaluateSarvam()
+binary_predictions, ball_tree_model_path = evaluate.main()
+go_parallel(num_proc=30, ball_tree_model_path=ball_tree_model_path, binary_predictions=binary_predictions,
+            top_k=5)
+create_model(final_corpus=binary_predictions.values(), ball_tree_model_path=ball_tree_model_path)
