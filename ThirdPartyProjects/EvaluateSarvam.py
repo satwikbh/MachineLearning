@@ -130,7 +130,10 @@ class EvaluateSarvam:
             for y in binary_values:
                 if x["family_name"] in [_["family_name"] for _ in y]:
                     tp[x["family_name"]] = 1
-        return max(tp.values())
+        if len(tp.keys()) > 0:
+            return max(tp.values())
+        else:
+            return 0
 
     def evaluate_sarvam(self, ball_tree_model_path, binary_predictions, top_k):
         meta_acc = list()

@@ -143,7 +143,10 @@ def compute_acc(binary_family, binary_values):
         for y in binary_values:
             if x["family_name"] in [_["family_name"] for _ in y]:
                 tp[x["family_name"]] = 1
-    return max(tp.values())
+    if len(tp.keys()) > 0:
+        return max(tp.values())
+    else:
+        return 0
 
 
 def go_parallel(**kwargs):
