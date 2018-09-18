@@ -6,6 +6,7 @@ from time import time
 from collections import defaultdict
 from sklearn.externals import joblib
 from sklearn.neighbors import BallTree
+from sklearn.model_selection import train_test_split
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -14,13 +15,14 @@ from HelperFunctions.HelperFunction import HelperFunction
 
 
 class EvaluateSarvam:
-    def __init__(self):
+    def __init__(self, malevol=True):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.db_utils = DBUtils()
         self.helper = HelperFunction()
         self.meta_dict = defaultdict()
         self.sarvam = defaultdict()
+        self.malevol = malevol
 
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
@@ -135,6 +137,31 @@ class EvaluateSarvam:
         else:
             return 0
 
+    def evaluate_malevol(self, ball_tree_model, x_test, y_test, top_k):
+        meta_acc = list()
+        failed = list()
+        binary_index = defaultdict()
+        binary_index.default_factory = binary_index.__len__()
+        for index, value in enumerate(y_test):
+            binary_index[index] = value
+
+        for index, feature in enumerate(x_test):
+            binary = y_test[index].split("VirusShare_")[1]
+            if binary in self.meta_dict:
+                dist, ind = ball_tree_model.query([feature], k=top_k)
+                binary_family = self.meta_dict[binary]
+                binary_values = list()
+                for _ in ind[0]:
+                    t = binary_index[_].split("VirusShare_")[1]
+                    if t in self.meta_dict:
+                        binary_values.append(self.meta_dict[t])
+                num = self.compute_acc(binary_family, binary_values)
+                meta_acc.append(num)
+            else:
+                failed.append(binary)
+        self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
+        return meta_acc, failed
+
     def evaluate_sarvam(self, ball_tree_model_path, binary_predictions, top_k):
         meta_acc = list()
         failed = list()
@@ -145,12 +172,15 @@ class EvaluateSarvam:
             binary_index[index] = value
 
         for binary, feature in binary_predictions.items():
+            binary = binary.split("VirusShare_")[1]
             if binary in self.meta_dict:
                 dist, ind = ball_tree_model.query([feature], k=top_k)
-                binary_family = self.meta_dict[binary.split("VirusShare_")[1]]
+                binary_family = self.meta_dict[binary]
                 binary_values = list()
                 for _ in ind[0]:
-                    binary_values.append(self.meta_dict[binary_index[_].split("VirusShare_")[1]])
+                    t = binary_index[_].split("VirusShare_")[1]
+                    if t in self.meta_dict:
+                        binary_values.append(self.meta_dict[t])
                 num = self.compute_acc(binary_family, binary_values)
                 meta_acc.append(num)
             else:
@@ -166,20 +196,38 @@ class EvaluateSarvam:
         joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
         return ball_tree
 
+    def validation(self, final_corpus, ball_tree_model_path):
+        self.log.info("Splitting final corpus into train and test")
+        x_train, x_test, y_train, y_test = train_test_split(final_corpus.values(), final_corpus.keys(), test_size=0.33)
+        self.log.info("Creating Ball Tree for Corpus")
+        corpus = np.asarray([np.asarray(document) for document in x_train])
+        ball_tree = BallTree(corpus)
+        self.log.info("Saving Ball Tree model at the following path : {}".format(ball_tree_model_path))
+        joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
+        return ball_tree, x_train, x_test, y_train, y_test
+
     def main(self):
         start_time = time()
         ball_tree_model_path = self.config["sarvam"]["bt_model_path"]
+        malevol_keys_path = self.config["data"]["list_of_keys"]
         sarvam_collection, avclass_collection = self.get_collection()
-        list_of_binaries = self.get_list_of_binaries(sarvam_collection)
+        if self.malevol:
+            list_of_binaries = pi.load(open(malevol_keys_path + "/" + "list_of_keys.pkl"))
+        else:
+            list_of_binaries = self.get_list_of_binaries(sarvam_collection)
         list_of_keys = self.helper.convert_from_vs_keys(list_of_vs_keys=list_of_binaries)
         self.get_avclass_dist(list_of_keys=list_of_keys, avclass_collection=avclass_collection)
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
-        meta_acc, failed = self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
+        if self.malevol:
+            ball_tree, x_train, x_test, y_train, y_test = self.validation(binary_predictions, ball_tree_model_path)
+            meta_acc, failed = self.evaluate_malevol(ball_tree_model=ball_tree, x_test=x_test, y_test=y_test, top_k=5)
+        else:
+            meta_acc, failed = self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
         pi.dump(failed, open("failed.pkl", "w"))
         self.create_model(ball_tree_model_path=ball_tree_model_path, final_corpus=binary_predictions.values())
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
-    evaluate = EvaluateSarvam()
+    evaluate = EvaluateSarvam(malevol=True)
     evaluate.main()
