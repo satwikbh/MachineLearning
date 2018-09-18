@@ -137,12 +137,13 @@ class EvaluateSarvam:
         else:
             return 0
 
-    def evaluate_malevol(self, ball_tree_model, x_test, y_test, top_k):
+    def evaluate_malevol(self, ball_tree_model, binary_predictions, x_test, y_test, top_k):
         meta_acc = list()
         failed = list()
         binary_index = defaultdict()
         binary_index.default_factory = binary_index.__len__()
-        for index, value in enumerate(y_test):
+
+        for index, value in enumerate(binary_predictions.keys()):
             binary_index[index] = value
 
         for index, feature in enumerate(x_test):
@@ -188,15 +189,28 @@ class EvaluateSarvam:
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
         return meta_acc, failed
 
-    def create_model(self, final_corpus, ball_tree_model_path):
+    def update_model(self, final_corpus, ball_tree_model_path):
+        """
+        Update the BallTree model to include all the instances encountered.
+        :param final_corpus:
+        :param ball_tree_model_path:
+        :return:
+        """
         self.log.info("Creating Ball Tree for Corpus")
-        corpus = np.asarray([np.asarray(document["feature"]) for document in final_corpus])
+        corpus = np.asarray([np.asarray(document) for document in final_corpus])
         ball_tree = BallTree(corpus)
         self.log.info("Saving Ball Tree model at the following path : {}".format(ball_tree_model_path))
         joblib.dump(ball_tree, ball_tree_model_path + "/" + "bt_model.pkl")
         return ball_tree
 
     def validation(self, final_corpus, ball_tree_model_path):
+        """
+        Split the dataset into train and test.
+        Then create a model for train and run the query the test.
+        :param final_corpus:
+        :param ball_tree_model_path:
+        :return:
+        """
         self.log.info("Splitting final corpus into train and test")
         x_train, x_test, y_train, y_test = train_test_split(final_corpus.values(), final_corpus.keys(), test_size=0.33)
         self.log.info("Creating Ball Tree for Corpus")
@@ -220,11 +234,12 @@ class EvaluateSarvam:
         binary_predictions = self.sarvam_binary_predictions(list_of_binaries, sarvam_collection)
         if self.malevol:
             ball_tree, x_train, x_test, y_train, y_test = self.validation(binary_predictions, ball_tree_model_path)
-            meta_acc, failed = self.evaluate_malevol(ball_tree_model=ball_tree, x_test=x_test, y_test=y_test, top_k=5)
+            meta_acc, failed = self.evaluate_malevol(ball_tree_model=ball_tree, binary_predictions=binary_predictions,
+                                                     x_test=x_test, y_test=y_test, top_k=5)
         else:
             meta_acc, failed = self.evaluate_sarvam(ball_tree_model_path, binary_predictions, top_k=5)
         pi.dump(failed, open("failed.pkl", "w"))
-        self.create_model(ball_tree_model_path=ball_tree_model_path, final_corpus=binary_predictions.values())
+        self.update_model(ball_tree_model_path=ball_tree_model_path, final_corpus=binary_predictions.values())
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
