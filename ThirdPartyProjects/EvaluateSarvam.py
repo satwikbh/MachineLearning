@@ -124,27 +124,53 @@ class EvaluateSarvam:
             index += 1
         return binary_predictions
 
-    @staticmethod
-    def compute_acc(binary_family, binary_values):
-        tp = defaultdict()
+    def compute_metrics(self, binary_family, binary_values, families_list):
+        true_positives = list()
+        all_positives = list()
         for x in binary_family:
-            tp[x["family_name"]] = 0
+            true_positives.append([x["family_name"]])
             for y in binary_values:
-                if x["family_name"] in [_["family_name"] for _ in y]:
-                    tp[x["family_name"]] = 1
-        if len(tp.keys()) > 0:
-            return max(tp.values())
+                all_positives.append([_["family_name"] for _ in y])
+        acc = self.compute_acc(true_positives=binary_family, all_positives=binary_values)
+        if acc == 0:
+            precision = 0
+            recall = 0
         else:
-            return 0
+            precision, recall = self.compute_precision_recall(true_positives=true_positives,
+                                                              all_positives=all_positives,
+                                                              families_list=families_list)
+        return acc, precision, recall
 
-    def evaluate_malevol(self, ball_tree_model, binary_predictions, x_test, y_test, top_k):
-        meta_acc = list()
-        failed = list()
-        binary_index = defaultdict()
-        binary_index.default_factory = binary_index.__len__()
+    @staticmethod
+    def compute_acc(true_positives, all_positives):
+        for x in true_positives:
+            if x in [_ for _ in all_positives]:
+                return 1
+        return 0
 
-        for index, value in enumerate(binary_predictions.keys()):
-            binary_index[index] = value
+    @staticmethod
+    def compute_precision_recall(true_positives, all_positives, families_list):
+        conf_mat = np.zeros(shape=(len(families_list), len(families_list)))
+
+        for x in true_positives:
+            for y in all_positives:
+                for z in y:
+                    i, j = families_list[x], families_list[z]
+                    conf_mat[i][j] += 1
+
+        precision_list, recall_list = list(), list()
+
+        for i, j in conf_mat.shape:
+            precision_at_i = conf_mat[i][j] * 1.0 / conf_mat[:, j]
+            recall_at_i = conf_mat[i][j] * 1.0 / conf_mat[i, :]
+            precision_list.append(precision_at_i)
+            recall_list.append(recall_at_i)
+
+        return np.mean(precision_list), np.mean(recall_list)
+
+    def get_malevol_families_list(self, x_test, y_test, ball_tree_model, top_k, binary_index):
+        families_list = defaultdict()
+        families_list.default_factory = families_list.__len__()
 
         for index, feature in enumerate(x_test):
             binary = y_test[index].split("VirusShare_")[1]
@@ -156,21 +182,56 @@ class EvaluateSarvam:
                     t = binary_index[_].split("VirusShare_")[1]
                     if t in self.meta_dict:
                         binary_values.append(self.meta_dict[t])
-                num = self.compute_acc(binary_family, binary_values)
-                meta_acc.append(num)
+                [families_list[x["family_name"]] for x in binary_family]
+                [families_list[y["family_name"]] for x in binary_values for y in x]
+
+        return families_list
+
+    def evaluate_malevol(self, ball_tree_model, binary_predictions, x_test, y_test, top_k):
+        meta_acc = list()
+        meta_precision = list()
+        meta_recall = list()
+        failed = list()
+
+        binary_index = defaultdict()
+        binary_index.default_factory = binary_index.__len__()
+
+        for index, value in enumerate(binary_predictions.keys()):
+            binary_index[index] = value
+
+        families_list = self.get_malevol_families_list(x_test=x_test,
+                                                       y_test=y_test,
+                                                       ball_tree_model=ball_tree_model,
+                                                       top_k=top_k,
+                                                       binary_index=binary_index)
+
+        for index, feature in enumerate(x_test):
+            binary = y_test[index].split("VirusShare_")[1]
+            if binary in self.meta_dict:
+                dist, ind = ball_tree_model.query([feature], k=top_k)
+                binary_family = self.meta_dict[binary]
+                binary_values = list()
+                for _ in ind[0]:
+                    t = binary_index[_].split("VirusShare_")[1]
+                    if t in self.meta_dict:
+                        binary_values.append(self.meta_dict[t])
+                acc, precision, recall = self.compute_metrics(binary_family=binary_family,
+                                                              binary_values=binary_values,
+                                                              families_list=families_list)
+                meta_acc.append(acc)
+                meta_precision.append(precision)
+                meta_recall.append(recall)
             else:
                 failed.append(binary)
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
+        self.log.info("Precision and Recall at top k : {} is : {}, {}".format(top_k,
+                                                                              np.mean(meta_precision),
+                                                                              np.mean(meta_recall)))
         return meta_acc, failed
 
-    def evaluate_sarvam(self, ball_tree_model_path, binary_predictions, top_k):
-        meta_acc = list()
-        failed = list()
-        ball_tree_model = joblib.load(ball_tree_model_path + "/" + "bt_model.pkl")
-        binary_index = defaultdict()
-        binary_index.default_factory = binary_index.__len__()
-        for index, value in enumerate(binary_predictions.keys()):
-            binary_index[index] = value
+    def get_sarvam_families_list(self, binary_predictions, ball_tree_model, top_k, binary_index):
+        families_list = defaultdict()
+        families_list.default_factory = families_list.__len__()
 
         for binary, feature in binary_predictions.items():
             binary = binary.split("VirusShare_")[1]
@@ -182,11 +243,50 @@ class EvaluateSarvam:
                     t = binary_index[_].split("VirusShare_")[1]
                     if t in self.meta_dict:
                         binary_values.append(self.meta_dict[t])
-                num = self.compute_acc(binary_family, binary_values)
-                meta_acc.append(num)
+                [families_list[x["family_name"]] for x in binary_family]
+                [families_list[y["family_name"]] for x in binary_values for y in x]
+        return families_list
+
+    def evaluate_sarvam(self, ball_tree_model_path, binary_predictions, top_k):
+        meta_acc = list()
+        meta_precision = list()
+        meta_recall = list()
+        failed = list()
+
+        ball_tree_model = joblib.load(ball_tree_model_path + "/" + "bt_model.pkl")
+        binary_index = defaultdict()
+        binary_index.default_factory = binary_index.__len__()
+
+        for index, value in enumerate(binary_predictions.keys()):
+            binary_index[index] = value
+
+        families_list = self.get_sarvam_families_list(binary_predictions=binary_predictions,
+                                                      ball_tree_model=ball_tree_model,
+                                                      top_k=top_k,
+                                                      binary_index=binary_index)
+
+        for binary, feature in binary_predictions.items():
+            binary = binary.split("VirusShare_")[1]
+            if binary in self.meta_dict:
+                dist, ind = ball_tree_model.query([feature], k=top_k)
+                binary_family = self.meta_dict[binary]
+                binary_values = list()
+                for _ in ind[0]:
+                    t = binary_index[_].split("VirusShare_")[1]
+                    if t in self.meta_dict:
+                        binary_values.append(self.meta_dict[t])
+                acc, precision, recall = self.compute_metrics(binary_family=binary_family,
+                                                              binary_values=binary_values,
+                                                              families_list=families_list)
+                meta_acc.append(acc)
+                meta_precision.append(precision)
+                meta_recall.append(recall)
             else:
                 failed.append(binary)
         self.log.info("Accuracy at top k : {} is : {}".format(top_k, np.mean(meta_acc)))
+        self.log.info("Precision and Recall at top k : {} is : {}, {}".format(top_k,
+                                                                              np.mean(meta_precision),
+                                                                              np.mean(meta_recall)))
         return meta_acc, failed
 
     def update_model(self, final_corpus, ball_tree_model_path):
