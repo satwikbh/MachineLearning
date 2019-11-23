@@ -1,3 +1,5 @@
+ete3
+scikit-bio
 pathos
 imblearn
 pymongo
