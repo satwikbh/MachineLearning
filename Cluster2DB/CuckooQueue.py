@@ -1,9 +1,9 @@
-import json
+from json import dumps
 
+from Cluster2DB.PerformAnalysis import PerformAnalysis
 from Utils.LoggerUtil import LoggerUtil
 from Utils.KafkaUtil import KafkaUtil
 from Utils.ConfigUtil import ConfigUtil
-from PerformAnalysis import PerformAnalysis
 
 
 class CuckooQueue:
@@ -30,7 +30,7 @@ class CuckooQueue:
         :return:
         """
         meta_list = self.queue.insert_in_queue(md5_value, md5_path)
-        message = json.dumps(meta_list)
+        message = dumps(meta_list)
         producer = kafka.get_producer()
         producer.send(topic_name, value=message)
 

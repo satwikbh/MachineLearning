@@ -1,4 +1,4 @@
-import json
+from json import loads
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
@@ -17,7 +17,8 @@ class PerformAnalysis:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
 
-    def submit_2_cuckoo(self, file_path):
+    @staticmethod
+    def submit_2_cuckoo(file_path):
         """
         The executable is submitted to cuckoo sandbox for dynamic analysis using the file_path.
         It returns success or failure based on cuckoo's response.
@@ -25,7 +26,8 @@ class PerformAnalysis:
         :return:
         """
         # TODO : Need to complete this method.
-        if True:
+        response = ""
+        if response is True:
             return "success"
         else:
             return "failure"
@@ -79,7 +81,7 @@ class PerformAnalysis:
                                                                                                     message.offset))
                 value = message.value
                 self.log.info("Message from Producer : {}".format(value))
-                value = json.loads(value)
+                value = loads(value)
                 md5_value, md5_path = value["md5_value"], value["md5_path"]
                 status = self.submit_2_cuckoo(file_path=md5_path)
                 self.to_book_keeping_db(md5_value=md5_value, status=status, book_keeping_db=book_keeping_db)
