@@ -3,10 +3,10 @@ import os
 import array
 import glob
 import gist
-import urllib
 
 from time import time
-from scipy.misc import imsave
+from urllib.parse import quote
+from skimage.io import imsave
 from keras.preprocessing.image import img_to_array, load_img
 
 from Utils.LoggerUtil import LoggerUtil
@@ -23,7 +23,7 @@ class Sarvam:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']

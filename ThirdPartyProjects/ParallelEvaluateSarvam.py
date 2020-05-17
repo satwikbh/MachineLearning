@@ -1,11 +1,11 @@
 import numpy as np
-import urllib
 
 from time import time
+from urllib.parse import quote
 from collections import defaultdict
 from sklearn.externals import joblib
 from sklearn.neighbors import BallTree
-from pathos.multiprocessing import ProcessingPool
+from pathos.multiprocessing import ProcessPool
 
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
@@ -24,7 +24,7 @@ class ParallelEvaluateSarvam:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -175,7 +175,7 @@ def go_parallel(**kwargs):
     binary_predictions = kwargs["binary_predictions"]
     top_k = kwargs["top_k"]
 
-    pool = ProcessingPool(processes=num_proc)
+    pool = ProcessPool(processes=num_proc)
     params = [ball_tree_model_path, binary_predictions, top_k]
     p_place_holder = pool.amap(evaluate.evaluate_sarvam, params)
     result = p_place_holder.get()

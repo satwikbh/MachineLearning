@@ -1,8 +1,8 @@
 import numpy as np
 import pickle as pi
-import urllib
 
 from time import time
+from urllib.parse import quote
 from collections import defaultdict
 from sklearn.externals import joblib
 from sklearn.neighbors import BallTree
@@ -27,7 +27,7 @@ class EvaluateSarvam:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
