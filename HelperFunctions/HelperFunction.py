@@ -1,7 +1,5 @@
 import matplotlib
 
-matplotlib.use('Agg')
-
 import math
 import hickle as hkl
 import numpy as np
@@ -14,7 +12,10 @@ from scipy.sparse import vstack, load_npz
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
+from deprecated import deprecated
 from Utils.LoggerUtil import LoggerUtil
+
+matplotlib.use('Agg')
 
 
 class HelperFunction:
@@ -74,9 +75,9 @@ class HelperFunction:
 
     @staticmethod
     def batch(iterable, n=1):
-        l = len(iterable)
-        for ndx in range(0, l, n):
-            yield iterable[ndx:min(ndx + n, l)]
+        l_11 = len(iterable)
+        for ndx in range(0, l_11, n):
+            yield iterable[ndx:min(ndx + n, l_11)]
 
     @staticmethod
     def nearest_power_of_two(shape):
@@ -207,18 +208,15 @@ class HelperFunction:
         return x_train, x_test, y_train, y_test
 
     @staticmethod
+    @deprecated(reason="In Python 3 by default every string is Unicode.")
     def make_unicode(input_str):
         input_str = str(input_str)
-        if type(input_str) != unicode:
-            input_str = input_str.decode('utf-8')
-            return input_str
-        else:
-            return input_str
+        return input_str
 
     @staticmethod
     def load_sparse_matrix(file_path, num_rows, identifier):
         fv = []
-        for x in xrange(num_rows):
+        for x in range(num_rows):
             fv.append(load_npz(file_path + "/" + identifier + str(x) + ".npz"))
         matrix = vstack(fv)
         return matrix

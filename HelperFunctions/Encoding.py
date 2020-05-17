@@ -69,7 +69,7 @@ class Encoding:
             output += self.encode_2_len_vector(vector, length, x)
         return output
 
-    def _test(self):
+    def test(self):
         vector = "1100011010101"
         output = self.encode(vector)
         print(output)
@@ -77,4 +77,4 @@ class Encoding:
 
 if __name__ == '__main__':
     encoder = Encoding()
-    encoder._test()
+    encoder.test()

@@ -1,6 +1,6 @@
-from time import time
-
 import numpy as np
+
+from time import time
 from scipy.sparse import load_npz, save_npz, vstack
 from sklearn.feature_selection import VarianceThreshold
 
@@ -30,7 +30,7 @@ class DataStats:
             return partial_index_pointer
         else:
             assert len(partial_index_pointer) == len(col_wise_dist)
-            for x in xrange(len(partial_index_pointer)):
+            for x in range(len(partial_index_pointer)):
                 col_wise_dist[x] = col_wise_dist[x] + partial_index_pointer[x]
             return col_wise_dist
 
@@ -70,7 +70,6 @@ class DataStats:
     @staticmethod
     def estimate_cols_to_remove(col_wise_dist, threshold):
         cols_to_delete = list()
-        # threshold = np.mean(col_wise_dist)
         for index, value in enumerate(col_wise_dist):
             if value < threshold:
                 cols_to_delete.append(index)

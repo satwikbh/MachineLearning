@@ -1,5 +1,4 @@
 import glob
-
 import numpy as np
 
 from PrepareData.LoadData import LoadData

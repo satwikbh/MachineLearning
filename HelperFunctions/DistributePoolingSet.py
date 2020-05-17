@@ -5,7 +5,7 @@ from scipy.sparse import save_npz
 
 from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
-from HelperFunction import HelperFunction
+from HelperFunctions.HelperFunction import HelperFunction
 
 
 class DistributePoolingSet:
