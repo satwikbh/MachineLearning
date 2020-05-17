@@ -32,13 +32,16 @@ class PopulateLatLong:
         db_name = self.config['environment']['mongo']['db_name']
         cuckoo_db = client[db_name]
 
+        c2db_collection_name = self.config['environment']['mongo']['c2db_collection_name']
+        c2db_collection = cuckoo_db[c2db_collection_name]
+
         lat_long_collection_name = self.config['environment']['mongo']['lat_long_collection']
         lat_long_collection = cuckoo_db[lat_long_collection_name]
 
         ip_collection_name = self.config['environment']['mongo']['ip_collection']
         ip_collection = cuckoo_db[ip_collection_name]
 
-        return lat_long_collection, ip_collection
+        return c2db_collection, lat_long_collection, ip_collection
 
     @staticmethod
     def get_query(lok):
@@ -77,12 +80,12 @@ class PopulateLatLong:
         families_path = self.config["data"]["malware_families_list"]
         fam_lok_dict = load(open(families_path + "/" + "family_to_key_list_mapping.json", "r"))
 
-        lat_long_collection, ip_collection = self.get_collection()
+        c2db_collection, lat_long_collection, ip_collection = self.get_collection()
 
         for family, lok in fam_lok_dict.items():
             lok = self.helper.convert_to_vs_keys(lok)
             query = self.get_query(lok=lok)
-            cursor = lat_long_collection.aggregate(query)
+            cursor = c2db_collection.aggregate(query)
             list_op_ips = self.get_ip_list(cursor)
             ip_dict, lat_long_dict = self.ip_data.get_ip_data(ip_addr_list=list_op_ips)
             self.fill_db(lat_long_collection, ip_collection, ip_dict, lat_long_dict)
