@@ -1,24 +1,15 @@
-import ConfigParser
-import logging
 import pickle as pi
-
 import os
-from pymongo import MongoClient
 
-config = ConfigParser.RawConfigParser()
-config.read('../Config.properties')
-
+from urllib.parse import quote
 from collections import defaultdict
 
-log = logging.getLogger(__name__)
-
-LOG_FILENAME = config.get('Mappings', 'mappings.logfile')
-LOG_LEVEL = config.get('Mappings', 'loglevel')
-
-logging.basicConfig(filename=LOG_FILENAME, level=LOG_LEVEL)
+from Utils.LoggerUtil import LoggerUtil
+from Utils.ConfigUtil import ConfigUtil
+from Utils.DBUtils import DBUtils
 
 
-class FeatureVectorGeneration():
+class FeatureVectorGeneration:
     files_cluster = set()
     keys_cluster = set()
     summary_cluster = set()
@@ -39,16 +30,29 @@ class FeatureVectorGeneration():
     cluster_path = ""
     cuckoo_root = ""
 
-    @staticmethod
-    def get_client():
-        return MongoClient(
-            "mongodb://" + config.get("MongoProperties", "address") + ":" + config.get("MongoProperties", "port"))
+    def __init__(self):
+        self.log = LoggerUtil(self.__class__.__name__).get()
+        self.config = ConfigUtil.get_config_instance()
+        self.db_utils = DBUtils()
 
-    @staticmethod
-    def get_collection(client, collection_name):
-        db = client.get_database(config.get("MongoProperties", "db_name"))
-        collection = db.get_collection(collection_name)
-        return collection
+    def get_collection(self):
+        username = self.config['environment']['mongo']['username']
+        pwd = self.config['environment']['mongo']['password']
+        password = quote(pwd)
+        address = self.config['environment']['mongo']['address']
+        port = self.config['environment']['mongo']['port']
+        auth_db = self.config['environment']['mongo']['auth_db']
+        is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
+
+        client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
+                                          username=username, password=password)
+
+        db_name = self.config['environment']['mongo']['db_name']
+        db = client[db_name]
+        fingerprint_collection_name = self.config['environment']['mongo']['fingerprint_collection_name']
+        fingerprint_collection = db[fingerprint_collection_name]
+
+        return fingerprint_collection
 
     def load_props(self):
         behavior_keys = []
@@ -56,11 +60,11 @@ class FeatureVectorGeneration():
         static_keys = []
         file_list = os.listdir(self.cluster_path)
         for file in file_list:
-            if file.endswith(".behaviorDump.cluster"):
+            if file.endswith(".behavior_dump.cluster"):
                 behavior_keys.append(file)
-            if file.endswith(".networkDump.cluster"):
+            if file.endswith(".network_dump.cluster"):
                 network_keys.append(file)
-            if file.endswith(".staticDump.cluster"):
+            if file.endswith(".static_dump.cluster"):
                 static_keys.append(file)
         return behavior_keys, network_keys, static_keys
 
@@ -148,7 +152,6 @@ class FeatureVectorGeneration():
             return ''.join(self.make_fp(value, self.peid_signatures_cluster))
 
     def meta_cluster(self, key, value):
-
         if key == "files":
             for here in value:
                 self.files_cluster.add(here.lower())
@@ -250,20 +253,20 @@ class FeatureVectorGeneration():
                 self.meta_cluster(key, value)
 
     def make_static(self):
-        self.files_cluster = list(self.files_cluster)
-        self.keys_cluster = list(self.keys_cluster)
-        self.summary_cluster = list(self.summary_cluster)
-        self.mutexes_cluster = list(self.mutexes_cluster)
-        self.executed_commands_cluster = list(self.executed_commands_cluster)
-        self.domain_cluster = list(self.domain_cluster)
-        self.udp_cluster = list(self.udp_cluster)
-        self.hosts_cluster = list(self.hosts_cluster)
-        self.dns_cluster = list(self.dns_cluster)
-        self.dirents_cluster = list(self.dirents_cluster)
-        self.fn_name_cluster = list(self.fn_name_cluster)
-        self.dlls_cluster = list(self.dlls_cluster)
-        self.sections_cluster = list(self.sections_cluster)
-        self.peid_signatures_cluster = list(self.peid_signatures_cluster)
+        self.files_cluster = set(self.files_cluster)
+        self.keys_cluster = set(self.keys_cluster)
+        self.summary_cluster = set(self.summary_cluster)
+        self.mutexes_cluster = set(self.mutexes_cluster)
+        self.executed_commands_cluster = set(self.executed_commands_cluster)
+        self.domain_cluster = set(self.domain_cluster)
+        self.udp_cluster = set(self.udp_cluster)
+        self.hosts_cluster = set(self.hosts_cluster)
+        self.dns_cluster = set(self.dns_cluster)
+        self.dirents_cluster = set(self.dirents_cluster)
+        self.fn_name_cluster = set(self.fn_name_cluster)
+        self.dlls_cluster = set(self.dlls_cluster)
+        self.sections_cluster = set(self.sections_cluster)
+        self.peid_signatures_cluster = set(self.peid_signatures_cluster)
 
     def behavior_fp(self):
         fp = defaultdict(dict)
@@ -295,8 +298,7 @@ class FeatureVectorGeneration():
                 fp[key] = self.generate_fingerprint(key, value)
             self.fingerprint[each_variant].append(fp)
 
-    @staticmethod
-    def get_cluster_path():
+    def get_cluster_path(self):
         """
         Gets the current path and stores the dumps in cluster
         :return:
@@ -305,7 +307,7 @@ class FeatureVectorGeneration():
         # CUCKOO_ROOT = "/".join(_current_dir.split("/")[:-2])
         # path = CUCKOO_ROOT + "/cluster/"
         path = _current_dir + "/cluster/"
-        log.info("Cluster Path: {0}".format(path))
+        self.log.info("Cluster Path: {0}".format(path))
         # return path, _current_dir
         return "/Users/satwik/Desktop/VS_ME/cluster/"
 
@@ -315,7 +317,7 @@ class FeatureVectorGeneration():
             if not os.path.exists(path):
                 os.makedirs(path)
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return path
 
     def create_cluster_dumps(self, collection):
@@ -375,7 +377,7 @@ class FeatureVectorGeneration():
     def main(self):
         self.cluster_path = self.get_cluster_path()
 
-        collection = self.get_collection(self.get_client(), config.get("MongoProperties", "meta_collection"))
+        collection = self.get_collection()
 
         behavior_keys, network_keys, static_keys = self.load_props()
 
@@ -407,7 +409,7 @@ class FeatureVectorGeneration():
             self.static_dump = self.load_dump(self.cluster_path, each)
             self.static_fp()
 
-        collection = self.get_collection(self.get_client(), config.get("MongoProperties", "fingerprint_collection"))
+        collection = self.get_collection()
         for key, value in self.fingerprint.items():
             try:
                 d = dict()

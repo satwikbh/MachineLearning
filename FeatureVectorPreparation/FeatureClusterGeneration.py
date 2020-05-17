@@ -1,36 +1,36 @@
-import logging
 import pickle as pi
-from collections import defaultdict
-
 import os
 
-log = logging.getLogger(__name__)
+from collections import defaultdict
+from Utils.LoggerUtil import LoggerUtil
 
 
-class FeatureClusterGeneration():
+class FeatureClusterGeneration:
     """
     This class generates the Fingerprint of a Malware
     """
 
-    name = ''
-    cluster_path = ''
+    def __init__(self):
+        self.log = LoggerUtil(self.__class__.__name__).get()
+
+    name = ""
+    cluster_path = ""
 
     cluster_list = []
     matches = []
     fingerprint = []
-    Abstract_Fingerprint = []
-    listFeatureVectors = []
+    abstract_fingerprint = []
+    list_feature_vectors = []
 
-    failedAnalyses = []
+    failed_analyses = []
 
-    #### New ordering
-    statsDump = defaultdict(dict)  # Is a dict of dict
-    signatureDump = defaultdict(dict)  # Is a dict of dict
-    malheurDump = defaultdict(dict)  # Is a dict of dict
-    staticDump = defaultdict(dict)  # Is a dict of dict
-    networkDump = defaultdict(dict)  # Is a dict of dict
-    behaviorDump = defaultdict(dict)  # Is a dict of dict
-    unknownFeatures = defaultdict(dict)  # Is a dict of dict
+    stats_dump = defaultdict(dict)  # Is a dict of dict
+    signature_dump = defaultdict(dict)  # Is a dict of dict
+    malheur_dump = defaultdict(dict)  # Is a dict of dict
+    static_dump = defaultdict(dict)  # Is a dict of dict
+    network_dump = defaultdict(dict)  # Is a dict of dict
+    behavior_dump = defaultdict(dict)  # Is a dict of dict
+    unknown_features = defaultdict(dict)  # Is a dict of dict
 
     @staticmethod
     def is_cluster_present(name):
@@ -49,7 +49,7 @@ class FeatureClusterGeneration():
         :return:
         """
         if len(error_list) > 0:
-            self.failedAnalyses.append(path)
+            self.failed_analyses.append(path)
             return True
         return False
 
@@ -59,10 +59,11 @@ class FeatureClusterGeneration():
         Example we don't know what procmemory does and also for test variants the output is empty.
         Hence, we can't add it to feature list.
         If in future for any malware if it is activated then we will take care of it.
+        :param md5:
         :param name:
         :return:
         """
-        self.unknownFeatures[md5].append(name)
+        self.unknown_features[md5].append(name)
 
     def get_name(self, results):
         """
@@ -91,8 +92,7 @@ class FeatureClusterGeneration():
             else:
                 return False
 
-    @staticmethod
-    def peid_signatures(pe_imports):
+    def peid_signatures(self, pe_imports):
         signature = set()
         try:
             if "peid_signatures" in pe_imports and pe_imports.get("peid_signatures") is not None:
@@ -101,11 +101,10 @@ class FeatureClusterGeneration():
                     for sigentry in each_signature:
                         signature.add(sigentry.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return signature
 
-    @staticmethod
-    def imports(pe_imports):
+    def imports(self, pe_imports):
         dll_set = set()
         fn_names = set()
         try:
@@ -118,11 +117,10 @@ class FeatureClusterGeneration():
                         fn_names.add(each_import_name.get("name").lower())
                     dll_set.add(dll_name.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return dll_set, fn_names
 
-    @staticmethod
-    def dirents(pe_imports):
+    def dirents(self, pe_imports):
         dirent_name = set()
         try:
             if "dirents" in pe_imports and pe_imports.get("dirents") is not None:
@@ -130,11 +128,10 @@ class FeatureClusterGeneration():
                 for each_dirent_entry in dirents:
                     dirent_name.add(each_dirent_entry.get("name"))
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return dirent_name
 
-    @staticmethod
-    def sections(pe_imports):
+    def sections(self, pe_imports):
         characteristic_set = set()
         try:
             if "sections" in pe_imports and pe_imports.get("sections") is not None:
@@ -144,7 +141,7 @@ class FeatureClusterGeneration():
                     for each_char in characteristics.split("|"):
                         characteristic_set.add(each_char.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return characteristic_set
 
     def static_res(self, md5, results):
@@ -172,7 +169,7 @@ class FeatureClusterGeneration():
                     characteristic_set = self.sections(pe_imports)
 
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         inner_dict = dict()
         inner_dict["peid_signatures"] = signature
@@ -184,15 +181,15 @@ class FeatureClusterGeneration():
         outer_dict = dict()
         outer_dict["static"] = inner_dict
 
-        self.staticDump[md5] = outer_dict
+        self.static_dump[md5] = outer_dict
 
     def proc_mem(self, md5, results):
         if len(results.get("procmemory")) > 0:
-            self.alert_unknown_features(self.name)
+            self.alert_unknown_features(md5=md5, name=self.name)
 
     def decompression(self, md5, results):
         if len(results.get("decompression")) > 0:
-            self.alert_unknown_features(self.name)
+            self.alert_unknown_features(md5=md5, name=self.name)
 
     def malheur(self, md5, results):
         """
@@ -208,12 +205,12 @@ class FeatureClusterGeneration():
             if "malscore" in results and results.get("malscore") is not None:
                 malheur.append(results.get("malscore"))
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         inner_dict = dict()
         inner_dict["malheur"] = malheur
 
-        self.malheurDump[md5] = inner_dict
+        self.malheur_dump[md5] = inner_dict
 
     def signatures(self, md5, results):
         """
@@ -234,7 +231,7 @@ class FeatureClusterGeneration():
                 confidence = []
                 weight = []
                 severity = []
-                for sig in xrange(len(sign)):
+                for sig in range(len(sign)):
                     if "confidence" in sign[sig] and sign[sig].get("confidence") is not None:
                         confidence = sign[sig].get("confidence")
                     if "description" in sign[sig] and sign[sig].get("description") is not None:
@@ -258,11 +255,11 @@ class FeatureClusterGeneration():
                     temp[sig].append(weight)
                     temp[sig].append(severity)
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         inner_dict = dict()
         inner_dict["signatures"] = temp
-        self.signatureDump[md5] = inner_dict
+        self.signature_dump[md5] = inner_dict
 
     def statistics(self, md5, results):
         """
@@ -282,14 +279,13 @@ class FeatureClusterGeneration():
                     for each_sign in signatures:
                         signature_set.add(each_sign.get("name").lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         inner_dict = dict()
         inner_dict["statSignatures"] = signature_set
-        self.statsDump[md5] = inner_dict
+        self.stats_dump[md5] = inner_dict
 
-    @staticmethod
-    def udp(network):
+    def udp(self, network):
         """
         Takes the networkResults and returns the udp segment
         :param network:
@@ -316,7 +312,7 @@ class FeatureClusterGeneration():
                     if "offset" in each_udp_value and each_udp_value.get("offset") is not None:
                         offset_set.add(each_udp_value.get("offset"))
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         udp = dict()
         udp["src"] = src_set
@@ -326,8 +322,7 @@ class FeatureClusterGeneration():
         udp["offset"] = offset_set
         return udp
 
-    @staticmethod
-    def hosts(network):
+    def hosts(self, network):
         """
         Takes the networkResults and returns the hosts segment
         :param network:
@@ -346,7 +341,7 @@ class FeatureClusterGeneration():
                 if "ip" in hosts and hosts.get("ip") != "":
                     ip.add(hosts.get("ip").lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         hosts = dict()
         hosts["country_name"] = country_name
@@ -354,8 +349,7 @@ class FeatureClusterGeneration():
         hosts["ip"] = ip
         return hosts
 
-    @staticmethod
-    def dns(network):
+    def dns(self, network):
         """
         Takes the network results and gives the dns segment.
         :param network:
@@ -373,15 +367,14 @@ class FeatureClusterGeneration():
                     if "request" in each_dns_entry and each_dns_entry.get("request") is not None:
                         request.add(each_dns_entry.get("request").lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         dns = dict()
         dns["request"] = request
         dns["type"] = type
         return dns
 
-    @staticmethod
-    def domains(network):
+    def domains(self, network):
         """
         Takes the network result and gives the domains segment.
         :param network:
@@ -398,7 +391,7 @@ class FeatureClusterGeneration():
                     if "domain" in each_domain and each_domain.get("domain") is not None:
                         dom.add(each_domain.get("domain").lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         domains = dict()
         domains["ip"] = ip
@@ -419,9 +412,9 @@ class FeatureClusterGeneration():
         :return:
         """
 
+        inner_dict = dict()
         if "network" in results and results.get("network") is not None:
             network = results.get("network")
-            inner_dict = dict()
             inner_dict["udp"] = self.udp(network)
             inner_dict["hosts"] = self.hosts(network)
             inner_dict["dns"] = self.dns(network)
@@ -429,10 +422,9 @@ class FeatureClusterGeneration():
 
         outer_dict = dict()
         outer_dict["network"] = inner_dict
-        self.networkDump[md5] = outer_dict
+        self.network_dump[md5] = outer_dict
 
-    @staticmethod
-    def file_FV(summary):
+    def file_fv(self, summary):
         """
         Takes the behavior summary and gives the fileset.
         :param summary:
@@ -460,12 +452,11 @@ class FeatureClusterGeneration():
                 for each_file in read_files:
                     file_set.add(each_file.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         return file_set
 
-    @staticmethod
-    def keys_FV(summary):
+    def keys_fv(self, summary):
         """
         Takes the behavior summary and returns the keyset
         :param summary:
@@ -493,12 +484,11 @@ class FeatureClusterGeneration():
                 for each_key in delete_keys:
                     key_set.add(each_key.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         return key_set
 
-    @staticmethod
-    def services_FP(summary):
+    def services_fp(self, summary):
         """
         Takes the behavior summary and returns the services accessed part.
         :param summary:
@@ -516,12 +506,11 @@ class FeatureClusterGeneration():
                 for each_service in created_services:
                     service_set.add(each_service)
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
         return service_set
 
-    @staticmethod
-    def mutexes(summary):
+    def mutexes(self, summary):
         mutex_set = set()
         try:
             if "mutexes" in summary and summary.get("mutexes") is not None:
@@ -529,11 +518,10 @@ class FeatureClusterGeneration():
                 for each_mutex in mutexes:
                     mutex_set.add(each_mutex.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return mutex_set
 
-    @staticmethod
-    def executed_commands(summary):
+    def executed_commands(self, summary):
         cmd_set = set()
         try:
             if "executed_commands" in summary and summary.get("executed_commands") is not None:
@@ -541,12 +529,12 @@ class FeatureClusterGeneration():
                 for each_cmd in executed_commands:
                     cmd_set.add(each_cmd.lower())
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
         return cmd_set
 
     def resolved_apis(self, md5, summary):
         try:
-            static_dict = self.staticDump.get(md5).get("static")
+            static_dict = self.static_dump.get(md5).get("static")
             dlls = static_dict.get("dlls")
             fn_name = static_dict.get("fn_name")
 
@@ -561,7 +549,7 @@ class FeatureClusterGeneration():
             static_dict["fn_name"] = fn_name
 
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
     def behavior(self, md5, results):
         """
@@ -569,12 +557,21 @@ class FeatureClusterGeneration():
         'files', 'write_keys', 'keys', 'write_files', 'read_keys', 'delete_keys', 'delete_files',
         'mutexes', 'executed_commands', 'started_services', 'read_files', 'resolved_apis', 'created_services'
         Signature:
-        {"md5":{"behavior":{"files": [files, write_files, delete_files, read_files], "keys":[keys, write_keys, read_keys, delete_keys], "mutexes":mutexes, "executed_commands":executed_commands, "resolved_apis":resolved_apis, "services":[started_services,created_service]}}}
+        {"md5":{"behavior":{
+        "files": [files, write_files, delete_files, read_files],
+        "keys": [keys, write_keys, read_keys, delete_keys],
+        "mutexes": mutexes,
+        "executed_commands": executed_commands,
+        "resolved_apis": resolved_apis,
+        "services": [started_services,created_service]}}}
         :param md5:
         :param results:
         :return:
         """
         inner_dict = dict()
+        files_set = set()
+        keys_set = set()
+        service_set = set()
         mutex_set = set()
         cmd_set = set()
         try:
@@ -583,32 +580,36 @@ class FeatureClusterGeneration():
                 if "summary" in behavior and behavior.get("summary") is not None:
                     summary = behavior.get("summary")
 
+                    files_set = self.file_fv(summary)
+                    keys_set = self.keys_fv(summary)
+                    service_set = self.services_fp(summary)
                     mutex_set = self.mutexes(summary)
                     cmd_set = self.executed_commands(summary)
+
                     self.resolved_apis(md5, summary)
 
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
+            summary = None
 
-        inner_dict["files"] = self.file_FV(summary)
-        inner_dict["keys"] = self.keys_FV(summary)
-        inner_dict["summary"] = self.services_FP(summary)
+        inner_dict["files"] = files_set
+        inner_dict["keys"] = keys_set
+        inner_dict["summary"] = service_set
         inner_dict["mutexes"] = mutex_set
         inner_dict["executed_commands"] = cmd_set
 
         outer_dict = dict()
         outer_dict["behavior"] = inner_dict
-        self.behaviorDump[md5] = outer_dict
+        self.behavior_dump[md5] = outer_dict
 
-    @staticmethod
-    def get_cluster_path():
+    def get_cluster_path(self):
         """
         Gets the current path and stores the dumps in cluster
         :return:
         """
         _current_dir = os.path.abspath(os.path.dirname("__file__"))
         path = _current_dir + "/cluster/"
-        log.info("Cluster Path: {0}".format(path))
+        self.log.info("Cluster Path: {0}".format(path))
         return path
 
     def write_dumps(self, md5):
@@ -616,39 +617,39 @@ class FeatureClusterGeneration():
         This method will write the results into pickle dumps
         :return:
         """
-        f1 = open(self.cluster_path + md5 + ".failedAnalyses.cluster", "wa")
-        pi.dump(self.failedAnalyses, f1)
+        f1 = open(self.cluster_path + md5 + ".failed_analyses.cluster", "wa")
+        pi.dump(self.failed_analyses, f1)
         f1.close()
 
         f2 = open(self.cluster_path + md5 + ".statsDump.cluster", "wa")
-        pi.dump(self.statsDump, f2)
+        pi.dump(self.stats_dump, f2)
         f2.close()
 
-        f3 = open(self.cluster_path + md5 + ".signatureDump.cluster", "wa")
-        pi.dump(self.signatureDump, f3)
+        f3 = open(self.cluster_path + md5 + ".signature_dump.cluster", "wa")
+        pi.dump(self.signature_dump, f3)
         f3.close()
 
-        f4 = open(self.cluster_path + md5 + ".malheurDump.cluster", "wa")
-        pi.dump(self.malheurDump, f4)
+        f4 = open(self.cluster_path + md5 + ".malheur_dump.cluster", "wa")
+        pi.dump(self.malheur_dump, f4)
         f4.close()
 
-        f5 = open(self.cluster_path + md5 + ".staticDump.cluster", "wa")
-        pi.dump(self.staticDump, f5)
+        f5 = open(self.cluster_path + md5 + ".static_dump.cluster", "wa")
+        pi.dump(self.static_dump, f5)
         f5.close()
 
-        f6 = open(self.cluster_path + md5 + ".networkDump.cluster", "wa")
-        pi.dump(self.networkDump, f6)
+        f6 = open(self.cluster_path + md5 + ".network_dump.cluster", "wa")
+        pi.dump(self.network_dump, f6)
         f6.close()
 
         f7 = open(self.cluster_path + md5 + ".unknownFeatures.cluster", "wa")
-        pi.dump(self.unknownFeatures, f7)
+        pi.dump(self.unknown_features, f7)
         f7.close()
 
-        f8 = open(self.cluster_path + md5 + ".behaviorDump.cluster", "wa")
-        pi.dump(self.behaviorDump, f8)
+        f8 = open(self.cluster_path + md5 + ".behavior_dump.cluster", "wa")
+        pi.dump(self.behavior_dump, f8)
         f8.close()
 
-    def generate_meta_FP(self, results):
+    def generate_meta_fp(self, results):
         """
         Generate the Meta fingerprint for all variants of the malware analyzed in current session.
         :return:
@@ -672,7 +673,7 @@ class FeatureClusterGeneration():
             self.write_dumps(self.name)
 
         except Exception as e:
-            log.error(e)
+            self.log.error(e)
 
     def prepare_dumps(self):
         """
@@ -680,10 +681,10 @@ class FeatureClusterGeneration():
         :return:
         """
         # TODO : This is a fix, need to optimize this.
-        self.statsDump = defaultdict(dict)  # Is a dict of dict
-        self.signatureDump = defaultdict(dict)  # Is a dict of dict
-        self.malheurDump = defaultdict(dict)  # Is a dict of dict
-        self.staticDump = defaultdict(dict)  # Is a dict of dict
-        self.networkDump = defaultdict(dict)  # Is a dict of dict
-        self.behaviorDump = defaultdict(dict)  # Is a dict of dict
-        self.unknownFeatures = defaultdict(dict)  # Is a dict of dict
+        self.stats_dump = defaultdict(dict)  # Is a dict of dict
+        self.signature_dump = defaultdict(dict)  # Is a dict of dict
+        self.malheur_dump = defaultdict(dict)  # Is a dict of dict
+        self.static_dump = defaultdict(dict)  # Is a dict of dict
+        self.network_dump = defaultdict(dict)  # Is a dict of dict
+        self.behavior_dump = defaultdict(dict)  # Is a dict of dict
+        self.unknown_features = defaultdict(list)  # Is a dict of list
