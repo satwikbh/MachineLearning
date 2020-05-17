@@ -1,10 +1,10 @@
 import glob
 import json
 import pickle as pi
+import numpy as np
+
 from collections import defaultdict
 from time import time
-
-import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
@@ -54,6 +54,7 @@ class ParsingLogic:
             bow += doc
         else:
             self.log.error("Feature {} doesn't have {} type as value.".format(feature, type(doc)))
+        return bow
 
     def get_bow_for_static_feature(self, feature, doc):
         bow = list()
@@ -67,16 +68,16 @@ class ParsingLogic:
 
     def get_bow_for_each_document(self, document, feature):
         if feature == "behavior":
-            behavior = document.values()[0].get(feature)
+            behavior = [_ for _ in document.values()][0][feature]
             return self.get_bow_for_behavior_feature(feature, behavior)
         elif feature == "network":
-            network = document.values()[0].get(feature)
+            network = [_ for _ in document.values()][0][feature]
             return self.get_bow_for_network_feature(feature, network)
         elif feature == "static":
-            static = document.values()[0].get(feature)
+            static = [_ for _ in document.values()][0][feature]
             return self.get_bow_for_static_feature(feature, static)
         elif feature == "statSignatures":
-            statistic = document.values()[0].get(feature)
+            statistic = [_ for _ in document.values()][0][feature]
             return self.get_bow_for_statistic_feature(feature, statistic)
         else:
             self.log.error("Feature other than behavior, network, static, statistic accessed.")
@@ -97,7 +98,7 @@ class ParsingLogic:
             feature = each_document.get("feature")
             value = each_document.get("value")
             if feature == "behavior" or feature == "network" or feature == "static" or feature == "statSignatures":
-                list_of_keys = value.values()[0].keys()
+                list_of_keys = [_ for _ in value.values()][0].keys()
                 if feature in list_of_keys:
                     d2b = self.get_bow_for_each_document(value, feature)
                     if d2b is not None:

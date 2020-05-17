@@ -1,6 +1,7 @@
 import json
-import urllib
+
 from collections import defaultdict
+from urllib.parse import quote
 from time import time
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -26,7 +27,7 @@ class IndividualFeatureClusterGeneration:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']

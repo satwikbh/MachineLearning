@@ -1,8 +1,8 @@
 import json
-import urllib
-from time import time
-
 import numpy as np
+
+from time import time
+from urllib.parse import quote
 
 from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
@@ -27,7 +27,7 @@ class FreqBasedIndiFeatClusterGen:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']

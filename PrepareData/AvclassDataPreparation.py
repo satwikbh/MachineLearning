@@ -2,8 +2,8 @@ import pickle as pi
 import hickle as hkl
 import math
 import os
-import urllib
 
+from urllib.parse import quote
 from collections import defaultdict
 from scipy.sparse import vstack
 from time import time
@@ -21,7 +21,7 @@ class AvclassDataPreparation:
     def get_connection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -152,12 +152,11 @@ class AvclassDataPreparation:
     def main(self):
         """
         The labels are sent as input. The output is each cluster with its accuracy and labels.
-        :param labels:
         :return:
         """
         start_time = time()
         client, avclass_collection = self.get_connection()
-        classified_matrix, unclassified_matrix = self.prepare_avclass_validation_data(avclass_collection)
+        self.prepare_avclass_validation_data(avclass_collection)
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 

@@ -1,9 +1,9 @@
 import glob
 import json
+import marisa_trie
+
 from collections import defaultdict
 from time import time
-
-import marisa_trie
 
 from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
@@ -44,7 +44,7 @@ class TrieBasedPruning:
         for index, key in enumerate(d.keys()):
             if index % 10 ** 5 == 0:
                 self.log.info("Iter : #{}".format(index))
-            unpruned_list = trie.prefixes(self.helper.make_unicode(key))
+            unpruned_list = trie.prefixes(key)
             unpruned_list = self.prune_prefix_ids(key, unpruned_list)
             for _ in unpruned_list:
                 meta_dict[_]

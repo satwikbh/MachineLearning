@@ -1,18 +1,18 @@
 import json
 import math
 import pickle as pi
-import urllib
+import numpy as np
+
 from collections import defaultdict
 from time import time
-
-import numpy as np
+from urllib.parse import quote
 
 from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.ParsingLogic import ParsingLogic
-from TrieBasedPruning import TrieBasedPruning
+from PrepareData.TrieBasedPruning import TrieBasedPruning
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
@@ -34,7 +34,7 @@ class PrepareDataset:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -205,7 +205,7 @@ class PrepareDataset:
                 checker.append(md5)
             x += config_param_chunk_size
             self.log.info("Iteration : #{}".format(x))
-        if not np.all([md5_keys[x] == checker[x] for x in xrange(len(md5_keys))]):
+        if not np.all([md5_keys[x] == checker[x] for x in range(len(md5_keys))]):
             raise Exception("Labels are not generated properly")
 
         for x in key_index_to_family_mapping.values():
