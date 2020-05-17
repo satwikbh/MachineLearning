@@ -4,18 +4,18 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import load_npz
 from scipy.stats import kendalltau
-from sklearn.externals import joblib
+from joblib import dump
 
-from Adaboost import Adaboost
-from DecisionTrees import DecisionTrees
-from ExtraTrees import ExtraTrees
+from Classification.Adaboost import Adaboost
+from Classification.DecisionTrees import DecisionTrees
+from Classification.ExtraTrees import ExtraTrees
 from HelperFunctions.HelperFunction import HelperFunction
-from NaiveBayesClassifier import NaiveBayesClassifier, CoreClassificationLogic
-from RandomForest import RandomForest
-from StochasticGradientDescent import StochasticGradientDescent
-from Bagging import Bagging
-from XGBoostClassifier import XGBoostClassifier
-from MultiClassMetrics import MultiClassMetrics
+from Classification.NaiveBayesClassifier import NaiveBayesClassifier, CoreClassificationLogic
+from Classification.RandomForest import RandomForest
+from Classification.StochasticGradientDescent import StochasticGradientDescent
+from Classification.Bagging import Bagging
+from Classification.XGBoostClassifier import XGBoostClassifier
+from Classification.MultiClassMetrics import MultiClassMetrics
 
 from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
@@ -88,15 +88,15 @@ class RankingMetrics:
         y_pred = self.bnb_clf.prediction(clf=clf, test_data=x_test)
         self.bnb_clf.compute_metrics(y_pred=y_pred, y_test=y_test, dr_name=dr_name,
                                      bnb_results_path=ranking_results_path)
-        joblib.dump(clf, bnb_model_path + "/" + "naive_bayes" + "_" + dr_name + ".pkl")
+        dump(clf, bnb_model_path + "/" + "naive_bayes" + "_" + dr_name + ".pkl")
 
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
 
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.bnb_ccl.bernoulli_nb_classifier_ranking(clf=clf, x_test=x_test,
@@ -124,15 +124,15 @@ class RankingMetrics:
         y_pred = self.rf_clf.prediction(clf=clf, test_data=x_test)
         self.rf_clf.compute_metrics(y_test=y_test, y_pred=y_pred,
                                     rf_results_path=ranking_results_path, dr_name=dr_name)
-        joblib.dump(clf, rf_model_path + "/" + "random_forest" + "_" + dr_name + ".pkl")
+        dump(clf, rf_model_path + "/" + "random_forest" + "_" + dr_name + ".pkl")
 
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
 
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
@@ -159,16 +159,16 @@ class RankingMetrics:
         clf = self.et_clf.classification(train_data=x_train, train_labels=y_train)
         y_pred = self.et_clf.prediction(clf=clf, test_data=x_test)
         self.et_clf.compute_metrics(y_test=y_test, y_pred=y_pred, et_results_path=ranking_results_path, dr_name=dr_name)
-        joblib.dump(clf, et_model_path + "/" + "extra_trees" + "_" + dr_name + ".pkl")
+        dump(clf, et_model_path + "/" + "extra_trees" + "_" + dr_name + ".pkl")
 
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)
@@ -195,16 +195,16 @@ class RankingMetrics:
         y_pred = self.dt_clf.prediction(clf=clf, test_data=x_test)
         self.dt_clf.compute_metrics(y_test=y_test, y_pred=y_pred,
                                     dt_results_path=ranking_results_path, dr_name=dr_name)
-        joblib.dump(clf, dt_model_path + "/" + "decision_tree" + "_" + dr_name + ".pkl")
+        dump(clf, dt_model_path + "/" + "decision_tree" + "_" + dr_name + ".pkl")
 
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)
@@ -231,16 +231,16 @@ class RankingMetrics:
         y_pred = self.adaboost_clf.prediction(clf=clf, test_data=x_test)
         self.adaboost_clf.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                           adaboost_results_path=ranking_results_path)
-        joblib.dump(clf, adaboost_model_path + "/" + "adaboost" + "_" + dr_name + ".pkl")
-        
+        dump(clf, adaboost_model_path + "/" + "adaboost" + "_" + dr_name + ".pkl")
+
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)
@@ -267,16 +267,16 @@ class RankingMetrics:
         y_pred = self.sgd_clf.prediction(clf=clf, test_data=x_test)
         self.sgd_clf.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                      sgd_results_path=ranking_results_path)
-        joblib.dump(clf, sgd_model_path + "/" + "sgd" + "_" + dr_name + ".pkl")
-        
+        dump(clf, sgd_model_path + "/" + "sgd" + "_" + dr_name + ".pkl")
+
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)
@@ -303,16 +303,16 @@ class RankingMetrics:
         y_pred = self.xgboost_clf.prediction(clf=clf, test_data=x_test)
         self.xgboost_clf.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                          xgboost_results_path=ranking_results_path)
-        joblib.dump(clf, xgboost_model_path + "/" + "xgboost" + dr_name + ".pkl")
-        
+        dump(clf, xgboost_model_path + "/" + "xgboost" + dr_name + ".pkl")
+
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)
@@ -339,16 +339,16 @@ class RankingMetrics:
         y_pred = self.bagging_clf.prediction(clf=clf, test_data=x_test)
         self.bagging_clf.compute_metrics(y_test=y_test, y_pred=y_pred, dr_name=dr_name,
                                          bagging_results_path=ranking_results_path)
-        joblib.dump(clf, bagging_model_path + "/" + "bagging" + dr_name + ".pkl")
-        
+        dump(clf, bagging_model_path + "/" + "bagging" + dr_name + ".pkl")
+
         d = dict()
         i, j = 1, 6
         for _ in range(i, j):
-            top_k_acc_list = self.metrics.get_top_k(x_test=x_test, y_test=y_test, k=_)
+            top_k_acc_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=_)
             d[_] = np.mean(top_k_acc_list)
 
-        self.log.info("Top k={} accuracies are : {}".format(6-1, d))
-        
+        self.log.info("Top k={} accuracies are : {}".format(6 - 1, d))
+
         if self.compute_search_ranking:
             kt_list, pearson_coeff_list = self.classifier_ranking(clf=clf, test_data=x_test,
                                                                   av_train_dist=av_train_dist)

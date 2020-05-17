@@ -7,7 +7,7 @@ from sklearn.model_selection import cross_val_score
 
 from HelperFunctions.HelperFunction import HelperFunction
 from HelperFunctions.LoadDRMatrices import LoadDRMatrices
-from MultiClassMetrics import MultiClassMetrics
+from Classification.MultiClassMetrics import MultiClassMetrics
 from Utils.ConfigUtil import ConfigUtil
 from Utils.LoggerUtil import LoggerUtil
 
@@ -99,7 +99,7 @@ class Bagging:
             y_pred = self.prediction(clf=clf, test_data=x_test)
             top_k = dict()
             k_range = 6
-            for k in xrange(1, k_range):
+            for k in range(1, k_range):
                 top_k_list = self.metrics.get_top_k(clf=clf, x_test=x_test, y_test=y_test, k=k)
                 val = np.mean(top_k_list)
                 top_k[k] = val
