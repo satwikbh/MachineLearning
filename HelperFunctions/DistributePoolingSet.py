@@ -1,11 +1,11 @@
-import hickle as hkl
 import pickle as pi
 
+import hickle as hkl
 from scipy.sparse import save_npz
 
-from Utils.LoggerUtil import LoggerUtil
+from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
-from HelperFunction import HelperFunction
+from Utils.LoggerUtil import LoggerUtil
 
 
 class DistributePoolingSet:
@@ -20,25 +20,25 @@ class DistributePoolingSet:
         try:
             feature_vector_path = self.config['data']['feature_vector_path']
             file_name = feature_vector_path + "/" + self.feature_vector_ext + ".hkl"
-            hkl.dump(feature_vector.tocsr(), file_name, mode='w', compression='gzip')
+            hkl.dump(feature_vector.tocsr(), file_name, mode='wb', compression='gzip')
             return file_name
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def save_feature_pool(self, feature_pool_path, values, index):
         try:
-            file_object = open(feature_pool_path + "/" + "feature_pool_part_" + str(index) + ".dump", "w")
+            file_object = open(feature_pool_path + "/" + "feature_pool_part_" + str(index) + ".dump", "wb")
             pi.dump(values, file_object)
             file_object.close()
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def save_distributed_feature_vector(self, mini_batch_matrix, feature_vector_path, index):
         try:
             file_name = feature_vector_path + "/" + "feature_vector_part_" + str(index) + ".npz"
-            file_object = open(file_name, "w")
+            file_object = open(file_name, "wb")
             save_npz(file_object, mini_batch_matrix, compressed=True)
             file_object.close()
             return file_name
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")

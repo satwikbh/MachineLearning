@@ -1,22 +1,19 @@
 import json
-import numpy as np
-
 from time import time
 
-from sklearn.model_selection import train_test_split
-from scipy.sparse import coo_matrix, vstack, save_npz
-
+import numpy as np
 from imblearn.over_sampling import SMOTE
+from scipy.sparse import coo_matrix, vstack, save_npz
+from sklearn.model_selection import train_test_split
 
-from Utils.LoggerUtil import LoggerUtil
-from Utils.DBUtils import DBUtils
-from Utils.ConfigUtil import ConfigUtil
 from HelperFunctions.HelperFunction import HelperFunction
-from LoadData import LoadData
+from PrepareData.LoadData import LoadData
+from Utils.ConfigUtil import ConfigUtil
+from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
 
 
 class ClassImbalanceSmote:
-
     def __init__(self):
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
@@ -31,11 +28,9 @@ class ClassImbalanceSmote:
             if family_name in keys:
                 vector[keys.index(family_name)] = 1
 
-        if vector.count(1) == 1:
-            pass
-        elif vector.count(1) < 1:
+        if vector.count(1) < 1:
             self.log.error("Error : {}".format(docs))
-        else:
+        if vector.count(1) > 1:
             for each_doc in docs:
                 family_name = each_doc["family_name"]
                 score = each_doc["score"]
@@ -56,7 +51,7 @@ class ClassImbalanceSmote:
         avclass_dist = list()
 
         for key, list_of_vs_keys in classified.items():
-            self.log.info("Working on Malware family : {}\tNumber of keys : {}".format(key, len(list_of_vs_keys)))
+            self.log.info(F"Working on Malware family : {key}\tNumber of keys : {len(list_of_vs_keys)}")
             family_vector = list()
             for vs_name in list_of_vs_keys:
                 md5 = vs_name.split("_")[1]
@@ -67,7 +62,7 @@ class ClassImbalanceSmote:
             avclass_dist.append(family_vector)
 
         avclass_dist = vstack(avclass_dist)
-        self.log.info("Final Shape : {}".format(avclass_dist.shape))
+        self.log.info(F"Final Shape : {avclass_dist.shape}")
         return avclass_dist
 
     @staticmethod
@@ -85,15 +80,20 @@ class ClassImbalanceSmote:
     def save_avclass_distribution(self, avclass_dist_path, avclass_dist):
         try:
             file_name = avclass_dist_path + "/" + "avclass_dist.npz"
-            file_object = open(file_name, "w")
+            file_object = open(file_name, "wb")
             save_npz(file_object, avclass_dist, compressed=True)
             file_object.close()
         except Exception as e:
             self.log.error("Error : {}".format(e))
 
-    def save_smote_data(self, smote_path, x_train_smote, y_train_smote,
-                        x_test_smote, y_test_smote,
-                        av_train_dist, av_test_dist):
+    def save_smote_data(self, **kwargs):
+        smote_path = kwargs["smote_path"]
+        x_train_smote = kwargs["x_train_smote"]
+        y_train_smote = kwargs["y_train_smote"]
+        x_test_smote = kwargs["x_test_smote"]
+        y_test_smote = kwargs["y_test_smote"]
+        av_train_dist = kwargs["av_train_dist"]
+        av_test_dist = kwargs["av_test_dist"]
         try:
             save_npz(smote_path + "/" + "smote_train_data", x_train_smote)
             np.savez_compressed(smote_path + "/" + "smote_train_labels", y_train_smote)
@@ -127,10 +127,10 @@ class ClassImbalanceSmote:
             labels=labels,
             avclass_dist=avclass_dist,
             n_jobs=n_jobs)
-        self.save_smote_data(smote_path, x_train_smote, y_train_smote,
-                             x_test_smote, y_test_smote,
-                             av_train_dist, av_test_dist)
-        self.log.info("Total time taken : {}".format(time() - start_time))
+        self.save_smote_data(smote_path=smote_path, x_train_smote=x_train_smote, y_train_smote=y_train_smote,
+                             x_test_smote=x_test_smote, y_test_smote=y_test_smote, av_train_dist=av_train_dist,
+                             av_test_dist=av_test_dist)
+        self.log.info(F"Total time taken : {time() - start_time}")
 
 
 if __name__ == '__main__':

@@ -43,8 +43,8 @@ class TrieBasedPruning:
         meta_dict.default_factory = meta_dict.__len__
         for index, key in enumerate(d.keys()):
             if index % 10 ** 5 == 0:
-                self.log.info("Iter : #{}".format(index))
-            unpruned_list = trie.prefixes(self.helper.make_unicode(key))
+                self.log.info(F"Iter : #{index}")
+            unpruned_list = trie.prefixes(key)
             unpruned_list = self.prune_prefix_ids(key, unpruned_list)
             for _ in unpruned_list:
                 meta_dict[_]
@@ -73,7 +73,7 @@ class TrieBasedPruning:
             self.log.info("Loading stat signature feature cluster")
             self.stat_sign_pool = json.load(open(individual_feature_pool_path + "/" + "stat_sign_features.json"))
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     @staticmethod
     def load_tries(trie_path):
@@ -140,7 +140,7 @@ class TrieBasedPruning:
         if len(glob.glob(trie_path + "/" + "*.dump")) == 4:
             files_trie_dict, reg_keys_trie_dict, executed_cmds_trie_dict, mutex_trie_dict = self.load_tries(trie_path)
         else:
-            self.log.info("Trie's not found at path : {}\nBuidling again".format(trie_path))
+            self.log.info(F"Trie's not found at path : {trie_path}\nBuidling again")
             files_trie_dict = self.build_trie(self.files_pool)
             reg_keys_trie_dict = self.build_trie(self.reg_keys_pool)
             executed_cmds_trie_dict = self.build_trie(self.exec_commands_pool)
@@ -153,7 +153,7 @@ class TrieBasedPruning:
                                 meta_reg_keys_pool=meta_reg_keys_pool,
                                 meta_executed_cmds_pool=meta_executed_cmds_pool,
                                 meta_mutex_pool=meta_mutex_pool)
-        self.log.info("Total time taken : {}".format(time() - start_time))
+        self.log.info(F"Total time taken : {time() - start_time}")
 
 
 if __name__ == '__main__':

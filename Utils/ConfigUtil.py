@@ -7,7 +7,7 @@ class ConfigUtil:
 
     @staticmethod
     def get_config_instance():
-        with open('Config.json') as json_data_file:
+        with open('/home/satwik/Documents/MachineLearning/Config.json') as json_data_file:
             data = json.load(json_data_file)
 
         return data

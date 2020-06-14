@@ -1,6 +1,6 @@
-from time import time
-
 import pandas as pd
+
+from time import time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV

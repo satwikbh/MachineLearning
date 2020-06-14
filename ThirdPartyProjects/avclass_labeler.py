@@ -7,7 +7,7 @@ from Utils.LoggerUtil import LoggerUtil
 import argparse
 import traceback
 import os
-import urllib
+from urllib.parse import quote
 import evaluate_clustering as ec
 import sys
 
@@ -36,7 +36,7 @@ def get_client(address, port, username, password, auth_db, is_auth_enabled):
 def get_connection():
     username = config['environment']['mongo']['username']
     pwd = config['environment']['mongo']['password']
-    password = urllib.quote(pwd)
+    password = quote(pwd)
     address = config['environment']['mongo']['address']
     port = config['environment']['mongo']['port']
     auth_db = config['environment']['mongo']['auth_db']
@@ -85,7 +85,7 @@ def main(args):
                 gt_dict[gt_hash] = family
 
         # Guess type of hash in ground truth file
-        hash_type = guess_hash(gt_dict.keys()[0])
+        hash_type = guess_hash([_ for _ in gt_dict.keys()][0])
 
     # Create AvLabels object
     av_labels = AvLabels(args.gen, args.alias, args.av)
@@ -247,24 +247,25 @@ def main(args):
                         else:
                             ff = family
                         try:
-                            numAll, numMal, numPup = fam_stats[ff]
+                            num_all, num_mal, num_pup = fam_stats[ff]
                         except KeyError:
-                            numAll = 0
-                            numMal = 0
-                            numPup = 0
+                            num_all = 0
+                            num_mal = 0
+                            num_pup = 0
 
-                        numAll += 1
+                        num_all += 1
                         if args.pup:
                             if is_pup:
-                                numPup += 1
+                                num_pup += 1
                             else:
-                                numMal += 1
-                        fam_stats[ff] = (numAll, numMal, numPup)
-                except:
+                                num_mal += 1
+                        fam_stats[ff] = (num_all, num_mal, num_pup)
+                except Exception as e1:
                     traceback.print_exc(file=sys.stderr)
+                    log.error(F"Error : {e1}")
                     continue
-            except Exception as e:
-                log.error("ERROR : {}\nindex : {}\t each_md5 : {}".format(e, index, vt_rep))
+            except Exception as e2:
+                log.error("ERROR : {}\nindex : {}\t each_md5 : {}".format(e2, index, vt_rep))
         count += batch_size
         index += 1
 
@@ -353,11 +354,11 @@ def main(args):
         for (f, fstat) in sorted_pairs:
             if args.pup:
                 if fstat[1] > fstat[2]:
-                    famType = "malware"
+                    fam_type = "malware"
                 else:
-                    famType = "pup"
+                    fam_type = "pup"
                 fam_fd.write("%s\t%d\t%d\t%d\t%s\n" % (f, fstat[0], fstat[1],
-                                                       fstat[2], famType))
+                                                       fstat[2], fam_type))
             else:
                 fam_fd.write("%s\t%d\n" % (f, fstat[0]))
         # Close file

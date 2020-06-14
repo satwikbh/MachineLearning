@@ -1,8 +1,12 @@
 import json
+<<<<<<< HEAD
 import pickle as pi
 import urllib
+=======
+>>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
 from collections import defaultdict
 from time import time
+from urllib.parse import quote
 
 from HelperFunctions.HelperFunction import HelperFunction
 from Utils.ConfigUtil import ConfigUtil
@@ -27,7 +31,7 @@ class IndividualFeatureClusterGeneration:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -82,7 +86,7 @@ class IndividualFeatureClusterGeneration:
             self.add_to_dict(curr_doc=doc["mutexes"], feature_pool=self.mutex_pool)
             self.add_to_dict(curr_doc=doc["executed_commands"], feature_pool=self.exec_commands_pool)
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def get_bow_for_network_feature(self, doc):
         bow = list()
@@ -92,7 +96,7 @@ class IndividualFeatureClusterGeneration:
             elif isinstance(value, list):
                 bow += [str(s) for s in value if isinstance(s, int)]
             else:
-                self.log.error("Something strange at this Key :{} \nValue : {}".format(key, value))
+                self.log.error(F"Something strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_static_feature(self, doc):
@@ -101,7 +105,7 @@ class IndividualFeatureClusterGeneration:
             if isinstance(value, list):
                 bow += value
             if isinstance(value, dict):
-                self.log.info("Something strange at this Key :{} \nValue : {}".format(key, value))
+                self.log.info(F"Something strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_stat_sign_feature(self, doc):
@@ -109,7 +113,7 @@ class IndividualFeatureClusterGeneration:
             bow = [_ for _ in doc]
             return bow
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def get_bow_for_docs(self, doc, feature):
         try:
@@ -125,13 +129,12 @@ class IndividualFeatureClusterGeneration:
                 stat_signatures = self.get_bow_for_stat_sign_feature(doc=doc["statSignatures"])
                 self.add_to_dict(curr_doc=stat_signatures, feature_pool=self.stat_sign_pool)
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def process_docs(self, c2db_collection, list_of_keys, chunk_size):
         x = 0
-
         while x < len(list_of_keys):
-            self.log.info("Working on Iter : #{}".format(x / chunk_size))
+            self.log.info(F"Working on Iter : #{x / chunk_size}")
             if x + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[x: x + chunk_size]
             else:
@@ -188,12 +191,12 @@ class IndividualFeatureClusterGeneration:
             self.log.info("Saving stat signature feature cluster")
             json.dump(self.stat_sign_pool, open(individual_feature_pool_path + "/" + "stat_sign_features.json", "w"))
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def main(self):
         start_time = time()
         individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
-        self.log.info("Preparing Individual Feature Pools at : {}".format(individual_feature_pool_path))
+        self.log.info(F"Preparing Individual Feature Pools at : {individual_feature_pool_path}")
 
         self.files_pool = self.get_cluster_dict()
         self.reg_keys_pool = self.get_cluster_dict()
@@ -215,7 +218,7 @@ class IndividualFeatureClusterGeneration:
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=100)
         self.save_feature_pools(individual_feature_pool_path)
 
-        self.log.info("Total time taken : {}".format(time() - start_time))
+        self.log.info(F"Total time taken : {time() - start_time}")
 
 
 if __name__ == '__main__':

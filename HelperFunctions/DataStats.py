@@ -24,13 +24,12 @@ class DataStats:
         return new_index_pointer
 
     def sum_up(self, partial_index_pointer, col_wise_dist):
-        self.log.info(
-            "partial_index_pointer : {}\tcol_wise_dist : {}".format(len(partial_index_pointer), len(col_wise_dist)))
+        self.log.info(F"partial_index_pointer : {len(partial_index_pointer)}\tcol_wise_dist : {len(col_wise_dist)}")
         if len(col_wise_dist) == 0:
             return partial_index_pointer
         else:
             assert len(partial_index_pointer) == len(col_wise_dist)
-            for x in xrange(len(partial_index_pointer)):
+            for x in range(len(partial_index_pointer)):
                 col_wise_dist[x] = col_wise_dist[x] + partial_index_pointer[x]
             return col_wise_dist
 
@@ -38,7 +37,7 @@ class DataStats:
         col_wise_dist = list()
         num_rows = 0
         for index, each_file in enumerate(list_of_files):
-            self.log.info("Iteration : {}".format(index))
+            self.log.info(F"Iteration : {index}")
             fv = load_npz(each_file)
             num_rows += fv.shape[0]
             partial_index_pointer = self.stats(fv)
@@ -70,7 +69,6 @@ class DataStats:
     @staticmethod
     def estimate_cols_to_remove(col_wise_dist, threshold):
         cols_to_delete = list()
-        # threshold = np.mean(col_wise_dist)
         for index, value in enumerate(col_wise_dist):
             if value < threshold:
                 cols_to_delete.append(index)
@@ -103,7 +101,7 @@ class DataStats:
             else:
                 p_matrix = feature_selection[count:]
             file_name = feature_selection_path + "/" + "feature_selection_part_" + str(index)
-            self.log.info("Iter : #{}".format(index))
+            self.log.info(F"Iter : #{index}")
             save_npz(file_name, p_matrix, compressed=True)
             count += chunk_size
             index += 1
@@ -131,7 +129,7 @@ class DataStats:
             self.helper.create_dir_if_absent(pruned_feature_selection_path)
             pruned_feature_vector_file_list = self.helper.get_files_ends_with_extension(path=pruned_feature_vector_path,
                                                                                         extension=".npz")
-            self.log.info("Total number of files : {}".format(len(pruned_feature_vector_file_list)))
+            self.log.info(F"Total number of files : {len(pruned_feature_vector_file_list)}")
             col_wise_dist, num_rows = self.get_stats(pruned_feature_vector_file_list)
             np.savez(col_dist_path + "/" + "col_wise_dist.dump", np.asarray(col_wise_dist))
             self.store_pruned_matrix(feature_vector=pruned_feature_vector_file_list, col_wise_dist=col_wise_dist,
@@ -146,7 +144,7 @@ class DataStats:
             unpruned_feature_vector_file_list = self.helper.get_files_ends_with_extension(
                 path=unpruned_feature_vector_path,
                 extension=".npz")
-            self.log.info("Total number of files : {}".format(len(unpruned_feature_vector_file_list)))
+            self.log.info(F"Total number of files : {len(unpruned_feature_vector_file_list)}")
             col_wise_dist, num_rows = self.get_stats(unpruned_feature_vector_file_list)
             np.savez(col_dist_path + "/" + "unpruned_col_wise_dist.dump", np.asarray(col_wise_dist))
             self.store_pruned_matrix(feature_vector=unpruned_feature_vector_file_list, col_wise_dist=col_wise_dist,
@@ -155,4 +153,4 @@ class DataStats:
                                            variance_threshold=variance_threshold, chunk_size=chunk_size,
                                            feature_selection_path=unpruned_feature_selection_path)
 
-        self.log.info("Total time for execution : {}".format(time() - start_time))
+        self.log.info(F"Total time for execution : {time() - start_time}")

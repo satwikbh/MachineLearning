@@ -1,6 +1,6 @@
 from time import time
 
-from sklearn import metrics
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 from Utils.LoggerUtil import LoggerUtil
 
@@ -11,7 +11,7 @@ class MultiClassMetrics:
 
     @staticmethod
     def confusion_matrix(labels_pred, labels_actual):
-        cnf_matrix = metrics.confusion_matrix(y_true=labels_actual, y_pred=labels_pred)
+        cnf_matrix = confusion_matrix(y_true=labels_actual, y_pred=labels_pred)
         return cnf_matrix
 
     def get_top_k(self, clf, x_test, y_test, k):
@@ -49,9 +49,9 @@ class MultiClassMetrics:
         support_dict = dict()
 
         for average in average_list:
-            precision, recall, fbeta_score, support = metrics.precision_recall_fscore_support(y_true=labels_actual,
-                                                                                              y_pred=labels_pred,
-                                                                                              average=average)
+            precision, recall, fbeta_score, support = precision_recall_fscore_support(y_true=labels_actual,
+                                                                                      y_pred=labels_pred,
+                                                                                      average=average)
             self.log.info(
                 "Metrics for average : {} are : \nPrecision : {}\tRecall : {}\tF1_Score : {}\tSupport : {}".format(
                     average, precision, recall, fbeta_score, support))
@@ -65,7 +65,5 @@ class MultiClassMetrics:
 
     def main(self, labels_pred, labels_actual):
         start_time = time()
-        precision_dict, recall_dict, fbeta_score_dict, support_dict, cnf_matrix = self.metrics(
-            labels_pred=labels_pred,
-            labels_actual=labels_actual)
+        self.metrics(labels_pred=labels_pred, labels_actual=labels_actual)
         self.log.info("Total time taken : {}".format(time() - start_time))

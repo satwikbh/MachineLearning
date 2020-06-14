@@ -1,19 +1,18 @@
 import json
 import math
 import pickle as pi
-
 from collections import defaultdict
-from urllib.parse import quote
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
 from time import time
+from urllib.parse import quote
 
-import ipdb
 import numpy as np
 
 from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.ParsingLogic import ParsingLogic
-from TrieBasedPruning import TrieBasedPruning
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
@@ -29,7 +28,8 @@ class PrepareDataset:
         self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
         self.data_stats = DataStats(use_trie_pruning=self.use_trie_pruning)
-        self.trie_based_pruning = TrieBasedPruning()
+        self.trie_based_pruning = use_trie_pruning()
+        self.feature_pool_part_path_list = list()
 
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
@@ -61,14 +61,14 @@ class PrepareDataset:
         iteration = 0
         while count < len(list_of_keys):
             try:
-                self.log.info("Iteration : {}".format(iteration))
+                self.log.info(F"Iteration : {iteration}")
                 if count + config_param_chunk_size < len(list_of_keys):
                     p_value = list_of_keys[count:count + config_param_chunk_size]
                 else:
                     p_value = list_of_keys[count:]
-                n_value = [key.split("_")[1] for key in p_value if "VirusShare_" in key]
+                p_value = self.helper.convert_from_vs_keys(p_value)
                 count += config_param_chunk_size
-                local_cursor = collection.find({"md5": {"$in": n_value}})
+                local_cursor = collection.find({"md5": {"$in": p_value}})
                 for index, each_value in enumerate(local_cursor):
                     family = each_value['avclass']['result']
                     val = "VirusShare_" + each_value['md5']
@@ -78,34 +78,91 @@ class PrepareDataset:
                         classified_families[family].append(val)
                 iteration += 1
             except Exception as e:
-                self.log.error("Error : {}".format(e))
+                self.log.error(F"Error : {e}")
 
         malware_families_path = self.config['data']['malware_families_list']
 
         json.dump(classified_families, open(malware_families_path + "/" + "classified_families.json", "w"))
         json.dump(unclassified_families, open(malware_families_path + "/" + "unclassified_families.json", "w"))
 
-        self.log.info("Classified : {} \t Unclassified : {}".format(len(classified_families),
-                                                                    len(unclassified_families)))
+        self.log.info(F"Classified : {len(classified_families)} \t Unclassified : {len(unclassified_families)}")
         nested_list = classified_families.values()
         nested_list = self.helper.is_nested_list(nested_list)
         return nested_list
+
+    def collect_parallel_result(self, feature_pool_part_path_list_value):
+        """
+        Collect the result of the parallely executed method
+        :param feature_pool_part_path_list_value:
+        :return:
+        """
+        self.feature_pool_part_path_list.append(feature_pool_part_path_list_value)
+
+    def parallel_parse_and_save_docs(self, list_of_keys, collection, feature_pool_path):
+        """
+        Aggregate over the list of keys for the collection.
+        Parse the resulting documents in doc2bow format and write to file.
+        While saving the file, we use a random number to counter the negative effects of the parallelization.
+        :param list_of_keys:
+        :param collection:
+        :param feature_pool_path:
+        :return:
+        """
+        doc2bow = self.parser.parse_list_of_documents(list_of_keys, collection)
+        index = np.random.RandomState().randint(0, 10 ** 12)
+        feature_pool_part_path_list_value = self.dis_pool.save_feature_pool(feature_pool_path,
+                                                                            self.helper.dict_values_to_list(
+                                                                                doc2bow.values()),
+                                                                            index)
+        return feature_pool_part_path_list_value
+
+    def parallel_generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
+        """
+        This is a parallelized version of the @generate_feature_pool method.
+        :param collection:
+        :param list_of_keys:
+        :param config_param_chunk_size:
+        :param feature_pool_path:
+        :return:
+        """
+        pool = Pool(cpu_count())
+
+        meta_p_keys_list = list()
+        count = 0
+        iteration = 0
+        while count < len(list_of_keys):
+            self.log.info(F"Iteration : {iteration}")
+            if count + config_param_chunk_size < len(list_of_keys):
+                p_list_of_keys = list_of_keys[count:count + config_param_chunk_size]
+            else:
+                p_list_of_keys = list_of_keys[count:]
+            meta_p_keys_list.append(p_list_of_keys)
+            count += config_param_chunk_size
+            iteration += 1
+
+        args = zip(meta_p_keys_list, collection, feature_pool_path)
+        pool.starmap_async(self.parallel_parse_and_save_docs, args, callback=self.collect_parallel_result)
+        pool.close()
+        pool.join()
+
+        # Instead of returning the feature_pool_part_path_list, use self.feature_pool_part_path_list
 
     def generate_feature_pool(self, collection, list_of_keys, config_param_chunk_size, feature_pool_path):
         feature_pool_part_path_list = list()
         count = 0
         iteration = 0
         while count < len(list_of_keys):
-            self.log.info("Iteration : {}".format(iteration))
+            self.log.info(F"Iteration : {iteration}")
             if count + config_param_chunk_size < len(list_of_keys):
-                value = list_of_keys[count:count + config_param_chunk_size]
+                p_list_of_keys = list_of_keys[count:count + config_param_chunk_size]
             else:
-                value = list_of_keys[count:]
+                p_list_of_keys = list_of_keys[count:]
             count += config_param_chunk_size
-            doc2bow = self.parser.parse_each_document(value, collection)
+            doc2bow = self.parser.parse_list_of_documents(p_list_of_keys, collection)
             iteration += 1
             feature_pool_part_path_list_value = self.dis_pool.save_feature_pool(feature_pool_path,
-                                                                                list(doc2bow.values()),
+                                                                                self.helper.dict_values_to_list(
+                                                                                    doc2bow.values()),
                                                                                 iteration)
             feature_pool_part_path_list.append(feature_pool_part_path_list_value)
             del doc2bow
@@ -118,13 +175,13 @@ class PrepareDataset:
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                   path=pruned_feature_vector_path)
         if len(pruned_indi_feature_pool_part_list) == 7:
-            self.log.info("Feature pool already generated at : {}".format(pruned_indi_feature_pool_path))
+            self.log.info(F"Feature pool already generated at : {pruned_indi_feature_pool_path}")
         else:
             self.trie_based_pruning.main()
         feature_pool_part_path_list = self.helper.get_files_ends_with_extension(extension="dump",
                                                                                 path=feature_pool_path)
         if len(feature_vector_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
-            self.log.info("Feature vector already generated at : {}".format(pruned_feature_vector_path))
+            self.log.info(F"Feature vector already generated at : {pruned_feature_vector_path}")
             return pruned_feature_vector_path
         else:
             return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
@@ -137,8 +194,9 @@ class PrepareDataset:
                                                                                 path=feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                   path=unpruned_feature_vector_path)
+
         if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
-            self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
+            self.log.info(F"Feature pool already generated at : {feature_pool_path}")
         else:
             feature_pool_part_path_list = self.generate_feature_pool(collection, list_of_keys,
                                                                      config_param_chunk_size,
@@ -146,11 +204,11 @@ class PrepareDataset:
         client.close()
 
         if len(feature_vector_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
-            self.log.info("Feature vector already generated at : {}".format(unpruned_feature_vector_path))
+            self.log.info(F"Feature vector already generated at : {unpruned_feature_vector_path}")
             return unpruned_feature_vector_path
         else:
             return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
-                                           feature_vector_path=unpruned_feature_vector_path, num_rows=len(list_of_keys), list_of_keys=list_of_keys)
+                                           feature_vector_path=unpruned_feature_vector_path, num_rows=len(list_of_keys))
 
     def get_data_as_matrix(self, **kwargs):
         client = kwargs["client"]
@@ -184,6 +242,7 @@ class PrepareDataset:
         list_of_families.default_factory = list_of_families.__len__
 
         checker = list()
+        index = 0
 
         while x < len(md5_keys):
             if x + config_param_chunk_size > len(md5_keys):
@@ -206,7 +265,8 @@ class PrepareDataset:
                 except Exception as e:
                     self.log.error(F"Error : {e}")
             x += config_param_chunk_size
-            self.log.info("Iteration : #{}".format(x))
+            index += 1
+            self.log.info(F"Iteration : #{index}")
         if not np.all([md5_keys[x] == checker[x] for x in range(len(md5_keys))]):
             raise Exception("Labels are not generated properly")
 
@@ -227,19 +287,17 @@ class PrepareDataset:
         pruned_feature_vector_path = self.config["data"]["pruned_feature_vector_path"]
 
         client, c2db_collection, avclass_collection = self.get_collection()
-        """
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
+
         list_of_keys = list()
 
         for each_element in cursor:
             list_of_keys.append(each_element['_id'])
 
-        self.log.info("Total keys are : {}".format(len(list_of_keys)))
+        self.log.info(F"Total keys before AVClass : {len(list_of_keys)}")
         list_of_keys = self.get_families_data(avclass_collection, list_of_keys, config_param_chunk_size)
-        self.log.info("Total keys after AVClass : {}".format(len(list_of_keys)))
+        self.log.info(F"Total keys after AVClass : {len(list_of_keys)}")
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
-        """
-        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json"))
 
         if self.use_trie_pruning:
             self.helper.create_dir_if_absent(pruned_indi_feature_pool_path)
@@ -256,9 +314,9 @@ class PrepareDataset:
         self.data_stats.main()
         labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
         pi.dump(labels, open(labels_path + "/" + "labels.pkl", "wb"))
-        self.log.info("Total time taken : {}".format(time() - start_time))
+        self.log.info(F"Total time taken : {time() - start_time}")
 
 
 if __name__ == "__main__":
-    prepare_dataset = PrepareDataset(use_trie_pruning=False)
+    prepare_dataset = PrepareDataset(use_trie_pruning=True)
     prepare_dataset.load_data()

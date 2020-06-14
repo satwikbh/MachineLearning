@@ -1,8 +1,8 @@
 import pickle as pi
-import urllib
-from time import time
-
 import os
+
+from urllib.parse import quote
+from time import time
 from os.path import isfile, join
 
 from Utils.ConfigUtil import ConfigUtil
@@ -24,7 +24,7 @@ class Cluster2db(object):
         auth_db = self.config['environment']['mongo']['auth_db']
         is_auth_enabled = self.config['environment']['mongo']['is_auth_enabled']
 
-        password = urllib.quote(pwd)
+        password = quote(pwd)
 
         client = self.db_utils.get_client(address=address, port=port, auth_db=auth_db, is_auth_enabled=is_auth_enabled,
                                           username=username, password=password)
@@ -138,16 +138,14 @@ class Cluster2db(object):
         main_doc['signatures'] = doc
         return main_doc
 
-    def convert_unknown_features_to_json(self, value):
+    @staticmethod
+    def convert_unknown_features_to_json(value):
         """
+        TODO: Need to implement this.
         :param value: 
         :return: 
         """
         main_doc = dict()
-        try:
-            pass
-        except Exception as e:
-            self.log.error("Error : {}".format(e))
         return main_doc
 
     def convert_malheur_value_to_json(self, value):
@@ -178,47 +176,46 @@ class Cluster2db(object):
             f = open(fname)
             behavior_profile = pi.load(f)
 
-            if isinstance(behavior_profile, list):
-                if fname.endswith(".failedAnalyses.cluster"):
-                    document = dict()
-                    document["key"] = "failedAnalyses"
-                    cursor = collection.find({"key": "failedAnalyses"})
-                    failed_list = list()
-                    for each in cursor:
-                        failed_list += each.get("value")
-                    failed_list += behavior_profile
-                    document["value"] = list(set(failed_list))
-                    collection.remove({"key": "failedAnalyses"})
-                    collection.insert(document)
+            if isinstance(behavior_profile, list) and fname.endswith(".failed_analyses.cluster"):
+                document = dict()
+                document["key"] = "failed_analyses"
+                cursor = collection.find({"key": "failed_analyses"})
+                failed_list = list()
+                for each in cursor:
+                    failed_list += each.get("value")
+                failed_list += behavior_profile
+                document["value"] = list(set(failed_list))
+                collection.remove({"key": "failed_analyses"})
+                collection.insert(document)
 
             if isinstance(behavior_profile, dict):
                 if len(behavior_profile.keys()) <= 0:
                     return
                 else:
-                    md5 = behavior_profile.keys()[0]
+                    md5 = [_ for _ in behavior_profile.keys()][0]
                     document = dict()
                     if '.' in md5:
                         behavior_profile[md5.split(".")[0]] = behavior_profile.pop(md5)
                         document['key'] = md5.split(".")[0]
                     else:
                         document['key'] = md5
-                    value = behavior_profile.values()[0]
-                    if fname.endswith(".behaviorDump.cluster"):
+                    value = [_ for _ in behavior_profile.values()][0]
+                    if fname.endswith(".behavior_dump.cluster"):
                         self.convert_behavior_dump_to_json(value)
                         document['feature'] = 'behavior'
-                    elif fname.endswith(".networkDump.cluster"):
+                    elif fname.endswith(".network_dump.cluster"):
                         self.convert_network_dump_to_json(value)
                         document['feature'] = 'network'
-                    elif fname.endswith(".staticDump.cluster"):
+                    elif fname.endswith(".static_dump.cluster"):
                         self.convert_static_dump_to_json(value)
                         document['feature'] = 'static'
                     elif fname.endswith(".statsDump.cluster"):
                         self.convert_statistics_dump_to_json(value)
                         document['feature'] = 'statSignatures'
-                    elif fname.endswith(".signatureDump.cluster"):
+                    elif fname.endswith(".signature_dump.cluster"):
                         behavior_profile = {document['key']: self.convert_signatures_dump_to_json(value)}
                         document['feature'] = 'signatures'
-                    elif fname.endswith(".malheurDump.cluster"):
+                    elif fname.endswith(".malheur_dump.cluster"):
                         behavior_profile = {document['key']: self.convert_malheur_value_to_json(value)}
                         document['feature'] = 'malheur'
                     elif fname.endswith(".unknownFeatures.cluster"):
@@ -238,15 +235,15 @@ class Cluster2db(object):
         if key == "statSignatures":
             return "statsDump"
         if key == "static":
-            return "staticDump"
+            return "static_dump"
         if key == "signatures":
-            return "signatureDump"
+            return "signature_dump"
         if key == "network":
-            return "networkDump"
+            return "network_dump"
         if key == "malheur":
-            return "malheurDump"
+            return "malheur_dump"
         if key == "behavior":
-            return "behaviorDump"
+            return "behavior_dump"
 
     @staticmethod
     def present_in_db(collection, files_list):
@@ -255,7 +252,7 @@ class Cluster2db(object):
         for each in cursor:
             key = each.get("key")
             feature = each.get("feature")
-            if "failedAnalyses" not in key:
+            if "failed_analyses" not in key:
                 val = key + "." + Cluster2db.key_mapping(feature) + ".cluster"
                 list_of_keys_in_mongo.append(val)
         return set(files_list).difference(set(list_of_keys_in_mongo))

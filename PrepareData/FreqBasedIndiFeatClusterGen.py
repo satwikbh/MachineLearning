@@ -1,6 +1,6 @@
 import json
-import urllib
 from time import time
+from urllib.parse import quote
 
 import pickle as pi
 import numpy as np
@@ -28,7 +28,7 @@ class FreqBasedIndiFeatClusterGen:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -85,7 +85,7 @@ class FreqBasedIndiFeatClusterGen:
             self.add_to_dict(curr_doc=doc["mutexes"], feature_pool=self.mutex_pool)
             self.add_to_dict(curr_doc=doc["executed_commands"], feature_pool=self.exec_commands_pool)
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def get_bow_for_network_feature(self, doc):
         bow = list()
@@ -95,7 +95,7 @@ class FreqBasedIndiFeatClusterGen:
             elif isinstance(value, list):
                 bow += [str(s) for s in value if isinstance(s, int)]
             else:
-                self.log.error("Something strange at this Key :{} \nValue : {}".format(key, value))
+                self.log.error(F"Something strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_static_feature(self, doc):
@@ -104,7 +104,7 @@ class FreqBasedIndiFeatClusterGen:
             if isinstance(value, list):
                 bow += value
             if isinstance(value, dict):
-                self.log.info("Something strange at this Key :{} \nValue : {}".format(key, value))
+                self.log.info(F"Something strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_stat_sign_feature(self, doc):
@@ -112,7 +112,7 @@ class FreqBasedIndiFeatClusterGen:
             bow = [_ for _ in doc]
             return bow
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def get_bow_for_docs(self, doc, feature):
         try:
@@ -128,13 +128,13 @@ class FreqBasedIndiFeatClusterGen:
                 stat_signatures = self.get_bow_for_stat_sign_feature(doc=doc["statSignatures"])
                 self.add_to_dict(curr_doc=stat_signatures, feature_pool=self.stat_sign_pool)
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def process_docs(self, c2db_collection, list_of_keys, chunk_size):
         counter = 0
 
         while counter < len(list_of_keys):
-            self.log.info("Working on Iter : #{}".format(counter / chunk_size))
+            self.log.info(F"Working on Iter : #{counter / chunk_size}")
             if counter + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[counter: counter + chunk_size]
             else:
@@ -191,7 +191,7 @@ class FreqBasedIndiFeatClusterGen:
             self.log.info("Saving stat signature feature cluster")
             json.dump(feature_list[6], open(individual_feature_pool_path + "/" + "stat_sign_features.json", "w"))
         except Exception as e:
-            self.log.error("Error : {}".format(e))
+            self.log.error(F"Error : {e}")
 
     def prune_features(self, top_k_features):
         """
@@ -238,8 +238,7 @@ class FreqBasedIndiFeatClusterGen:
         freq_individual_feature_pool_path = self.config["data"]["freq_individual_feature_pool_path"]
         top_k_features = self.config["data"]["top_k_features"]
 
-        self.log.info(
-            "Preparing Frequency based individual Feature Pools at : {}".format(freq_individual_feature_pool_path))
+        self.log.info(F"Preparing Frequency based individual Feature Pools at : {freq_individual_feature_pool_path}")
 
         self.files_pool = self.get_cluster_dict()
         self.reg_keys_pool = self.get_cluster_dict()
@@ -260,7 +259,7 @@ class FreqBasedIndiFeatClusterGen:
         feature_list = self.prune_features(top_k_features=top_k_features)
         self.save_feature_pools(freq_individual_feature_pool_path, feature_list)
 
-        self.log.info("Total time taken : {}".format(time() - start_time))
+        self.log.info(F"Total time taken : {time() - start_time}")
 
 
 if __name__ == '__main__':

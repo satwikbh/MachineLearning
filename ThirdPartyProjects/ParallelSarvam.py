@@ -3,10 +3,10 @@ import os
 import array
 import glob
 import gist
-import urllib
 import logging
 
-from scipy.misc import imsave
+from skimage.io import imsave
+from urllib.parse import quote
 from keras.preprocessing.image import img_to_array, load_img
 from multiprocessing import Pool, get_logger
 from time import time
@@ -23,6 +23,9 @@ db_utils = DBUtils()
 
 """
 Parallel Sarvam.
+https://github.com/tuttieee/lear-gist-python
+This version of gist needs to be installed by following the above instructions but not 
+regular pip install.
 """
 
 
@@ -40,7 +43,7 @@ def create_logger():
 def get_collection():
     username = config['environment']['mongo']['username']
     pwd = config['environment']['mongo']['password']
-    password = urllib.quote(pwd)
+    password = quote(pwd)
     address = config['environment']['mongo']['address']
     port = config['environment']['mongo']['port']
     auth_db = config['environment']['mongo']['auth_db']

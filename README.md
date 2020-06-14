@@ -1,30 +1,19 @@
 # MachineLearning
 
-My experiments with various machine learning algorithms.
+Code to generate the dataset from cuckoo reports of analyzed malware binaries. 
+This branch is a python3 implementation and consists of major changes due to porting. 
 
-Following are the various algorithms I have worked on:
-
-1. Linear Dimensionality Reduction Techniques
-	* Singular Value Decomposition
-	* Principal Component Analysis
-2. Non Linear Dimensionality Reduction Techniques
-	* Local Linear Embedding
-	* t-Distributed Stochastic Neighbor Embedding
-	* Stacked AutoEncoders
-3. Clustering
-	* Hierarchical Clustering Algorithm
-4. Miscellaneous
-	* Gap Statistic to determine optimal value of K in k-means
-
-### Datasets:
-Link to dataset
-
-https://www.dropbox.com/sh/d3fjjzic5zbga9r/AACnk2e5q537DrJD-876LAF5a?dl=0
-
-### IMP:
-* All the models are stored at **models** in config file.
-* Best parameters for Dim Red. are stored at **dr_params**.
-* Clustering results are stored at **clustering_results**.
+## Updates:
+1. Clustering module is no longer necessary and hence is removed in its entirely.
+2. MDS from Linear Dimensionality is not used and hence removed.
+3. Standardized the usage of Utility functions and hence, its unnecessary to implement a custom logger module.
+4. Non-Linear Dimensionality module is removed as only Autoencoder is being used. The code needs to be written separately based on the jupyter notebook of the same.
+5. Old Code is irrelevant and hence removed. 
+6. DataGeneratorKeras.py from PrepareData module is removed.
+7. Many changes have been performed such as 
+    a. Optimizing code.
+    b. Re-writing for python 3 compatibility.
+    c. Dead-code removal.
 
 ### Authors:
 Satwik
