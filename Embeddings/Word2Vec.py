@@ -1,10 +1,11 @@
 from urllib.parse import quote
-from gensim.models import Word2Vec, FastText, word2vec
+
+from gensim.models import word2vec
 
 from PrepareData.ParsingLogic import ParsingLogic
-from Utils.LoggerUtil import LoggerUtil
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
+from Utils.LoggerUtil import LoggerUtil
 
 
 class Word2Vec:
@@ -86,7 +87,7 @@ class Word2Vec:
                         "VirusShare_3b32f4b2d50b0ec87a73526f03bf6ad0", "VirusShare_340ed801725f236952e7d2f15d991320",
                         "VirusShare_b6dc3a2fbc6eb7581623a4a53c00a320", "VirusShare_e0230fa68d921796ca18618b82d4e550",
                         "VirusShare_bb0a9a00c1cae8c76c0be6b5ba413000", "VirusShare_3a708cd3cc91ad9b6acb77de3095c380"]
-        doc2bow = self.parser.parse_each_document(list_of_keys, c2db_collection)
+        doc2bow = self.parser.parse_list_of_documents(list_of_keys, c2db_collection)
         # print(type(doc2bow))
         model = word2vec.Word2Vec(sentences=doc2bow.values(), min_count=2, size=30, compute_loss=True)
         print(F"Training Loss : {model.get_latest_training_loss()}")

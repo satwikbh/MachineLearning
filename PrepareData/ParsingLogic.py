@@ -1,10 +1,12 @@
 import glob
 import json
 import pickle as pi
-import numpy as np
-
 from collections import defaultdict
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
 from time import time
+
+import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
@@ -25,6 +27,8 @@ class ParsingLogic:
         self.network_pool = None
         self.static_feature_pool = None
         self.stat_sign_feature_pool = None
+        self.fv_dist_fnames = list()
+        self.feature_vector_list = list()
 
     def get_bow_for_behavior_feature(self, feature, doc):
         bow = list()
@@ -83,7 +87,7 @@ class ParsingLogic:
             self.log.error("Feature other than behavior, network, static, statistic accessed.")
             return None
 
-    def parse_each_document(self, list_of_docs, collection):
+    def parse_list_of_documents(self, list_of_docs, collection):
         doc2bow = defaultdict(list)
         self.log.info("************ Parsing the documents *************")
         start_time = time()
@@ -172,7 +176,7 @@ class ParsingLogic:
         cluster_dict.default_factory = cluster_dict.__len__
 
         for index, each_file in enumerate(feature_pool_part_path_list):
-            self.log.info("Final pool preparation Iteration: #{}".format(index))
+            self.log.info(F"Final pool preparation Iteration: #{index}")
             file_object = open(each_file)
             doc2bow = pi.load(file_object)
             flat_list = self.helper.flatten_list(doc2bow)
@@ -184,6 +188,58 @@ class ParsingLogic:
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
         return cluster_dict
 
+    def collect_parallel_results(self, fv_dist_part_file_name):
+        self.fv_dist_fnames.append(fv_dist_part_file_name)
+
+    def parallel_parse_covert_save_docs(self, file_name, cluster_dict, feature_vector_path):
+        file_object = open(file_name, "rb")
+        doc2bow = pi.load(file_object)
+        matrix = list()
+        for inner_index, each in enumerate(doc2bow):
+            column = list(set([cluster_dict.get(x) for x in each if x in cluster_dict]))
+            row = len(column) * [0]
+            data = len(column) * [1.0]
+
+            value = coo_matrix((data, (row, column)), shape=(1, len(cluster_dict.keys())), dtype=np.float32)
+            matrix.append(value)
+
+        mini_batch_matrix = vstack(matrix)
+        index = np.random.RandomState().randint(0, 10 ** 12)
+        fv_dist_part_file_name = self.dis_pool.save_distributed_feature_vector(mini_batch_matrix,
+                                                                               feature_vector_path,
+                                                                               index)
+        return fv_dist_part_file_name
+
+    def parallel_convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows,
+                             pruned_feature_pool_path=None):
+        """
+        Parallellized version for the @convert2vec method.
+        :param pruned_feature_pool_path: This is valid only if the trie based pruning is applied.
+        :param feature_pool_part_path_list:
+        :param feature_vector_path:
+        :param num_rows:
+        :return:
+        """
+        fv_dist_fnames = list()
+
+        if self.use_trie_pruning:
+            cluster_dict = self.pruning_feature_cluster(pruned_feature_pool_path=pruned_feature_pool_path)
+        else:
+            cluster_dict = self.non_pruning_feature_cluster(feature_pool_part_path_list=feature_pool_part_path_list)
+        num_cols = len(cluster_dict.keys())
+        self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
+
+        start_time = time()
+
+        pool = Pool(cpu_count())
+        args = zip(feature_pool_part_path_list, cluster_dict, feature_vector_path)
+        pool.starmap_async(self.parallel_parse_covert_save_docs, args, callback=self.collect_parallel_results)
+        pool.close()
+        pool.join()
+
+        self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
+        return fv_dist_fnames
+
     def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows, pruned_feature_pool_path=None):
         """
         Generate & return the feature vector path names
@@ -194,7 +250,6 @@ class ParsingLogic:
         :param num_rows:
         :return:
         """
-        feature_vector_list = list()
         fv_dist_fnames = list()
 
         if self.use_trie_pruning:
@@ -206,7 +261,7 @@ class ParsingLogic:
 
         start_time = time()
         for index, each_file in enumerate(feature_pool_part_path_list):
-            file_object = open(each_file)
+            file_object = open(each_file, "rb")
             doc2bow = pi.load(file_object)
             matrix = list()
             for inner_index, each in enumerate(doc2bow):
@@ -223,7 +278,6 @@ class ParsingLogic:
                                                                                    feature_vector_path,
                                                                                    index)
             fv_dist_fnames.append(fv_dist_part_file_name)
-            feature_vector_list.append(mini_batch_matrix)
             file_object.close()
 
         self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))

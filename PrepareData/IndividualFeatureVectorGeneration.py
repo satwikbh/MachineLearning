@@ -1,9 +1,9 @@
 import glob
 import json
-import numpy as np
-
 from time import time
 from urllib.parse import quote
+
+import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
@@ -95,7 +95,7 @@ class IndividualFeatureGeneration:
         index = 0
 
         while x < len(list_of_keys):
-            self.log.info("Working on Iter : #{}".format(x / chunk_size))
+            self.log.info(F"Working on Iter : #{x / chunk_size}")
             if x + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[x: x + chunk_size]
             else:
@@ -190,8 +190,7 @@ class IndividualFeatureGeneration:
             elif isinstance(value, list):
                 bow += [str(s) for s in value if isinstance(s, int)]
             else:
-                self.log.error(
-                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+                self.log.error(F"In feature {feature} \nSomething strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_network_feature(self, doc):
@@ -205,8 +204,7 @@ class IndividualFeatureGeneration:
             if isinstance(value, list):
                 bow += value
             if isinstance(value, dict):
-                self.log.error(
-                    "In feature {} \nSomething strange at this Key :{} \nValue : {}".format(feature, key, value))
+                self.log.error(F"In feature {feature} \nSomething strange at this Key :{key} \nValue : {value}")
         return bow
 
     def get_bow_for_static_feature(self, doc):
@@ -278,7 +276,7 @@ class IndividualFeatureGeneration:
                           mutexes_fv_path=mutexes_fv_path, exec_cmds_fv_path=exec_cmds_fv_path,
                           network_fv_path=network_fv_path, static_feature_fv_path=static_feature_fv_path)
 
-        self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
+        self.log.info(F"Time taken for Convert 2 Vector : {time() - start_time}")
 
 
 if __name__ == '__main__':

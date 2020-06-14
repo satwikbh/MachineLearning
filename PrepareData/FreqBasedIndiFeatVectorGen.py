@@ -1,9 +1,9 @@
 import glob
-import numpy as np
 import json
-
 from time import time
 from urllib.parse import quote
+
+import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
@@ -96,7 +96,7 @@ class FreqBasedIndiFeatVectorGen:
             list_of_network_features = list()
             list_of_static_features = list()
 
-            self.log.info("Working on Iter : #{}".format(counter / chunk_size))
+            self.log.info(F"Working on Iter : #{counter / chunk_size}")
             if counter + chunk_size < len(list_of_keys):
                 p_keys = list_of_keys[counter: counter + chunk_size]
             else:
@@ -255,7 +255,7 @@ class FreqBasedIndiFeatVectorGen:
                           mutexes_fv_path=mutexes_fv_path, exec_cmds_fv_path=exec_cmds_fv_path,
                           network_fv_path=network_fv_path, static_feature_fv_path=static_feature_fv_path)
 
-        self.log.info("Time taken for Convert 2 Vector : {}".format(time() - start_time))
+        self.log.info(F"Time taken for Convert 2 Vector : {time() - start_time}")
 
 
 if __name__ == '__main__':
