@@ -3,6 +3,7 @@ import pickle as pi
 import urllib
 import numpy as np
 import json
+import ipdb
 
 from time import time
 from scipy.sparse import coo_matrix, vstack
@@ -89,7 +90,6 @@ class FreqBasedIndiFeatVectorGen:
         index = 0
 
         while counter < len(list_of_keys):
-
             list_of_files_feature = list()
             list_of_reg_keys_feature = list()
             list_of_mutex_features = list()
@@ -238,7 +238,7 @@ class FreqBasedIndiFeatVectorGen:
 
     def main(self):
         start_time = time()
-        chunk_size = 500
+        chunk_size = 100
 
         individual_feature_pool_path = self.config["data"]["freq_individual_feature_pool_path"]
         files_fv_path = self.config["freq_individual_feature_vector_path"]["files_feature"]
@@ -249,7 +249,8 @@ class FreqBasedIndiFeatVectorGen:
         static_feature_fv_path = self.config["freq_individual_feature_vector_path"]["static_feature"]
 
         c2db_collection = self.get_collection()
-        list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
         self.load_feature_pools(indi_feature_path=individual_feature_pool_path)
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=chunk_size,
                           files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,

@@ -1,13 +1,14 @@
 import json
 import math
 import pickle as pi
-import urllib
+
 from collections import defaultdict
+from urllib.parse import quote
 from time import time
 
+import ipdb
 import numpy as np
 
-from Clustering.KMeansImpl import KMeansImpl
 from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
@@ -25,7 +26,6 @@ class PrepareDataset:
         self.use_trie_pruning = use_trie_pruning
         self.parser = ParsingLogic(use_trie_pruning=self.use_trie_pruning)
         self.dis_pool = DistributePoolingSet()
-        self.kmeans = KMeansImpl()
         self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
         self.data_stats = DataStats(use_trie_pruning=self.use_trie_pruning)
@@ -34,7 +34,7 @@ class PrepareDataset:
     def get_collection(self):
         username = self.config['environment']['mongo']['username']
         pwd = self.config['environment']['mongo']['password']
-        password = urllib.quote(pwd)
+        password = quote(pwd)
         address = self.config['environment']['mongo']['address']
         port = self.config['environment']['mongo']['port']
         auth_db = self.config['environment']['mongo']['auth_db']
@@ -105,7 +105,7 @@ class PrepareDataset:
             doc2bow = self.parser.parse_each_document(value, collection)
             iteration += 1
             feature_pool_part_path_list_value = self.dis_pool.save_feature_pool(feature_pool_path,
-                                                                                doc2bow.values(),
+                                                                                list(doc2bow.values()),
                                                                                 iteration)
             feature_pool_part_path_list.append(feature_pool_part_path_list_value)
             del doc2bow
@@ -137,7 +137,6 @@ class PrepareDataset:
                                                                                 path=feature_pool_path)
         feature_vector_part_path_list = self.helper.get_files_ends_with_extension(extension="npz",
                                                                                   path=unpruned_feature_vector_path)
-
         if len(feature_pool_part_path_list) == math.ceil(len(list_of_keys) * 1.0 / config_param_chunk_size):
             self.log.info("Feature pool already generated at : {}".format(feature_pool_path))
         else:
@@ -151,7 +150,7 @@ class PrepareDataset:
             return unpruned_feature_vector_path
         else:
             return self.parser.convert2vec(feature_pool_part_path_list=feature_pool_part_path_list,
-                                           feature_vector_path=unpruned_feature_vector_path, num_rows=len(list_of_keys))
+                                           feature_vector_path=unpruned_feature_vector_path, num_rows=len(list_of_keys), list_of_keys=list_of_keys)
 
     def get_data_as_matrix(self, **kwargs):
         client = kwargs["client"]
@@ -198,14 +197,17 @@ class PrepareDataset:
             ]
             cursor = avclass_collection.aggregate(query)
             for _ in cursor:
-                md5 = _["md5"]
-                family = _["avclass"]["result"]
-                key_index_to_family_mapping[index_pointer] = family
-                index_pointer += 1
-                checker.append(md5)
+                try:
+                    md5 = _["md5"]
+                    family = _["avclass"]["result"]
+                    key_index_to_family_mapping[index_pointer] = family
+                    index_pointer += 1
+                    checker.append(md5)
+                except Exception as e:
+                    self.log.error(F"Error : {e}")
             x += config_param_chunk_size
             self.log.info("Iteration : #{}".format(x))
-        if not np.all([md5_keys[x] == checker[x] for x in xrange(len(md5_keys))]):
+        if not np.all([md5_keys[x] == checker[x] for x in range(len(md5_keys))]):
             raise Exception("Labels are not generated properly")
 
         for x in key_index_to_family_mapping.values():
@@ -225,19 +227,21 @@ class PrepareDataset:
         pruned_feature_vector_path = self.config["data"]["pruned_feature_vector_path"]
 
         client, c2db_collection, avclass_collection = self.get_collection()
+        """
         cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
-
         list_of_keys = list()
 
         for each_element in cursor:
             list_of_keys.append(each_element['_id'])
 
-        self.log.info("Total keys before AVClass : {}".format(len(list_of_keys)))
+        self.log.info("Total keys are : {}".format(len(list_of_keys)))
         list_of_keys = self.get_families_data(avclass_collection, list_of_keys, config_param_chunk_size)
         self.log.info("Total keys after AVClass : {}".format(len(list_of_keys)))
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
+        """
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json"))
 
-        if self.trie_based_pruning:
+        if self.use_trie_pruning:
             self.helper.create_dir_if_absent(pruned_indi_feature_pool_path)
             self.helper.create_dir_if_absent(unpruned_feature_vector_path)
         else:
@@ -251,10 +255,10 @@ class PrepareDataset:
                                 unpruned_feature_vector_path=unpruned_feature_vector_path)
         self.data_stats.main()
         labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
-        pi.dump(labels, open(labels_path + "/" + "labels.pkl", "w"))
+        pi.dump(labels, open(labels_path + "/" + "labels.pkl", "wb"))
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == "__main__":
-    prepare_dataset = PrepareDataset(use_trie_pruning=True)
+    prepare_dataset = PrepareDataset(use_trie_pruning=False)
     prepare_dataset.load_data()

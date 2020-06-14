@@ -2,6 +2,7 @@ import json
 import urllib
 from time import time
 
+import pickle as pi
 import numpy as np
 
 from HelperFunctions.HelperFunction import HelperFunction
@@ -249,8 +250,13 @@ class FreqBasedIndiFeatClusterGen:
         self.stat_sign_pool = self.get_cluster_dict()
 
         c2db_collection = self.get_collection()
-        list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=500)
+        # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        l1 = pi.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.pkl"))
+        l2 = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+
+        list_of_keys = l1 + l2
+
+        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=100)
         feature_list = self.prune_features(top_k_features=top_k_features)
         self.save_feature_pools(freq_individual_feature_pool_path, feature_list)
 

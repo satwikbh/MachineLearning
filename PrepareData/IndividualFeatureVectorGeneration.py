@@ -1,4 +1,5 @@
 import glob
+import pickle as pi
 import json
 import urllib
 from time import time
@@ -216,7 +217,7 @@ class IndividualFeatureGeneration:
 
     @staticmethod
     def gen_vector(feature_pool, doc_feature):
-        column = [feature_pool.get(x) for x in doc_feature]
+        column = [feature_pool.get(x) for x in doc_feature if x in feature_pool]
         row = len(column) * [0]
         data = len(column) * [1.0]
         value = coo_matrix((data, (row, column)), shape=(1, len(feature_pool.keys())), dtype=np.int8)
@@ -260,7 +261,7 @@ class IndividualFeatureGeneration:
 
     def main(self):
         start_time = time()
-        chunk_size = 500
+        chunk_size = 200
 
         individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
         files_fv_path = self.config["individual_feature_vector_path"]["files_feature"]
@@ -271,7 +272,8 @@ class IndividualFeatureGeneration:
         static_feature_fv_path = self.config["individual_feature_vector_path"]["static_feature"]
 
         c2db_collection = self.get_collection()
-        list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
         self.load_feature_pools(indi_feature_path=individual_feature_pool_path)
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=chunk_size,
                           files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,

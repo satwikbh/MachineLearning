@@ -1,4 +1,5 @@
 import json
+import pickle as pi
 import urllib
 from collections import defaultdict
 from time import time
@@ -203,8 +204,15 @@ class IndividualFeatureClusterGeneration:
         self.stat_sign_pool = self.get_cluster_dict()
 
         c2db_collection = self.get_collection()
-        list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=500)
+        # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
+        l1 = pi.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.pkl"))
+        l2 = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+
+        # list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+
+        list_of_keys = l1 + l2
+
+        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=100)
         self.save_feature_pools(individual_feature_pool_path)
 
         self.log.info("Total time taken : {}".format(time() - start_time))
