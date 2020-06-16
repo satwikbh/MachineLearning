@@ -1,10 +1,5 @@
 import glob
 import json
-<<<<<<< HEAD
-import ipdb
-
-=======
->>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
 from time import time
 from urllib.parse import quote
 
@@ -54,7 +49,7 @@ class FreqBasedIndiFeatVectorGen:
         return c2db_collection
 
     def get_list_of_keys(self, c2db_collection):
-        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}])
+        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}], allowDiskUse=True)
         list_of_keys = self.helper.cursor_to_list(cursor, identifier="_id")
         return list_of_keys
 
@@ -106,9 +101,9 @@ class FreqBasedIndiFeatVectorGen:
             else:
                 p_keys = list_of_keys[counter:]
 
-            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"))
-            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"))
-            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"))
+            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"), allowDiskUse=True)
+            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"), allowDiskUse=True)
+            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"), allowDiskUse=True)
 
             for doc in behavior_cursor:
                 key = doc["key"]

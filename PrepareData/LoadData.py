@@ -62,13 +62,7 @@ class LoadData:
                                                        identifier="feature_vector_part_")
         matrix = hstack(
             [files_matrix, reg_keys_matrix, mutexes_matrix, exec_cmds_matrix, network_matrix, static_matrix])
-<<<<<<< HEAD
-        scaler = StandardScaler(with_mean=False)
-        matrix = scaler.fit_transform(matrix)
-        self.log.info("Feature vector shape (n_samples, n_features) : {}".format(matrix.shape))
-=======
         self.log.info(F"Feature vector shape (n_samples, n_features) : {matrix.shape}")
->>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
         labels = pi.load(open(labels_path + "/" + "labels.pkl"))
         self.log.info(F"Total number of labels are : {len(labels)}")
         return matrix, labels

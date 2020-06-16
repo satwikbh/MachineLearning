@@ -1,9 +1,4 @@
 import json
-<<<<<<< HEAD
-import pickle as pi
-import urllib
-=======
->>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
 from collections import defaultdict
 from time import time
 from urllib.parse import quote
@@ -49,7 +44,7 @@ class IndividualFeatureClusterGeneration:
         return c2db_collection
 
     def get_list_of_keys(self, c2db_collection):
-        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}])
+        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}], allowDiskUse=True)
         list_of_keys = self.helper.cursor_to_list(cursor, identifier="_id")
         return list_of_keys
 
@@ -140,11 +135,11 @@ class IndividualFeatureClusterGeneration:
             else:
                 p_keys = list_of_keys[x:]
 
-            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"))
-            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"))
-            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"))
+            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"), allowDiskUse=True)
+            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"), allowDiskUse=True)
+            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"), allowDiskUse=True)
             stat_sign_feature_cursor = c2db_collection.aggregate(
-                self.get_query(list_of_keys=p_keys, feature="statSignatures"))
+                self.get_query(list_of_keys=p_keys, feature="statSignatures"), allowDiskUse=True)
 
             for doc in behavior_cursor:
                 key = doc["key"]
@@ -196,6 +191,7 @@ class IndividualFeatureClusterGeneration:
     def main(self):
         start_time = time()
         individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
+        self.helper.create_dir_if_absent(individual_feature_pool_path)
         self.log.info(F"Preparing Individual Feature Pools at : {individual_feature_pool_path}")
 
         self.files_pool = self.get_cluster_dict()
@@ -208,14 +204,9 @@ class IndividualFeatureClusterGeneration:
 
         c2db_collection = self.get_collection()
         # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        l1 = pi.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.pkl"))
-        l2 = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json"))
 
-        # list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
-
-        list_of_keys = l1 + l2
-
-        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=100)
+        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=1000)
         self.save_feature_pools(individual_feature_pool_path)
 
         self.log.info(F"Total time taken : {time() - start_time}")

@@ -50,7 +50,7 @@ class IndividualFeatureGeneration:
         return c2db_collection
 
     def get_list_of_keys(self, c2db_collection):
-        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}])
+        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}], allowDiskUse=True)
         list_of_keys = self.helper.cursor_to_list(cursor, identifier="_id")
         return list_of_keys
 
@@ -102,9 +102,9 @@ class IndividualFeatureGeneration:
             else:
                 p_keys = list_of_keys[x:]
 
-            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"))
-            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"))
-            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"))
+            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"), allowDiskUse=True)
+            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"), allowDiskUse=True)
+            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"), allowDiskUse=True)
 
             for doc in behavior_cursor:
                 key = doc["key"]
@@ -259,19 +259,25 @@ class IndividualFeatureGeneration:
 
     def main(self):
         start_time = time()
-        chunk_size = 200
+        chunk_size = 1000
 
         individual_feature_pool_path = self.config["data"]["individual_feature_pool_path"]
         files_fv_path = self.config["individual_feature_vector_path"]["files_feature"]
+        self.helper.create_dir_if_absent(files_fv_path)
         reg_keys_fv_path = self.config["individual_feature_vector_path"]["reg_keys_feature"]
+        self.helper.create_dir_if_absent(reg_keys_fv_path)
         mutexes_fv_path = self.config["individual_feature_vector_path"]["mutexes_feature"]
+        self.helper.create_dir_if_absent(mutexes_fv_path)
         exec_cmds_fv_path = self.config["individual_feature_vector_path"]["exec_cmds_feature"]
+        self.helper.create_dir_if_absent(exec_cmds_fv_path)
         network_fv_path = self.config["individual_feature_vector_path"]["network_feature"]
+        self.helper.create_dir_if_absent(network_fv_path)
         static_feature_fv_path = self.config["individual_feature_vector_path"]["static_feature"]
+        self.helper.create_dir_if_absent(static_feature_fv_path)
 
         c2db_collection = self.get_collection()
         # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json"))
         self.load_feature_pools(indi_feature_path=individual_feature_pool_path)
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=chunk_size,
                           files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,

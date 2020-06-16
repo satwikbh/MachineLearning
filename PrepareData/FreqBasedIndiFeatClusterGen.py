@@ -46,7 +46,7 @@ class FreqBasedIndiFeatClusterGen:
         return c2db_collection
 
     def get_list_of_keys(self, c2db_collection):
-        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}])
+        cursor = c2db_collection.aggregate([{"$group": {"_id": "$key"}}], allowDiskUse=True)
         list_of_keys = self.helper.cursor_to_list(cursor, identifier="_id")
         return list_of_keys
 
@@ -140,11 +140,11 @@ class FreqBasedIndiFeatClusterGen:
             else:
                 p_keys = list_of_keys[counter:]
 
-            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"))
-            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"))
-            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"))
+            behavior_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="behavior"), allowDiskUse=True)
+            network_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="network"), allowDiskUse=True)
+            static_feature_cursor = c2db_collection.aggregate(self.get_query(list_of_keys=p_keys, feature="static"), allowDiskUse=True)
             stat_sign_feature_cursor = c2db_collection.aggregate(
-                self.get_query(list_of_keys=p_keys, feature="statSignatures"))
+                self.get_query(list_of_keys=p_keys, feature="statSignatures"), allowDiskUse=True)
 
             for doc in behavior_cursor:
                 key = doc["key"]
@@ -199,32 +199,32 @@ class FreqBasedIndiFeatClusterGen:
         :param top_k_features: Number of features to select.
         :return:
         """
-        files_keys, files_values = self.files_pool.keys(), np.asarray(self.files_pool.values())
+        files_keys, files_values = self.helper.dict_values_to_list(self.files_pool.keys()), np.asarray(list(self.files_pool.values()))
         arr = files_values.argsort()[-top_k_features:]
         files_features = [files_keys[_] for _ in arr]
 
-        reg_keys_pool_keys, reg_keys_pool_values = self.reg_keys_pool.keys(), np.asarray(self.reg_keys_pool.values())
+        reg_keys_pool_keys, reg_keys_pool_values = self.helper.dict_values_to_list(self.reg_keys_pool.keys()), np.asarray(list(self.reg_keys_pool.values()))
         arr = reg_keys_pool_values.argsort()[-top_k_features:]
         reg_keys_pool_features = [reg_keys_pool_keys[_] for _ in arr]
 
-        mutex_keys, mutex_values = self.mutex_pool.keys(), np.asarray(self.mutex_pool.values())
+        mutex_keys, mutex_values = self.helper.dict_values_to_list(self.mutex_pool.keys()), np.asarray(list(self.mutex_pool.values()))
         arr = mutex_values.argsort()[-top_k_features:]
         mutex_features = [mutex_keys[_] for _ in arr]
 
-        exec_commands_keys, exec_commands_values = self.exec_commands_pool.keys(), np.asarray(
-            self.exec_commands_pool.values())
+        exec_commands_keys, exec_commands_values = self.helper.dict_values_to_list(self.exec_commands_pool.keys()), np.asarray(
+            list(self.exec_commands_pool.values()))
         arr = exec_commands_values.argsort()[-top_k_features:]
         exec_commands_features = [exec_commands_keys[_] for _ in arr]
 
-        network_keys, network_values = self.network_pool.keys(), np.asarray(self.network_pool.values())
+        network_keys, network_values = self.helper.dict_values_to_list(self.network_pool.keys()), np.asarray(list(self.network_pool.values()))
         arr = network_values.argsort()[-top_k_features:]
         network_features = [network_keys[_] for _ in arr]
 
-        static_keys, static_values = self.static_feature_pool.keys(), np.asarray(self.static_feature_pool.values())
+        static_keys, static_values = self.helper.dict_values_to_list(self.static_feature_pool.keys()), np.asarray(list(self.static_feature_pool.values()))
         arr = static_values.argsort()[-top_k_features:]
         static_features = [static_keys[_] for _ in arr]
 
-        stat_sign_keys, stat_sign_values = self.stat_sign_pool.keys(), np.asarray(self.stat_sign_pool.values())
+        stat_sign_keys, stat_sign_values = self.helper.dict_values_to_list(self.stat_sign_pool.keys()), np.asarray(list(self.stat_sign_pool.values()))
         arr = stat_sign_values.argsort()[-top_k_features:]
         stat_sign_features = [stat_sign_keys[_] for _ in arr]
 
@@ -250,12 +250,9 @@ class FreqBasedIndiFeatClusterGen:
 
         c2db_collection = self.get_collection()
         # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        l1 = pi.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.pkl"))
-        l2 = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json", "rb"))
 
-        list_of_keys = l1 + l2
-
-        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=100)
+        self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=1000)
         feature_list = self.prune_features(top_k_features=top_k_features)
         self.save_feature_pools(freq_individual_feature_pool_path, feature_list)
 

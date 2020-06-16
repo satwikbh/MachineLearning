@@ -13,6 +13,7 @@ from HelperFunctions.DataStats import DataStats
 from HelperFunctions.DistributePoolingSet import DistributePoolingSet
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.ParsingLogic import ParsingLogic
+from PrepareData.TrieBasedPruning import TrieBasedPruning
 from Utils.ConfigUtil import ConfigUtil
 from Utils.DBUtils import DBUtils
 from Utils.LoggerUtil import LoggerUtil
@@ -28,7 +29,7 @@ class PrepareDataset:
         self.helper = HelperFunction()
         self.config = ConfigUtil().get_config_instance()
         self.data_stats = DataStats(use_trie_pruning=self.use_trie_pruning)
-        self.trie_based_pruning = use_trie_pruning()
+        self.trie_based_pruning = TrieBasedPruning()
         self.feature_pool_part_path_list = list()
 
     def get_collection(self):
@@ -254,7 +255,7 @@ class PrepareDataset:
                 {"$addFields": {"__order": {"$indexOfArray": [p_keys, "$md5"]}}},
                 {"$sort": {"__order": 1}}
             ]
-            cursor = avclass_collection.aggregate(query)
+            cursor = avclass_collection.aggregate(query, allowDiskUse=True)
             for _ in cursor:
                 try:
                     md5 = _["md5"]
@@ -287,21 +288,27 @@ class PrepareDataset:
         pruned_feature_vector_path = self.config["data"]["pruned_feature_vector_path"]
 
         client, c2db_collection, avclass_collection = self.get_collection()
-        cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}])
+        """
+        cursor = c2db_collection.aggregate([{"$group": {"_id": '$key'}}], allowDiskUse=True)
 
         list_of_keys = list()
 
         for each_element in cursor:
             list_of_keys.append(each_element['_id'])
 
+        """
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json", "rb"))
+        """
+
         self.log.info(F"Total keys before AVClass : {len(list_of_keys)}")
         list_of_keys = self.get_families_data(avclass_collection, list_of_keys, config_param_chunk_size)
         self.log.info(F"Total keys after AVClass : {len(list_of_keys)}")
-        pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "w"))
+        pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "wb")
+        """
 
         if self.use_trie_pruning:
             self.helper.create_dir_if_absent(pruned_indi_feature_pool_path)
-            self.helper.create_dir_if_absent(unpruned_feature_vector_path)
+            self.helper.create_dir_if_absent(pruned_feature_vector_path)
         else:
             self.helper.create_dir_if_absent(feature_pool_path)
             self.helper.create_dir_if_absent(unpruned_feature_vector_path)

@@ -118,13 +118,13 @@ class TrieBasedPruning:
         json.dump(meta_mutex_pool, open(mutexes_path, "w"))
 
         network_path = pruned_indi_feature_pool_path + "/" + "network.json"
-        json.dump(self.network_pool.keys(), open(network_path, "w"))
+        json.dump(self.helper.dict_values_to_list(self.network_pool.keys()), open(network_path, "w"))
 
         static_features_path = pruned_indi_feature_pool_path + "/" + "static_features.json"
-        json.dump(self.static_feature_pool.keys(), open(static_features_path, "w"))
+        json.dump(self.helper.dict_values_to_list(self.static_feature_pool.keys()), open(static_features_path, "w"))
 
         stat_sign_features_path = pruned_indi_feature_pool_path + "/" + "stat_sign_features.json"
-        json.dump(self.stat_sign_pool.keys(), open(stat_sign_features_path, "w"))
+        json.dump(self.helper.dict_values_to_list(self.stat_sign_pool.keys()), open(stat_sign_features_path, "w"))
 
     def main(self):
         """

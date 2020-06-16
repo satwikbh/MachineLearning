@@ -5,6 +5,7 @@ from collections import defaultdict
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from time import time
+
 import numpy as np
 from scipy.sparse import coo_matrix, vstack
 
@@ -95,7 +96,7 @@ class ParsingLogic:
             {"$addFields": {"__order": {"$indexOfArray": [list_of_docs, "$key"]}}},
             {"$sort": {"__order": 1}}
         ]
-        cursor = collection.aggregate(query)
+        cursor = collection.aggregate(query, allowDiskUse= True)
 
         for each_document in cursor:
             feature = each_document.get("feature")
@@ -175,13 +176,8 @@ class ParsingLogic:
         cluster_dict.default_factory = cluster_dict.__len__
 
         for index, each_file in enumerate(feature_pool_part_path_list):
-<<<<<<< HEAD
-            self.log.info("Final pool preparation Iteration: #{}".format(index))
-            file_object = open(each_file, "rb")
-=======
             self.log.info(F"Final pool preparation Iteration: #{index}")
-            file_object = open(each_file)
->>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
+            file_object = open(each_file, "rb")
             doc2bow = pi.load(file_object)
             flat_list = self.helper.flatten_list(doc2bow)
             for each in flat_list:
@@ -192,9 +188,6 @@ class ParsingLogic:
         self.log.info("Time taken for generating final feature pool : {}".format(time() - start_time))
         return cluster_dict
 
-<<<<<<< HEAD
-    def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows, pruned_feature_pool_path=None, list_of_keys=None):
-=======
     def collect_parallel_results(self, fv_dist_part_file_name):
         self.fv_dist_fnames.append(fv_dist_part_file_name)
 
@@ -248,7 +241,6 @@ class ParsingLogic:
         return fv_dist_fnames
 
     def convert2vec(self, feature_pool_part_path_list, feature_vector_path, num_rows, pruned_feature_pool_path=None):
->>>>>>> d6d48005de6893e1e3af46b0e1c98838dd4b92c8
         """
         Generate & return the feature vector path names
         The feature matrix is in Scipy CSR format.
@@ -268,7 +260,6 @@ class ParsingLogic:
         self.log.info("Input Matrix Shape : (Rows={}, Columns={})".format(num_rows, num_cols))
 
         start_time = time()
-
         for index, each_file in enumerate(feature_pool_part_path_list):
             file_object = open(each_file, "rb")
             doc2bow = pi.load(file_object)
