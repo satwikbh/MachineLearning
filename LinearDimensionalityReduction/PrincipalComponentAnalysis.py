@@ -4,8 +4,6 @@ from time import time
 import numpy as np
 from sklearn.decomposition import IncrementalPCA, PCA
 
-from Clustering.DBScanClustering import DBScanClustering
-from Clustering.HDBScanClustering import HDBScanClustering
 from HelperFunctions.HelperFunction import HelperFunction
 from PrepareData.LoadData import LoadData
 from Utils.ConfigUtil import ConfigUtil
@@ -17,8 +15,6 @@ class PrincipalComponentAnalysis:
         self.log = LoggerUtil(self.__class__.__name__).get()
         self.config = ConfigUtil.get_config_instance()
         self.load_data = LoadData()
-        self.dbscan = DBScanClustering()
-        self.hdbscan = HDBScanClustering()
         self.helper = HelperFunction()
         self.large_dataset = large_dataset
         self.use_pruned_data = use_pruned_data
@@ -95,10 +91,10 @@ class PrincipalComponentAnalysis:
             try:
                 if self.large_dataset:
                     pca_model = IncrementalPCA(n_components)
-                    pca_model = self.partial_fit(pca_model, input_matrix, chunk_size=1000)
-                    reduced_matrix = self.partial_transform(pca_model, input_matrix, chunk_size=1000)
+                    pca_model = self.partial_fit(pca_model, input_matrix, chunk_size=5000)
+                    reduced_matrix = self.partial_transform(pca_model, input_matrix, chunk_size=5000)
                     error_curr = self.partial_inverse_transform(pca_model, input_matrix, reduced_matrix,
-                                                                chunk_size=1000)
+                                                                chunk_size=5000)
                 else:
                     if randomized:
                         pca_model = PCA(n_components=n_components, svd_solver='randomized')
@@ -132,6 +128,7 @@ class PrincipalComponentAnalysis:
 
         labels_path = self.config["data"]["labels_path"]
         pca_model_path = self.config["models"]["pca"]["model_path"]
+        self.helper.create_dir_if_absent(pca_model_path)
         pca_dr_params_path = self.config["results"]["dr_params"]["pca"]
         reconstruction_error = self.config['models']['pca']['reconstruction_error']
 
@@ -157,4 +154,4 @@ class PrincipalComponentAnalysis:
 
 if __name__ == '__main__':
     pca = PrincipalComponentAnalysis(large_dataset=True, use_pruned_data=True)
-    pca.main(num_rows=346679)
+    pca.main(num_rows=3466)

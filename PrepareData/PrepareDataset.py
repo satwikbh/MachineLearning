@@ -304,7 +304,6 @@ class PrepareDataset:
         list_of_keys = self.get_families_data(avclass_collection, list_of_keys, config_param_chunk_size)
         self.log.info(F"Total keys after AVClass : {len(list_of_keys)}")
         pi.dump(list_of_keys, open(self.config["data"]["list_of_keys"] + "/" + "names.dump", "wb")
-        """
 
         if self.use_trie_pruning:
             self.helper.create_dir_if_absent(pruned_indi_feature_pool_path)
@@ -319,8 +318,9 @@ class PrepareDataset:
                                 pruned_feature_vector_path=pruned_feature_vector_path,
                                 unpruned_feature_vector_path=unpruned_feature_vector_path)
         self.data_stats.main()
+        """
         labels = self.generate_labels(avclass_collection, list_of_keys, config_param_chunk_size)
-        pi.dump(labels, open(labels_path + "/" + "labels.pkl", "wb"))
+        json.dump(labels, open(labels_path + "/" + "labels.json", "w"))
         self.log.info(F"Total time taken : {time() - start_time}")
 
 

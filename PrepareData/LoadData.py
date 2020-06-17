@@ -1,4 +1,5 @@
 import pickle as pi
+import json
 
 from scipy.sparse import hstack
 from sklearn.preprocessing import StandardScaler
@@ -63,7 +64,7 @@ class LoadData:
         matrix = hstack(
             [files_matrix, reg_keys_matrix, mutexes_matrix, exec_cmds_matrix, network_matrix, static_matrix])
         self.log.info(F"Feature vector shape (n_samples, n_features) : {matrix.shape}")
-        labels = pi.load(open(labels_path + "/" + "labels.pkl"))
+        labels = json.load(open(labels_path + "/" + "labels.json"))
         self.log.info(F"Total number of labels are : {len(labels)}")
         return matrix, labels
 

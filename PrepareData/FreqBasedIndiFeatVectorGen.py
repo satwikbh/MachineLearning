@@ -236,19 +236,25 @@ class FreqBasedIndiFeatVectorGen:
 
     def main(self):
         start_time = time()
-        chunk_size = 100
+        chunk_size = 1000
 
         individual_feature_pool_path = self.config["data"]["freq_individual_feature_pool_path"]
         files_fv_path = self.config["freq_individual_feature_vector_path"]["files_feature"]
+        self.helper.create_dir_if_absent(files_fv_path)
         reg_keys_fv_path = self.config["freq_individual_feature_vector_path"]["reg_keys_feature"]
+        self.helper.create_dir_if_absent(reg_keys_fv_path)
         mutexes_fv_path = self.config["freq_individual_feature_vector_path"]["mutexes_feature"]
+        self.helper.create_dir_if_absent(mutexes_fv_path)
         exec_cmds_fv_path = self.config["freq_individual_feature_vector_path"]["exec_cmds_feature"]
+        self.helper.create_dir_if_absent(exec_cmds_fv_path)
         network_fv_path = self.config["freq_individual_feature_vector_path"]["network_feature"]
+        self.helper.create_dir_if_absent(network_fv_path)
         static_feature_fv_path = self.config["freq_individual_feature_vector_path"]["static_feature"]
+        self.helper.create_dir_if_absent(static_feature_fv_path)
 
         c2db_collection = self.get_collection()
         # list_of_keys = self.get_list_of_keys(c2db_collection=c2db_collection)
-        list_of_keys = pi.load(open("/home/satwik/Documents/MachineLearning/Data99k/list_of_keys.pkl"))
+        list_of_keys = json.load(open("/home/satwik/Documents/MachineLearning/Data346k/list_of_keys.json"))
         self.load_feature_pools(indi_feature_path=individual_feature_pool_path)
         self.process_docs(c2db_collection=c2db_collection, list_of_keys=list_of_keys, chunk_size=chunk_size,
                           files_fv_path=files_fv_path, reg_keys_fv_path=reg_keys_fv_path,
