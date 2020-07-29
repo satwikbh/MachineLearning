@@ -11,7 +11,7 @@ class LoadDRMatrices:
         self.load_data = LoadData()
         self.use_pruned_data = use_pruned_data
 
-    def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows):
+    def get_dr_matrices(self, labels_path, base_data_path, pca_model_path, tsne_model_path, sae_model_path, num_rows, chunk_size):
         """
         Takes the dimensionality reduction techniques model_path's, loads the matrices.
         Returns the matrices as a dict.
@@ -24,12 +24,15 @@ class LoadDRMatrices:
         :return:
         """
         dr_matrices = dict()
-
+        input_matrix, labels = self.load_data.load_freq_top_k_data(num_rows=num_rows, labels_path=labels_path, chunk_size=chunk_size)
+        """
         input_matrix, input_matrix_indices, labels = self.load_data.get_data_with_labels(num_rows=num_rows,
                                                                                          data_path=base_data_path,
                                                                                          labels_path=labels_path)
         del input_matrix_indices
+        """
         dr_matrices['base_data'] = input_matrix
+        """
 
         if self.use_pruned_data:
             pca_file_name = pca_model_path + "/" + "pca_reduced_pruned_matrix_" + str(num_rows) + ".npy"
@@ -58,5 +61,6 @@ class LoadDRMatrices:
             sae_file_name = sae_model_path + "/" + "sae_reduced_unpruned_matrix_" + str(num_rows) + ".npz"
         sae_reduced_matrix = np.load(sae_file_name)['arr_0']
         dr_matrices['sae'] = sae_reduced_matrix
+        """
 
         return dr_matrices, labels

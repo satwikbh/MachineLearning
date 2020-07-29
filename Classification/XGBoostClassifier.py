@@ -62,8 +62,10 @@ class XGBoostClassifier:
 
     def classification(self, train_data, train_labels):
         cv = 5
+        n_estimators = 50
         self.log.info("Using XGBoost classifier")
-        clf = XGBClassifier(n_estimators=100, random_state=0, n_jobs=30, verbose=1)
+        self.log.info(F"Number of estimators: {n_estimators}")
+        clf = XGBClassifier(n_estimators=n_estimators, random_state=0, n_jobs=35, verbose=1)
         clf.fit(train_data, train_labels)
         self.log.info("Performing cross validation with cv : {}".format(cv))
         scores = cross_val_score(clf, train_data, train_labels, cv=cv)
@@ -92,7 +94,7 @@ class XGBoostClassifier:
                 self.log.info("Using XGBoost classifier on on SAE")
             else:
                 self.log.error("Dimensionality Reduction technique employed is not supported!!!")
-            x_train, x_test, y_train, y_test = self.helper.validation_split(dr_matrix, labels, test_size=0.33)
+            x_train, x_test, y_train, y_test = self.helper.validation_split(dr_matrix, labels, test_size=0.1)
             del dr_matrix, labels
             clf = self.classification(train_data=x_train,
                                       train_labels=y_train)
@@ -118,6 +120,7 @@ class XGBoostClassifier:
         """
         start_time = time()
         labels_path = self.config["data"]["labels_path"]
+        chunk_size = self.config["data"]["config_param_chunk_size"]
 
         if self.use_pruned_data:
             base_data_path = self.config["data"]["pruned_feature_selection_path"]
@@ -132,11 +135,11 @@ class XGBoostClassifier:
         dr_matrices, labels = self.load_dr_mat.get_dr_matrices(labels_path=labels_path, base_data_path=base_data_path,
                                                                pca_model_path=pca_model_path,
                                                                tsne_model_path=tsne_model_path,
-                                                               sae_model_path=sae_model_path, num_rows=num_rows)
+                                                               sae_model_path=sae_model_path, num_rows=num_rows, chunk_size=chunk_size)
         self.prepare_classifier(dr_matrices=dr_matrices, labels=labels, xgboost_results_path=xgboost_results_path)
         self.log.info("Total time taken : {}".format(time() - start_time))
 
 
 if __name__ == '__main__':
     xgboost_clf = XGBoostClassifier(use_pruned_data=True)
-    xgboost_clf.main(num_rows=50000)
+    xgboost_clf.main(num_rows=346679)

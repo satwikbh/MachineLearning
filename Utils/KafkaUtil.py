@@ -1,4 +1,4 @@
-from LoggerUtil import LoggerUtil
+from Utils.LoggerUtil import LoggerUtil
 from kafka import KafkaConsumer, KafkaProducer
 
 
